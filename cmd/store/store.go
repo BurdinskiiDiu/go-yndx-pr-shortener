@@ -32,7 +32,7 @@ func (uS *UrlStorage) CreateShortUrl(url string) (string, error) {
 	defer uS.Unlock()
 
 	if url == "" {
-		return "", errors.New("Empty url")
+		return "", errors.New("empty url")
 	}
 
 	for key, value := range uS.urlStr {
@@ -49,7 +49,7 @@ func (uS *UrlStorage) CreateShortUrl(url string) (string, error) {
 func (us *UrlStorage) GetLongUrl(shrtUrl string) (string, error) {
 	lngUrl, ok := us.urlStr[shrtUrl]
 	if !ok {
-		return "", errors.New("Wrong short url")
+		return "", errors.New("wrong short url")
 	} else {
 		return lngUrl, nil
 	}
