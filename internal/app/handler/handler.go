@@ -3,6 +3,7 @@ package handler
 import (
 	"io"
 	"net/http"
+	"strconv"
 
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/cmd/store"
 )
@@ -19,8 +20,6 @@ func NewRouter(uS *store.UrlStorage) *Router {
 	}
 
 	rt.HandleFunc("/", http.HandlerFunc(rt.ComRequest).ServeHTTP)
-	//rt.HandleFunc("/{id}", http.HandlerFunc(rt.ReturnOrignUrl).ServeHTTP)
-
 	return rt
 }
 
@@ -30,18 +29,18 @@ func (rt *Router) ComRequest(w http.ResponseWriter, r *http.Request) {
 
 		content, err := io.ReadAll(r.Body)
 		if err != nil {
-			w.Write([]byte(err.Error()))
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
 		shrtUrl, err := rt.uS.CreateShortUrl(string(content))
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
+
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-
 		w.Header().Set("Content-Type", "text/plain")
+		w.Header().Set("Content-Length", strconv.Itoa(len(shrtUrl)))
 		w.WriteHeader(http.StatusCreated)
 		w.Write([]byte(shrtUrl))
 	} else if r.Method == http.MethodGet {
@@ -52,7 +51,8 @@ func (rt *Router) ComRequest(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-		w.Write([]byte(lngUrl))
+		w.WriteHeader(http.StatusTemporaryRedirect)
+		w.Write([]byte("Location: " + lngUrl))
 	} else {
 		http.Error(w, "bad method", http.StatusBadRequest)
 		return
