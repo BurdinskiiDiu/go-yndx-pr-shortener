@@ -27,7 +27,7 @@ func shorting() string {
 	return string(b)
 }
 
-func (uS *URLStorage) CreateShortUrl(url string) (string, error) {
+func (uS *URLStorage) CreateShortURL(url string) (string, error) {
 	uS.Lock()
 	defer uS.Unlock()
 
@@ -46,7 +46,7 @@ func (uS *URLStorage) CreateShortUrl(url string) (string, error) {
 	return shrtURL, nil
 }
 
-func (uS *URLStorage) GetLongUrl(shrtURL string) (string, error) {
+func (uS *URLStorage) GetLongURL(shrtURL string) (string, error) {
 	lngURL, ok := uS.urlStr[shrtURL]
 	if !ok {
 		return "", errors.New("wrong short url")

@@ -33,7 +33,7 @@ func (rt *Router) ComRequest(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		shrtURL, err := rt.uS.CreateShortUrl(string(content))
+		shrtURL, err := rt.uS.CreateShortURL(string(content))
 		if err != nil {
 
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -46,7 +46,7 @@ func (rt *Router) ComRequest(w http.ResponseWriter, r *http.Request) {
 	} else if r.Method == http.MethodGet {
 		srtURL := r.URL.Path
 		srtURL = srtURL[1:]
-		lngURL, err := rt.uS.GetLongUrl(srtURL)
+		lngURL, err := rt.uS.GetLongURL(srtURL)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
