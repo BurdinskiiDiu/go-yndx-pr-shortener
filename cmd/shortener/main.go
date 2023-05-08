@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	uS := store.NewUrlStorage()
+	uS := store.NewURLStorage()
 	h := handler.NewRouter(uS)
 	srv := server.NewServer(":8080", h)
 	srv.Run()

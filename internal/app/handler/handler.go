@@ -10,10 +10,10 @@ import (
 
 type Router struct {
 	*http.ServeMux
-	uS *store.UrlStorage
+	uS *store.URLStorage
 }
 
-func NewRouter(uS *store.UrlStorage) *Router {
+func NewRouter(uS *store.URLStorage) *Router {
 	rt := &Router{
 		ServeMux: http.NewServeMux(),
 		uS:       uS,
@@ -33,26 +33,26 @@ func (rt *Router) ComRequest(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		shrtUrl, err := rt.uS.CreateShortUrl(string(content))
+		shrtURL, err := rt.uS.CreateShortUrl(string(content))
 		if err != nil {
 
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		w.Header().Set("Content-Type", "text/plain")
-		w.Header().Set("Content-Length", strconv.Itoa(len(shrtUrl)))
+		w.Header().Set("Content-Length", strconv.Itoa(len(shrtURL)))
 		w.WriteHeader(http.StatusCreated)
-		w.Write([]byte(shrtUrl))
+		w.Write([]byte(shrtURL))
 	} else if r.Method == http.MethodGet {
-		srtUrl := r.URL.Path
-		srtUrl = srtUrl[1:]
-		lngUrl, err := rt.uS.GetLongUrl(srtUrl)
+		srtURL := r.URL.Path
+		srtURL = srtURL[1:]
+		lngURL, err := rt.uS.GetLongUrl(srtURL)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 		w.WriteHeader(http.StatusTemporaryRedirect)
-		w.Write([]byte("Location: " + lngUrl))
+		w.Write([]byte("Location: " + lngURL))
 	} else {
 		http.Error(w, "bad method", http.StatusBadRequest)
 		return

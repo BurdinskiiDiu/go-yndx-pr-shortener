@@ -6,13 +6,13 @@ import (
 	"sync"
 )
 
-type UrlStorage struct {
+type URLStorage struct {
 	urlStr map[string]string
 	sync.Mutex
 }
 
-func NewUrlStorage() *UrlStorage {
-	return &UrlStorage{
+func NewURLStorage() *URLStorage {
+	return &URLStorage{
 		urlStr: make(map[string]string),
 	}
 }
@@ -27,7 +27,7 @@ func shorting() string {
 	return string(b)
 }
 
-func (uS *UrlStorage) CreateShortUrl(url string) (string, error) {
+func (uS *URLStorage) CreateShortUrl(url string) (string, error) {
 	uS.Lock()
 	defer uS.Unlock()
 
@@ -41,16 +41,16 @@ func (uS *UrlStorage) CreateShortUrl(url string) (string, error) {
 		}
 	}
 
-	shrtUrl := shorting()
-	uS.urlStr[shrtUrl] = url
-	return shrtUrl, nil
+	shrtURL := shorting()
+	uS.urlStr[shrtURL] = url
+	return shrtURL, nil
 }
 
-func (us *UrlStorage) GetLongUrl(shrtUrl string) (string, error) {
-	lngUrl, ok := us.urlStr[shrtUrl]
+func (uS *URLStorage) GetLongUrl(shrtURL string) (string, error) {
+	lngURL, ok := uS.urlStr[shrtURL]
 	if !ok {
 		return "", errors.New("wrong short url")
 	} else {
-		return lngUrl, nil
+		return lngURL, nil
 	}
 }
