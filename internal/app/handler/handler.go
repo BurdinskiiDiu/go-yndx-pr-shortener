@@ -40,17 +40,19 @@ func (rt *Router) ComRequest(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		w.Header().Set("Content-Type", "text/plain")
-		w.Header().Set("Content-Length", strconv.Itoa(len(shrtURL)))
+		w.Header().Set("Content-Length", strconv.Itoa(len("http://localhost:8080/"+shrtURL)))
 		w.WriteHeader(http.StatusCreated)
-		w.Write([]byte(shrtURL))
+		w.Write([]byte("http://localhost:8080/" + shrtURL))
 	} else if r.Method == http.MethodGet {
 		srtURL := r.URL.Path
+		//w.Write([]byte(srtURL))
 		srtURL = srtURL[1:]
 		lngURL, err := rt.uS.GetLongURL(srtURL)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
+		w.Header().Set("Location", lngURL)
 		w.WriteHeader(http.StatusTemporaryRedirect)
 		w.Write([]byte("Location: " + lngURL))
 	} else {
