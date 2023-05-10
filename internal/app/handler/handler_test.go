@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -40,7 +40,7 @@ func TestURLShortenerRequest(t *testing.T) {
 
 			assert.Equal(t, tc.expectedCode, result.StatusCode)
 			if i == 0 {
-				getBody, err := ioutil.ReadAll(result.Body)
+				getBody, err := io.ReadAll(result.Body)
 				require.NoError(t, err)
 				require.NotEqual(t, "", string(getBody), "empty short url")
 				words := strings.Split(string(getBody), "/")
