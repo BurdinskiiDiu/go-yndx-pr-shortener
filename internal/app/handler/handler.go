@@ -19,7 +19,8 @@ func NewRouter(uS *store.URLStorage) *Router {
 		uS:       uS,
 	}
 
-	rt.HandleFunc("/", http.HandlerFunc(rt.ComRequest).ServeHTTP)
+	//rt.HandleFunc("/", http.HandlerFunc(rt.ComRequest).ServeHTTP)
+	rt.HandleFunc("/", URLShortenerRequest(rt))
 	return rt
 }
 
@@ -59,4 +60,8 @@ func (rt *Router) ComRequest(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "bad method", http.StatusBadRequest)
 		return
 	}
+}
+
+func URLShortenerRequest(rt *Router) http.HandlerFunc {
+	return rt.ComRequest
 }
