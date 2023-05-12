@@ -6,6 +6,11 @@ import (
 	"sync"
 )
 
+type URLStore interface {
+	CreateShortURL(string) (string, error)
+	GetLongURL(string) (string, error)
+}
+
 type URLStorage struct {
 	urlStr map[string]string
 	sync.Mutex

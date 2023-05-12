@@ -10,7 +10,7 @@ import (
 
 type Router struct {
 	*http.ServeMux
-	uS *store.URLStorage
+	uS store.URLStore
 }
 
 func NewRouter(uS *store.URLStorage) *Router {
