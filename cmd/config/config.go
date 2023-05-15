@@ -3,7 +3,6 @@ package config
 import (
 	"flag"
 	"fmt"
-	"net/url"
 )
 
 type Config struct {
@@ -32,7 +31,8 @@ func ParseFlags(cf *Config) {
 
 }
 
-func isUrl(str string) (bool, error) {
+/*
+func isURL(str string) (bool, error) {
 	parsedURL, err := url.Parse(str)
 	return err == nil && parsedURL.Scheme != "" && parsedURL.Host != "", err
 	/*url, err := url.ParseRequestURI(str)
@@ -46,5 +46,6 @@ func isUrl(str string) (bool, error) {
 	if url.Host == "" {
 		url.Host = "localhost:8080"
 	}
-	return url, nil*/
+	return url, nil
 }
+*/
