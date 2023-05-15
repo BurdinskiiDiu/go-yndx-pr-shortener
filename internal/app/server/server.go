@@ -2,29 +2,31 @@ package server
 
 import (
 	"net/http"
-	"time"
+
+	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/cmd/store"
+	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/app/handler"
+	"github.com/go-chi/chi/v5"
 )
 
 type Server struct {
-	srv http.Server
+	rt   chi.Router
+	addr string
 }
 
-func NewServer(addr string, h http.Handler) *Server {
-	s := &Server{}
-
-	s.srv = http.Server{
-		Addr:         addr,
-		Handler:      h,
-		ReadTimeout:  30 * time.Second,
-		WriteTimeout: 30 * time.Second,
+func NewServer(uS store.URLStore, addr string) *Server {
+	return &Server{
+		rt:   NewRouter(uS),
+		addr: addr,
 	}
-	return s
 }
 
-func (s *Server) Run() {
-	s.srv.ListenAndServe()
-}
+func NewRouter(uS store.URLStore) chi.Router {
+	rt := chi.NewRouter()
 
-/*func Run(adr string, rt http.ServeMux) error {
-	return http.ListenAndServe(adr, mux)
-}*/
+	rt.Post("/", handler.PostLongURL(uS))
+	rt.Get("/{id}", handler.GetLongURL(uS))
+	return rt
+}
+func (sr *Server) Run() {
+	http.ListenAndServe(sr.addr, sr.rt)
+}

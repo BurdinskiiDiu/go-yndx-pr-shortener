@@ -17,6 +17,7 @@ func TestURLShortenerRequest(t *testing.T) {
 	testCases := []struct {
 		name                string
 		method              string
+		fun                 http.HandlerFunc
 		expectedCode        int
 		target              string
 		expectedBody        string
@@ -24,16 +25,16 @@ func TestURLShortenerRequest(t *testing.T) {
 		testURL             string
 		shortURL            string
 	}{
-		{method: http.MethodPost, expectedCode: http.StatusCreated, target: "/", expectedBody: "", testURL: "http://yandex.practicum.com"},
-		{method: http.MethodGet, expectedCode: http.StatusTemporaryRedirect, expectedBody: "", testURL: "http://yandex.practicum.com"},
+		{method: http.MethodPost, fun: PostLongURL(uS), expectedCode: http.StatusCreated, target: "/", expectedBody: "", testURL: "http://yandex.practicum.com"},
+		{method: http.MethodGet, fun: GetLongURL(uS), expectedCode: http.StatusTemporaryRedirect, expectedBody: "", testURL: "http://yandex.practicum.com"},
 	}
 
 	for i, tc := range testCases {
 		t.Run(tc.method, func(t *testing.T) {
 			r := httptest.NewRequest(tc.method, tc.target, strings.NewReader(tc.testURL))
 			w := httptest.NewRecorder()
-			rt := NewRouter(uS)
-			h := http.HandlerFunc(URLShortenerRequest(rt))
+			//rt := NewRouter(uS)
+			h := http.HandlerFunc(tc.fun)
 			h(w, r)
 
 			result := w.Result()
