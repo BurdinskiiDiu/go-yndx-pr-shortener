@@ -1,6 +1,7 @@
 package server
 
 import (
+	"log"
 	"net/http"
 	"time"
 
@@ -25,11 +26,11 @@ func NewServer(uS store.URLStore, conf config.Config) *Server {
 
 func NewRouter(uS store.URLStore, conf config.Config) chi.Router {
 	rt := chi.NewRouter()
-	rt.Use(middleware.Timeout(30 * time.Second))
+	rt.Use(middleware.Timeout(10 * time.Second))
 	rt.Post("/", handler.PostLongURL(uS, conf))
 	rt.Get("/{id}", handler.GetLongURL(uS))
 	return rt
 }
 func (sr *Server) Run() {
-	http.ListenAndServe(sr.conf.DefaultAddr, sr.rt)
+	log.Fatal(http.ListenAndServe(sr.conf.DefaultAddr, sr.rt))
 }

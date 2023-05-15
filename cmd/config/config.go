@@ -3,6 +3,7 @@ package config
 import (
 	"flag"
 	"fmt"
+	"strings"
 )
 
 type Config struct {
@@ -15,7 +16,8 @@ func ParseFlags(cf *Config) {
 
 	flag.StringVar(&cf.BaseAddr, "b", "http://localhost:8080", "base host addr for short URL response")
 	flag.Parse()
-	/*hp := strings.Split(cf.DefaultAddr, ":")
+	//cf.DefaultAddr = "http://" + cf.DefaultAddr
+	hp := strings.Split(cf.DefaultAddr, ":")
 	if len(hp) == 2 {
 		cf.DefaultAddr = ":" + hp[1]
 
@@ -27,7 +29,7 @@ func ParseFlags(cf *Config) {
 		fmt.Println("Need address in a form host:port")
 		cf.DefaultAddr = ":8080"
 		return
-	}*/
+	}
 
 	fmt.Println(cf.DefaultAddr)
 	fmt.Println(cf.BaseAddr)
