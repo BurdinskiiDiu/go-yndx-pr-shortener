@@ -17,12 +17,17 @@ func ParseFlags(cf *Config) {
 	flag.StringVar(&cf.BaseAddr, "b", "http://localhost:8080", "base host addr for short URL response")
 	flag.Parse()
 	hp := strings.Split(cf.DefaultAddr, ":")
-	if len(hp) != 2 {
+	if len(hp) == 2 {
+		cf.DefaultAddr = ":" + hp[1]
+
+	} else if len(hp) == 3 {
+		cf.DefaultAddr = ":" + hp[2]
+
+	} else {
+
 		fmt.Println("Need address in a form host:port")
 		cf.DefaultAddr = ":8080"
 		return
-	} else {
-		cf.DefaultAddr = ":" + hp[1]
 	}
 
 	fmt.Println(cf.DefaultAddr)
