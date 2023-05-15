@@ -22,6 +22,6 @@ func ParseFlags(cf *Config) {
 		return
 	}
 	cf.DefaultAddr = ":" + hp[1]
-	fmt.Println(cf.DefaultAddr)
-	fmt.Println(cf.BaseAddr)
+	//fmt.Println(cf.DefaultAddr)
+	//fmt.Println(cf.BaseAddr)
 }
