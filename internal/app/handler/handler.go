@@ -42,7 +42,9 @@ func PostLongURL(uS store.URLStore, cf config.Config) http.HandlerFunc {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
+			//w.Header().Add("Location:", "")
 			w.Header().Set("Content-Type", "text/plain")
+			//w.Header().Set("Location", "")
 			w.Header().Set("Content-Length", strconv.Itoa(len("http://localhost:8080/"+shrtURL)))
 			w.WriteHeader(http.StatusCreated)
 			w.Write([]byte(cf.BaseAddr + "/" + shrtURL))
@@ -55,6 +57,7 @@ func PostLongURL(uS store.URLStore, cf config.Config) http.HandlerFunc {
 
 func GetLongURL(uS store.URLStore) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		//w.Header().Set("Location:", "")
 		if r.Method == http.MethodGet {
 			srtURL := r.URL.Path
 			srtURL = srtURL[1:]
@@ -65,7 +68,7 @@ func GetLongURL(uS store.URLStore) http.HandlerFunc {
 			}
 			w.Header().Set("Location", lngURL)
 			w.WriteHeader(http.StatusTemporaryRedirect)
-			w.Write([]byte("Location: " + lngURL))
+			//w.Write([]byte("Location: " + lngURL))
 		} else {
 			http.Error(w, "bad method", http.StatusBadRequest)
 			return
