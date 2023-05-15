@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/cmd/config"
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/cmd/store"
 )
 
@@ -25,7 +26,7 @@ func NewRouter(uS *store.URLStorage) *Router {
 	return rt
 }*/
 
-func PostLongURL(uS store.URLStore) http.HandlerFunc {
+func PostLongURL(uS store.URLStore, cf config.Config) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodPost {
 			defer r.Body.Close()
@@ -44,7 +45,7 @@ func PostLongURL(uS store.URLStore) http.HandlerFunc {
 			w.Header().Set("Content-Type", "text/plain")
 			w.Header().Set("Content-Length", strconv.Itoa(len("http://localhost:8080/"+shrtURL)))
 			w.WriteHeader(http.StatusCreated)
-			w.Write([]byte("http://localhost:8080/" + shrtURL))
+			w.Write([]byte(cf.BaseAddr + "/" + shrtURL))
 		} else {
 			http.Error(w, "bad method", http.StatusBadRequest)
 			return

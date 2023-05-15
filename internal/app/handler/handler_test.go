@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/cmd/config"
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/cmd/store"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -14,6 +15,10 @@ import (
 
 func TestURLShortenerRequest(t *testing.T) {
 	uS := store.NewURLStorage()
+	conf := config.Config{
+		DefaultAddr: ":8080",
+		BaseAddr:    "http://localhost:8080/",
+	}
 	testCases := []struct {
 		name                string
 		method              string
@@ -25,7 +30,7 @@ func TestURLShortenerRequest(t *testing.T) {
 		testURL             string
 		shortURL            string
 	}{
-		{method: http.MethodPost, fun: PostLongURL(uS), expectedCode: http.StatusCreated, target: "/", expectedBody: "", testURL: "http://yandex.practicum.com"},
+		{method: http.MethodPost, fun: PostLongURL(uS, conf), expectedCode: http.StatusCreated, target: "/", expectedBody: "", testURL: "http://yandex.practicum.com"},
 		{method: http.MethodGet, fun: GetLongURL(uS), expectedCode: http.StatusTemporaryRedirect, expectedBody: "", testURL: "http://yandex.practicum.com"},
 	}
 
