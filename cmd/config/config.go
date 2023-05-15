@@ -17,21 +17,24 @@ func ParseFlags(cf *Config) {
 	flag.Parse()
 	fmt.Println(cf.DefaultAddr)
 	fmt.Println(cf.BaseAddr)
-	isUrl1, _ := isUrl(cf.DefaultAddr)
-	isUrl2, _ := isUrl(cf.BaseAddr)
+	//isUrl1, _ := isUrl(cf.DefaultAddr)
+	//isUrl2, _ := isUrl(cf.BaseAddr)
+	/*
+		if !isUrl1 {
+			cf.DefaultAddr = ":8080"
+		}
 
-	if !isUrl1 {
-		cf.DefaultAddr = ":8080"
-	}
+		if !isUrl2 {
+			cf.BaseAddr = "http://localhost:8080"
+		}*/
+	//fmt.Println(cf.DefaultAddr)
+	//fmt.Println(cf.BaseAddr)
 
-	if !isUrl2 {
-		cf.BaseAddr = "http://localhost:8080"
-	}
 }
 
 func isUrl(str string) (bool, error) {
-	parsedUrl, err := url.Parse(str)
-	return err == nil && parsedUrl.Scheme != "" && parsedUrl.Host != "", err
+	parsedURL, err := url.Parse(str)
+	return err == nil && parsedURL.Scheme != "" && parsedURL.Host != "", err
 	/*url, err := url.ParseRequestURI(str)
 	if err != nil {
 		fmt.Println(err)
