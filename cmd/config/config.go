@@ -19,9 +19,12 @@ func ParseFlags(cf *Config) {
 	hp := strings.Split(cf.DefaultAddr, ":")
 	if len(hp) != 2 {
 		fmt.Println("Need address in a form host:port")
+		cf.DefaultAddr = ":8080"
 		return
+	} else {
+		cf.DefaultAddr = ":" + hp[1]
 	}
-	cf.DefaultAddr = ":" + hp[1]
-	//fmt.Println(cf.DefaultAddr)
-	//fmt.Println(cf.BaseAddr)
+
+	fmt.Println(cf.DefaultAddr)
+	fmt.Println(cf.BaseAddr)
 }
