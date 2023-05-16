@@ -68,7 +68,7 @@ func GetLongURL(uS store.URLStore) http.HandlerFunc {
 			}
 			w.Header().Set("Location", lngURL)
 			w.WriteHeader(http.StatusTemporaryRedirect)
-			//w.Write([]byte("Location: " + lngURL))
+			w.Write([]byte("Location: " + lngURL))
 		} else {
 			http.Error(w, "bad method", http.StatusBadRequest)
 			return
