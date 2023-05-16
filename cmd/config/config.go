@@ -30,9 +30,9 @@ func ParseFlags(cf *Config) {
 
 	ba := strings.Split(cf.BaseAddr, ":")
 	if len(ba) == 2 {
-		cf.BaseAddr = ba[0] + ":" + cf.DefaultAddr
+		cf.BaseAddr = ba[0] + cf.DefaultAddr
 	} else if len(ba) == 3 {
-		cf.BaseAddr = ba[0] + ba[1] + ":" + cf.DefaultAddr
+		cf.BaseAddr = ba[0] + ba[1] + cf.DefaultAddr
 	} else {
 		fmt.Println("Need address in a form host:port")
 		cf.BaseAddr = "http://localhost:8080"
