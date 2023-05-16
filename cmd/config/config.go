@@ -3,6 +3,7 @@ package config
 import (
 	"flag"
 	"fmt"
+	"os"
 	"strings"
 )
 
@@ -16,7 +17,15 @@ func ParseFlags(cf *Config) {
 
 	flag.StringVar(&cf.BaseAddr, "b", "http://localhost:8080", "base host addr for short URL response")
 	flag.Parse()
-	//cf.DefaultAddr = "http://" + cf.DefaultAddr
+
+	if envRunAddr := os.Getenv("SERVER_ADDRESS"); envRunAddr != "" {
+		cf.DefaultAddr = envRunAddr
+	}
+
+	if envBaseAddr := os.Getenv("BASE_URL"); envBaseAddr != "" {
+		cf.BaseAddr = envBaseAddr
+	}
+
 	da := strings.Split(cf.DefaultAddr, ":")
 	if len(da) == 2 {
 		cf.DefaultAddr = ":" + da[1]
