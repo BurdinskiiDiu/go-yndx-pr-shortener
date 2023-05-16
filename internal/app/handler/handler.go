@@ -45,7 +45,7 @@ func PostLongURL(uS store.URLStore, cf config.Config) http.HandlerFunc {
 			//w.Header().Add("Location:", "")
 			w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 			//w.Header().Set("Location", "")
-			w.Header().Set("Content-Length", strconv.Itoa(len("http://localhost:8080/"+shrtURL)))
+			w.Header().Set("Content-Length", strconv.Itoa(len(cf.BaseAddr+"/"+shrtURL)))
 			w.WriteHeader(http.StatusCreated)
 			w.Write([]byte(cf.BaseAddr + "/" + shrtURL))
 		} else {

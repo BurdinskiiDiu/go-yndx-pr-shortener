@@ -1,7 +1,6 @@
 package server
 
 import (
-	"log"
 	"net/http"
 	"time"
 
@@ -32,5 +31,5 @@ func NewRouter(uS store.URLStore, conf config.Config) chi.Router {
 	return rt
 }
 func (sr *Server) Run() {
-	log.Fatal(http.ListenAndServe(sr.conf.DefaultAddr, sr.rt))
+	http.ListenAndServe(sr.conf.DefaultAddr /*":8080"*/, sr.rt)
 }

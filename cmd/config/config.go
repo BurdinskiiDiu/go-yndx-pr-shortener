@@ -25,7 +25,6 @@ func ParseFlags(cf *Config) {
 	} else {
 		fmt.Println("Need address in a form host:port")
 		cf.DefaultAddr = ":8080"
-		return
 	}
 
 	ba := strings.Split(cf.BaseAddr, ":")
@@ -36,7 +35,6 @@ func ParseFlags(cf *Config) {
 	} else {
 		fmt.Println("Need address in a form host:port")
 		cf.BaseAddr = "http://localhost:8080"
-		return
 	}
 
 	fmt.Println(cf.DefaultAddr)
