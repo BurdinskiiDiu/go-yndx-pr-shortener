@@ -7,8 +7,7 @@ import (
 )
 
 func main() {
-	conf := &config.Config{}
-	config.ParseFlags(conf)
+	conf := config.GetConfig()
 	uS := store.NewURLStorage()
 	rt := server.NewServer(uS, *conf)
 	rt.Run()
