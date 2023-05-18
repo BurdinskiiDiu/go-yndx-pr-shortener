@@ -6,15 +6,19 @@ import (
 	"strconv"
 
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/cmd/config"
-	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/cmd/store"
 )
 
 type Router struct {
 	*http.ServeMux
-	uS store.URLStore
+	uS URLStore
 }
 
-func PostLongURL(uS store.URLStore, cf config.Config) http.HandlerFunc {
+type URLStore interface {
+	CreateShortURL(string) (string, error)
+	GetLongURL(string) (string, error)
+}
+
+func PostLongURL(uS URLStore, cf config.Config) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodPost {
 			defer r.Body.Close()
@@ -43,7 +47,7 @@ func PostLongURL(uS store.URLStore, cf config.Config) http.HandlerFunc {
 	})
 }
 
-func GetLongURL(uS store.URLStore) http.HandlerFunc {
+func GetLongURL(uS URLStore) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodGet {
 			srtURL := r.URL.Path
@@ -55,7 +59,7 @@ func GetLongURL(uS store.URLStore) http.HandlerFunc {
 			}
 			w.Header().Set("Location", lngURL)
 			w.WriteHeader(http.StatusTemporaryRedirect)
-			w.Write([]byte("Location: " + lngURL))
+			//w.Write([]byte("Location: " + lngURL))
 		} else {
 			http.Error(w, "bad method", http.StatusBadRequest)
 			return

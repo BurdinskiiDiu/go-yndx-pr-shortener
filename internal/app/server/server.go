@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/cmd/config"
-	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/cmd/store"
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/app/handler"
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/chi/v5"
@@ -18,7 +17,7 @@ type Server struct {
 	conf config.Config
 }
 
-func NewServer(uS store.URLStore, conf config.Config) *Server {
+func NewServer(uS handler.URLStore, conf config.Config) *Server {
 	return &Server{
 		rt:   NewRouter(uS, conf),
 		conf: conf,
@@ -48,7 +47,7 @@ func ValidConfig(cf *config.Config) config.Config {
 	return *cf
 }
 
-func NewRouter(uS store.URLStore, conf config.Config) chi.Router {
+func NewRouter(uS handler.URLStore, conf config.Config) chi.Router {
 	conf = ValidConfig(&conf)
 	rt := chi.NewRouter()
 	rt.Use(middleware.Timeout(10 * time.Second))
