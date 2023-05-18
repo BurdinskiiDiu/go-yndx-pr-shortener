@@ -35,6 +35,7 @@ func TestURLShortenerRequest(t *testing.T) {
 	}
 
 	for i, tc := range testCases {
+		i, tc := i, tc
 		t.Run(tc.method, func(t *testing.T) {
 			r := httptest.NewRequest(tc.method, tc.target, strings.NewReader(tc.testURL))
 			w := httptest.NewRecorder()
