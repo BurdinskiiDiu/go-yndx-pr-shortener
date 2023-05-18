@@ -10,12 +10,6 @@ import (
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/cmd/config"
 )
 
-/*
-type Router struct {
-	*http.ServeMux
-	uS URLStore
-}*/
-
 type URLStore interface {
 	PostShortURL(string, string) bool
 	GetLongURL(string) (string, error)
@@ -47,22 +41,17 @@ func PostLongURL(uS URLStore, cf config.Config) http.HandlerFunc {
 		longURL := string(content)
 		var shrtURL string
 
-		//shrtURL, err := uS.CreateShortURL(string(content))
 		done := false
 		for !done {
 			shrtURL = shorting()
 			done = uS.PostShortURL(shrtURL, longURL)
 		}
-		/*
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}*/
+
 		bodyResp := cf.BaseAddr + "/" + shrtURL
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-		w.Header().Set("Content-Length", strconv.Itoa(len( /*cf.BaseAddr+"/"+shrtURL*/ bodyResp)))
+		w.Header().Set("Content-Length", strconv.Itoa(len(bodyResp)))
 		w.WriteHeader(http.StatusCreated)
-		w.Write([]byte( /*cf.BaseAddr + "/" + shrtURL*/ bodyResp))
+		w.Write([]byte(bodyResp))
 	})
 }
 
@@ -81,6 +70,5 @@ func GetLongURL(uS URLStore) http.HandlerFunc {
 		}
 		w.Header().Set("Location", lngURL)
 		w.WriteHeader(http.StatusTemporaryRedirect)
-		//w.Write([]byte("Location: " + lngURL))
 	})
 }

@@ -39,7 +39,6 @@ func TestURLShortenerRequest(t *testing.T) {
 		t.Run(tc.method, func(t *testing.T) {
 			r := httptest.NewRequest(tc.method, tc.target, strings.NewReader(tc.testURL))
 			w := httptest.NewRecorder()
-			//rt := NewRouter(uS)
 			h := http.HandlerFunc(tc.fun)
 			h(w, r)
 
