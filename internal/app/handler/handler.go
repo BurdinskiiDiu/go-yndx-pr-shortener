@@ -41,7 +41,7 @@ func PostLongURL(uS URLStore, cf config.Config) http.HandlerFunc {
 		defer r.Body.Close()
 		content, err := io.ReadAll(r.Body)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		longURL := string(content)
@@ -58,12 +58,11 @@ func PostLongURL(uS URLStore, cf config.Config) http.HandlerFunc {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}*/
-
+		bodyResp := cf.BaseAddr + "/" + shrtURL
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-		w.Header().Set("Content-Length", strconv.Itoa(len(cf.BaseAddr+"/"+shrtURL)))
+		w.Header().Set("Content-Length", strconv.Itoa(len( /*cf.BaseAddr+"/"+shrtURL*/ bodyResp)))
 		w.WriteHeader(http.StatusCreated)
-		w.Write([]byte(cf.BaseAddr + "/" + shrtURL))
-
+		w.Write([]byte( /*cf.BaseAddr + "/" + shrtURL*/ bodyResp))
 	})
 }
 
@@ -77,7 +76,7 @@ func GetLongURL(uS URLStore) http.HandlerFunc {
 		srtURL = srtURL[1:]
 		lngURL, err := uS.GetLongURL(srtURL)
 		if err != nil {
-			log.Fatal(w, err.Error(), http.StatusBadRequest)
+			log.Fatal(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		w.Header().Set("Location", lngURL)
