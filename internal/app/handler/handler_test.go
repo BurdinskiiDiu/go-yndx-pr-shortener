@@ -16,8 +16,8 @@ import (
 func TestURLShortenerRequest(t *testing.T) {
 	uS := store.NewURLStorage()
 	conf := config.Config{
-		DefaultAddr: ":8080",
-		BaseAddr:    "http://localhost:8080/",
+		ServAddr: ":8080",
+		BaseAddr: "http://localhost:8080/",
 	}
 	testCases := []struct {
 		name                string

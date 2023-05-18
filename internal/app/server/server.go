@@ -31,5 +31,5 @@ func NewRouter(uS store.URLStore, conf config.Config) chi.Router {
 	return rt
 }
 func (sr *Server) Run() {
-	http.ListenAndServe(sr.conf.DefaultAddr, sr.rt)
+	http.ListenAndServe(sr.conf.ServAddr, sr.rt)
 }
