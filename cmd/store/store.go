@@ -13,12 +13,13 @@ type URLStore interface {
 
 type URLStorage struct {
 	urlStr map[string]string
-	sync.Mutex
+	mutex  sync.Mutex
 }
 
 func NewURLStorage() *URLStorage {
 	return &URLStorage{
 		urlStr: make(map[string]string),
+		mutex:  *new(sync.Mutex),
 	}
 }
 
@@ -33,8 +34,8 @@ func shorting() string {
 }
 
 func (uS *URLStorage) CreateShortURL(url string) (string, error) {
-	uS.Lock()
-	defer uS.Unlock()
+	uS.mutex.Lock()
+	defer uS.mutex.Unlock()
 
 	if url == "" {
 		return "", errors.New("empty url")
@@ -52,6 +53,8 @@ func (uS *URLStorage) CreateShortURL(url string) (string, error) {
 }
 
 func (uS *URLStorage) GetLongURL(shrtURL string) (string, error) {
+	uS.mutex.Lock()
+	defer uS.mutex.Unlock()
 	lngURL, ok := uS.urlStr[shrtURL]
 	if !ok {
 		return "", errors.New("wrong short url")
