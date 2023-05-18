@@ -1,7 +1,9 @@
 package server
 
 import (
+	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/cmd/config"
@@ -23,7 +25,31 @@ func NewServer(uS store.URLStore, conf config.Config) *Server {
 	}
 }
 
+func ValidConfig(cf *config.Config) config.Config {
+	da := strings.Split(cf.ServAddr, ":")
+	if len(da) == 2 {
+		cf.ServAddr = ":" + da[1]
+	} else if len(da) == 3 {
+		cf.ServAddr = ":" + da[2]
+	} else {
+		log.Printf("Need address in a form host:port")
+		cf.ServAddr = ":8080"
+	}
+
+	ba := strings.Split(cf.BaseAddr, ":")
+	if len(ba) == 2 {
+		cf.BaseAddr = ba[0] + cf.ServAddr
+	} else if len(ba) == 3 {
+		cf.BaseAddr = ba[0] + ":" + ba[1] + cf.ServAddr
+	} else {
+		log.Printf("Need address in a form host:port")
+		cf.BaseAddr = "http://localhost:8080"
+	}
+	return *cf
+}
+
 func NewRouter(uS store.URLStore, conf config.Config) chi.Router {
+	conf = ValidConfig(&conf)
 	rt := chi.NewRouter()
 	rt.Use(middleware.Timeout(10 * time.Second))
 	rt.Post("/", handler.PostLongURL(uS, conf))
