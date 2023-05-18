@@ -65,7 +65,6 @@ func (uS *URLStorage) GetLongURL(shrtURL string) (string, error) {
 	lngURL, ok := uS.urlStr[shrtURL]
 	if !ok {
 		return "", errors.New("wrong short url")
-	} else {
-		return lngURL, nil
 	}
+	return lngURL, nil
 }

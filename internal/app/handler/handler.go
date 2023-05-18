@@ -9,10 +9,11 @@ import (
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/cmd/config"
 )
 
+/*
 type Router struct {
 	*http.ServeMux
 	uS URLStore
-}
+}*/
 
 type URLStore interface {
 	PostShortURL(string, string) bool
