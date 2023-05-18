@@ -2,6 +2,7 @@ package handler
 
 import (
 	"io"
+	"math/rand"
 	"net/http"
 	"strconv"
 
@@ -14,8 +15,18 @@ type Router struct {
 }
 
 type URLStore interface {
-	CreateShortURL(string) (string, error)
+	PostShortURL(string, string) bool
 	GetLongURL(string) (string, error)
+}
+
+const letterBytes = "abcdifghijklmnopqrstuvwxyzABCDIFGHIJKLMNOPQRSTUVWXYZ"
+
+func shorting() string {
+	b := make([]byte, 8)
+	for i := range b {
+		b[i] = letterBytes[rand.Intn(len(letterBytes))]
+	}
+	return string(b)
 }
 
 func PostLongURL(uS URLStore, cf config.Config) http.HandlerFunc {
@@ -28,12 +39,20 @@ func PostLongURL(uS URLStore, cf config.Config) http.HandlerFunc {
 				http.Error(w, err.Error(), http.StatusBadRequest)
 				return
 			}
+			longURL := string(content)
+			var shrtURL string
 
-			shrtURL, err := uS.CreateShortURL(string(content))
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
+			//shrtURL, err := uS.CreateShortURL(string(content))
+			done := false
+			for !done {
+				shrtURL = shorting()
+				done = uS.PostShortURL(shrtURL, longURL)
 			}
+			/*
+				if err != nil {
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+					return
+				}*/
 
 			w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 
