@@ -43,22 +43,21 @@ func TestURLShortenerRequest(t *testing.T) {
 			h(w, r)
 
 			result := w.Result()
-
 			assert.Equal(t, tc.expectedCode, result.StatusCode)
-			if i == 0 {
-				getBody, err := io.ReadAll(result.Body)
-				require.NoError(t, err)
-				require.NotEqual(t, "", string(getBody), "empty short url")
-				words := strings.Split(string(getBody), "/")
-				testCases[0].shortURL = words[len(words)-1]
-				err = result.Body.Close()
-				require.NoError(t, err)
-				testCases[1].shortURL = testCases[0].shortURL
-				testCases[1].target = "/" + testCases[1].shortURL
-			} else {
+			if i != 0 {
 				t.Logf("short url for get request test is: " + testCases[0].shortURL)
 				require.Equal(t, tc.testURL, result.Header.Get("Location"))
+				return
 			}
+			getBody, err := io.ReadAll(result.Body)
+			require.NoError(t, err)
+			require.NotEqual(t, "", string(getBody), "empty short url")
+			words := strings.Split(string(getBody), "/")
+			testCases[0].shortURL = words[len(words)-1]
+			err = result.Body.Close()
+			require.NoError(t, err)
+			testCases[1].shortURL = testCases[0].shortURL
+			testCases[1].target = "/" + testCases[1].shortURL
 		})
 	}
 }
