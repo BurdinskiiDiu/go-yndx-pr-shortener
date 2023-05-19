@@ -27,10 +27,10 @@ func shorting() string {
 
 func PostLongURL(uS URLStore, cf config.Config) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost {
+		/*if r.Method != http.MethodPost {
 			http.Error(w, "bad method", http.StatusBadRequest)
 			return
-		}
+		}*/
 
 		defer r.Body.Close()
 		content, err := io.ReadAll(r.Body)
@@ -63,10 +63,10 @@ func PostLongURL(uS URLStore, cf config.Config) http.HandlerFunc {
 
 func GetLongURL(uS URLStore, srtURL string) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodGet {
+		/*if r.Method != http.MethodGet {
 			http.Error(w, "bad method", http.StatusBadRequest)
 			return
-		}
+		}*/
 		//correct part to get {id} from Urlpath, using standart lib
 		//srtURL := r.URL.Path
 		//srtURL = srtURL[1:]
