@@ -42,7 +42,7 @@ func PostLongURL(uS URLStore, cf config.Config) http.HandlerFunc {
 		}
 		longURL := string(content)
 		var shrtURL string
-		var done bool = true
+		done := true
 		errPSU := errors.New("init")
 		for done != false {
 			shrtURL = shorting()
@@ -51,9 +51,7 @@ func PostLongURL(uS URLStore, cf config.Config) http.HandlerFunc {
 				done = false
 			}
 		}
-		if errPSU.Error() != "" {
-			log.Printf(errPSU.Error())
-		}
+		log.Printf(errPSU.Error())
 
 		bodyResp := cf.BaseAddr + "/" + shrtURL
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
