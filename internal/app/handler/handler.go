@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"io"
 	"log"
 	"math/rand"
@@ -11,7 +12,7 @@ import (
 )
 
 type URLStore interface {
-	PostShortURL(string, string) bool
+	PostShortURL(string, string) error
 	GetLongURL(string) (string, error)
 }
 
@@ -41,10 +42,10 @@ func PostLongURL(uS URLStore, cf config.Config) http.HandlerFunc {
 		longURL := string(content)
 		var shrtURL string
 
-		done := false
-		for !done {
+		errPSU := errors.New("init")
+		for errPSU != nil {
 			shrtURL = shorting()
-			done = uS.PostShortURL(shrtURL, longURL)
+			errPSU = uS.PostShortURL(shrtURL, longURL)
 		}
 
 		bodyResp := cf.BaseAddr + "/" + shrtURL

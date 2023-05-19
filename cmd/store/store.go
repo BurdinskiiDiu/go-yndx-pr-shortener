@@ -17,15 +17,16 @@ func NewURLStorage() *URLStorage {
 	}
 }
 
-func (uS *URLStorage) PostShortURL(shortURL, longURL string) bool {
+func (uS *URLStorage) PostShortURL(shortURL, longURL string) error {
 	uS.mutex.Lock()
 	defer uS.mutex.Unlock()
 	_, ok := uS.urlStr[shortURL]
-	if !ok && shortURL != "" {
-		uS.urlStr[shortURL] = longURL
-		return true
+	if ok {
+		return errors.New("this short url is already involved")
 	}
-	return false
+	uS.urlStr[shortURL] = longURL
+	return nil
+
 }
 
 func (uS *URLStorage) GetLongURL(shrtURL string) (string, error) {
