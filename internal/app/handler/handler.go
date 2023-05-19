@@ -48,7 +48,7 @@ func PostLongURL(uS URLStore, cf config.Config) http.HandlerFunc {
 			shrtURL = shorting()
 			errPSU = uS.PostShortURL(shrtURL, longURL)
 		}
-		if errPSU != nil {
+		if errPSU.Error() != "" {
 			log.Printf(errPSU.Error())
 		}
 
