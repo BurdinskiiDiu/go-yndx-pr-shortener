@@ -8,7 +8,6 @@ import (
 	"strconv"
 
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/cmd/config"
-	"github.com/go-chi/chi"
 )
 
 type URLStore interface {
@@ -47,8 +46,9 @@ func PostLongURL(uS URLStore, cf config.Config) http.HandlerFunc {
 			shrtURL = shorting()
 			done, errPSU = uS.PostShortURL(shrtURL, longURL)
 		}
+
 		if errPSU != nil {
-			log.Printf(errPSU.Error())
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 		bodyResp := cf.BaseAddr + "/" + shrtURL
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
@@ -64,9 +64,9 @@ func GetLongURL(uS URLStore) http.HandlerFunc {
 			http.Error(w, "bad method", http.StatusBadRequest)
 			return
 		}
-		//srtURL := r.URL.Path
-		srtURL := chi.URLParam(r, "id")
-		//srtURL = srtURL[1:]
+		srtURL := r.URL.Path
+		//srtURL := chi.URLParam(r, "id")
+		srtURL = srtURL[1:]
 		lngURL, err := uS.GetLongURL(srtURL)
 		if err != nil {
 			log.Fatal(err.Error())
