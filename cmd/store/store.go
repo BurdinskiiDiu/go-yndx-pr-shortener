@@ -7,13 +7,13 @@ import (
 
 type URLStorage struct {
 	urlStr map[string]string
-	mutex  sync.Mutex
+	mutex  *sync.Mutex
 }
 
 func NewURLStorage() *URLStorage {
 	return &URLStorage{
 		urlStr: make(map[string]string),
-		mutex:  *new(sync.Mutex),
+		mutex:  new(sync.Mutex),
 	}
 }
 

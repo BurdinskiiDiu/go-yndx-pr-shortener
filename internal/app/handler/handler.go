@@ -61,15 +61,15 @@ func PostLongURL(uS URLStore, cf config.Config) http.HandlerFunc {
 	})
 }
 
-func GetLongURL(uS URLStore) http.HandlerFunc {
+func GetLongURL(uS URLStore, srtURL string) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
 			http.Error(w, "bad method", http.StatusBadRequest)
 			return
 		}
-		srtURL := r.URL.Path
+		//srtURL := r.URL.Path
 		//srtURL := chi.URLParam(r, "id")
-		srtURL = srtURL[1:]
+		//srtURL = srtURL[1:]
 		lngURL, err := uS.GetLongURL(srtURL)
 		if err != nil {
 			log.Fatal(err.Error())

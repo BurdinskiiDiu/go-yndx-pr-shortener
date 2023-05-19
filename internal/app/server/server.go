@@ -78,7 +78,11 @@ func NewRouter(uS handler.URLStore, conf config.Config) chi.Router {
 	rt := chi.NewRouter()
 	rt.Use(middleware.Timeout(10 * time.Second))
 	rt.Post("/", handler.PostLongURL(uS, conf))
-	rt.Get("/{id}", handler.GetLongURL(uS))
+	rt.Get("/{id}", func(w http.ResponseWriter, r *http.Request) {
+		id := chi.URLParam(r, "id")
+		handler.GetLongURL(uS, id)
+	})
+	//rt.Get("/{id}", handler.GetLongURL(uS))
 	return rt
 }
 func (sr *Server) Run() {
