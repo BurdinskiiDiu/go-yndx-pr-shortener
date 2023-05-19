@@ -80,7 +80,7 @@ func NewRouter(uS handler.URLStore, conf config.Config) chi.Router {
 	rt.Post("/", handler.PostLongURL(uS, conf))
 	rt.Get("/{id}", func(w http.ResponseWriter, r *http.Request) {
 		id := chi.URLParam(r, "id")
-		handler.GetLongURL(uS, id)
+		handler.GetLongURL(uS, id).ServeHTTP(w, r)
 	})
 	//rt.Get("/{id}", handler.GetLongURL(uS))
 	return rt
