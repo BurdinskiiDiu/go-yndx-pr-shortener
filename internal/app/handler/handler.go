@@ -58,9 +58,6 @@ func PostLongURL(uS URLStore, cf config.Config) http.HandlerFunc {
 
 func GetLongURL(uS URLStore, srtURL string) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		//correct part to get {id} from Urlpath, using standart lib
-		//srtURL := r.URL.Path
-		//srtURL = srtURL[1:]
 		lngURL, err := uS.GetLongURL(srtURL)
 		if err != nil {
 			log.Fatal(err.Error())
@@ -68,6 +65,5 @@ func GetLongURL(uS URLStore, srtURL string) http.HandlerFunc {
 		}
 		w.Header().Set("Location", lngURL)
 		w.WriteHeader(http.StatusTemporaryRedirect)
-
 	})
 }
