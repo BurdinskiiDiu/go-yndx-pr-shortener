@@ -67,8 +67,8 @@ func GetLongURL(uS URLStore, srtURL string) http.HandlerFunc {
 			http.Error(w, "bad method", http.StatusBadRequest)
 			return
 		}
+		//correct part to get {id} from Urlpath, using standart lib
 		//srtURL := r.URL.Path
-		//srtURL := chi.URLParam(r, "id")
 		//srtURL = srtURL[1:]
 		lngURL, err := uS.GetLongURL(srtURL)
 		if err != nil {

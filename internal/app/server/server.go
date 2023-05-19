@@ -56,23 +56,6 @@ type CompleRespWriter struct {
 	chiData *ChiData
 }
 
-/*
-func GettingIdByChi(next http.Handler) http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		shrtURLId := &ChiData{
-			shrtURLId: "",
-		}
-		cRW := CompleRespWriter{
-			ResponseWriter: w,
-			chiData:        shrtURLId,
-		}
-
-		cRW.chiData.shrtURLId = chi.URLParam(r, "id")
-		next.ServeHTTP(&cRW, r)
-
-	})
-}*/
-
 func NewRouter(uS handler.URLStore, conf config.Config) chi.Router {
 	conf = ValidConfig(&conf)
 	rt := chi.NewRouter()
@@ -82,7 +65,6 @@ func NewRouter(uS handler.URLStore, conf config.Config) chi.Router {
 		id := chi.URLParam(r, "id")
 		handler.GetLongURL(uS, id).ServeHTTP(w, r)
 	})
-	//rt.Get("/{id}", handler.GetLongURL(uS))
 	return rt
 }
 func (sr *Server) Run() {
