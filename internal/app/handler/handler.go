@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"errors"
 	"io"
 	"log"
 	"math/rand"
@@ -13,7 +12,7 @@ import (
 )
 
 type URLStore interface {
-	PostShortURL(string, string) error
+	PostShortURL(string, string) (bool, error)
 	GetLongURL(string) (string, error)
 }
 
@@ -42,17 +41,15 @@ func PostLongURL(uS URLStore, cf config.Config) http.HandlerFunc {
 		}
 		longURL := string(content)
 		var shrtURL string
-		done := true
-		errPSU := errors.New("init")
-		for done != false {
+		var done bool
+		var errPSU error
+		for !done {
 			shrtURL = shorting()
-			errPSU = uS.PostShortURL(shrtURL, longURL)
-			if errPSU == nil {
-				done = false
-			}
+			done, errPSU = uS.PostShortURL(shrtURL, longURL)
 		}
-		log.Printf(errPSU.Error())
-
+		if errPSU != nil {
+			log.Printf(errPSU.Error())
+		}
 		bodyResp := cf.BaseAddr + "/" + shrtURL
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		w.Header().Set("Content-Length", strconv.Itoa(len(bodyResp)))
@@ -69,7 +66,7 @@ func GetLongURL(uS URLStore) http.HandlerFunc {
 		}
 		//srtURL := r.URL.Path
 		srtURL := chi.URLParam(r, "id")
-		srtURL = srtURL[1:]
+		//srtURL = srtURL[1:]
 		lngURL, err := uS.GetLongURL(srtURL)
 		if err != nil {
 			log.Fatal(err.Error())
