@@ -15,7 +15,7 @@ import (
 
 func TestURLShortenerRequest(t *testing.T) {
 	uS := store.NewURLStorage()
-	uS.UrlStr["abcdefj"] = "http://yandex.practicum.com"
+	uS.URLStr["abcdefj"] = "http://yandex.practicum.com"
 	conf := config.Config{
 		ServAddr: ":8080",
 		BaseAddr: "http://localhost:8080/",
