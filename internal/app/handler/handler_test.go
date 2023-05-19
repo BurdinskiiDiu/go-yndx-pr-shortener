@@ -15,6 +15,7 @@ import (
 
 func TestURLShortenerRequest(t *testing.T) {
 	uS := store.NewURLStorage()
+	uS.UrlStr["abcdefj"] = "http://yandex.practicum.com"
 	conf := config.Config{
 		ServAddr: ":8080",
 		BaseAddr: "http://localhost:8080/",
@@ -31,7 +32,7 @@ func TestURLShortenerRequest(t *testing.T) {
 		shortURL            string
 	}{
 		{method: http.MethodPost, fun: PostLongURL(uS, conf), expectedCode: http.StatusCreated, target: "/", expectedBody: "", testURL: "http://yandex.practicum.com"},
-		{method: http.MethodGet, fun: GetLongURL(uS), expectedCode: http.StatusTemporaryRedirect, expectedBody: "", testURL: "http://yandex.practicum.com"},
+		{method: http.MethodGet, fun: GetLongURL(uS, "abcdefj"), expectedCode: http.StatusTemporaryRedirect, expectedBody: "", testURL: "http://yandex.practicum.com"},
 	}
 
 	for i, tc := range testCases {

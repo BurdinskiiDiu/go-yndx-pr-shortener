@@ -6,13 +6,13 @@ import (
 )
 
 type URLStorage struct {
-	urlStr map[string]string
+	UrlStr map[string]string
 	mutex  *sync.Mutex
 }
 
 func NewURLStorage() *URLStorage {
 	return &URLStorage{
-		urlStr: make(map[string]string),
+		UrlStr: make(map[string]string),
 		mutex:  new(sync.Mutex),
 	}
 }
@@ -20,11 +20,11 @@ func NewURLStorage() *URLStorage {
 func (uS *URLStorage) PostShortURL(shortURL, longURL string) error {
 	uS.mutex.Lock()
 	defer uS.mutex.Unlock()
-	_, ok := uS.urlStr[shortURL]
+	_, ok := uS.UrlStr[shortURL]
 	if ok {
 		return errors.New("this short url is already involved")
 	}
-	uS.urlStr[shortURL] = longURL
+	uS.UrlStr[shortURL] = longURL
 	return nil
 
 }
@@ -32,7 +32,7 @@ func (uS *URLStorage) PostShortURL(shortURL, longURL string) error {
 func (uS *URLStorage) GetLongURL(shrtURL string) (string, error) {
 	uS.mutex.Lock()
 	defer uS.mutex.Unlock()
-	lngURL, ok := uS.urlStr[shrtURL]
+	lngURL, ok := uS.UrlStr[shrtURL]
 	if !ok {
 		return "", errors.New("wrong short url")
 	}
