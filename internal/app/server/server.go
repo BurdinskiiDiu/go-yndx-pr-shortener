@@ -47,6 +47,32 @@ func ValidConfig(cf *config.Config) config.Config {
 	return *cf
 }
 
+type ChiData struct {
+	shrtURLId string
+}
+
+type CompleRespWriter struct {
+	http.ResponseWriter
+	chiData *ChiData
+}
+
+/*
+func GettingIdByChi(next http.Handler) http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		shrtURLId := &ChiData{
+			shrtURLId: "",
+		}
+		cRW := CompleRespWriter{
+			ResponseWriter: w,
+			chiData:        shrtURLId,
+		}
+
+		cRW.chiData.shrtURLId = chi.URLParam(r, "id")
+		next.ServeHTTP(&cRW, r)
+
+	})
+}*/
+
 func NewRouter(uS handler.URLStore, conf config.Config) chi.Router {
 	conf = ValidConfig(&conf)
 	rt := chi.NewRouter()
