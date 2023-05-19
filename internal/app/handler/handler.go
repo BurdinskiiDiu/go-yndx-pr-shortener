@@ -11,7 +11,7 @@ import (
 )
 
 type URLStore interface {
-	PostShortURL(string, string) (bool, error)
+	PostShortURL(string, string) error
 	GetLongURL(string) (string, error)
 }
 
@@ -40,13 +40,16 @@ func PostLongURL(uS URLStore, cf config.Config) http.HandlerFunc {
 		}
 		longURL := string(content)
 		var shrtURL string
-		var done bool
+		cntr := 0
 		var errPSU error
-		for !done {
+		for cntr < 100 {
 			shrtURL = shorting()
-			done, errPSU = uS.PostShortURL(shrtURL, longURL)
+			if errPSU = uS.PostShortURL(shrtURL, longURL); errPSU != nil {
+				cntr++
+				continue
+			}
+			break
 		}
-
 		if errPSU != nil {
 			http.Error(w, errPSU.Error(), http.StatusInternalServerError)
 		}
