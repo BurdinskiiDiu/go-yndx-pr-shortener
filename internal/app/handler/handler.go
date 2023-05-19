@@ -51,7 +51,7 @@ func PostLongURL(uS URLStore, cf config.Config) http.HandlerFunc {
 			break
 		}
 		if errPSU != nil {
-			http.Error(w, errPSU.Error(), http.StatusInternalServerError)
+			log.Println(errPSU.Error())
 		}
 		bodyResp := cf.BaseAddr + "/" + shrtURL
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
