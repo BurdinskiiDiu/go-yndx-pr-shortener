@@ -86,7 +86,8 @@ func TestGetlongURLRequest(t *testing.T) {
 			assert.Equal(t, tc.expectedCode, result.StatusCode)
 			t.Logf("short url for get request test is: " + tc.shortURL)
 			require.Equal(t, tc.testURL, result.Header.Get("Location"))
-			return
+			err := result.Body.Close()
+			require.NoError(t, err)
 		})
 	}
 
