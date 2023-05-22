@@ -12,7 +12,7 @@ import (
 
 var Log *zap.Logger = zap.NewNop()
 
-func InitLog(conf *config.Config, log *zap.Logger) error {
+func InitLog(conf *config.Config) error {
 	lvl, err := zap.ParseAtomicLevel(conf.LogLevel)
 	if err != nil {
 		return errors.New("parse logger level err")
@@ -26,7 +26,7 @@ func InitLog(conf *config.Config, log *zap.Logger) error {
 		return errors.New("builging new zap logger error")
 	}
 
-	log = zapLogger
+	Log = zapLogger
 	return nil
 }
 
