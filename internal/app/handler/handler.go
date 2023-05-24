@@ -104,8 +104,12 @@ func PostURLApi(uS URLStore, cf config.Config) http.HandlerFunc {
 		var urlResp URLResp
 		urlResp.Result = cf.BaseAddr + "/" + shrtURL
 		resp, err := json.MarshalIndent(urlResp.Result, "", "   ")
+		if err != nil {
+			logger.Log.Error(err.Error())
+			return
+		}
 		w.Header().Set("Content-Type", "application/json")
-		//w.Header().Set("Content-Length", string(resp))
+		w.Header().Set("Content-Length", string(resp))
 		w.WriteHeader(http.StatusCreated)
 		w.Write(resp)
 	})
