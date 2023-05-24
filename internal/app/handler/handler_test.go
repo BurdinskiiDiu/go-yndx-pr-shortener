@@ -2,6 +2,7 @@ package handler
 
 import (
 	"io"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -91,4 +92,47 @@ func TestGetlongURLRequest(t *testing.T) {
 		})
 	}
 
+}
+
+func TestPostlongURLRequestApi(t *testing.T) {
+	uS := store.NewURLStorage()
+	uS.URLStr["abcdefj"] = "http://yandex.practicum.com"
+	conf := config.Config{
+		ServAddr: ":8080",
+		BaseAddr: "http://localhost:8080/",
+	}
+	testCase := []struct {
+		name                string
+		method              string
+		fun                 http.HandlerFunc
+		expectedCode        int
+		target              string
+		expectedBody        string
+		expectedContentType string
+		testURL             string
+		shortURL            string
+	}{
+		{method: http.MethodPost, fun: PostURLApi(uS, conf), expectedCode: http.StatusCreated, target: "/api/shorten", expectedBody: "", testURL: "{\"url\":\"https://practicum.yandex.ru\"}"},
+	}
+
+	for i, tc := range testCase {
+		_, tc := i, tc
+		t.Run(tc.method, func(t *testing.T) {
+			r := httptest.NewRequest(tc.method, tc.target, strings.NewReader(tc.testURL))
+			w := httptest.NewRecorder()
+			h := http.HandlerFunc(tc.fun)
+			h(w, r)
+
+			result := w.Result()
+			assert.Equal(t, tc.expectedCode, result.StatusCode)
+			log.Println(result.Body)
+			getBody, err := io.ReadAll(result.Body)
+			require.NoError(t, err)
+			require.NotEqual(t, "", string(getBody), "empty short url")
+			words := strings.Split(string(getBody), "/")
+			tc.shortURL = words[len(words)-1]
+			err = result.Body.Close()
+			require.NoError(t, err)
+		})
+	}
 }
