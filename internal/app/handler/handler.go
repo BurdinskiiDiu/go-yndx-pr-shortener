@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"bytes"
+	"encoding/json"
 	"io"
 	"log"
 	"math/rand"
@@ -8,6 +10,7 @@ import (
 	"strconv"
 
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/cmd/config"
+	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/logger"
 )
 
 type URLStore interface {
@@ -34,7 +37,7 @@ func PostLongURL(uS URLStore, cf config.Config) http.HandlerFunc {
 			return
 		}
 		longURL := string(content)
-		var shrtURL string
+		/*var shrtURL string
 		cntr := 0
 		var errPSU error
 		for cntr < 100 {
@@ -44,7 +47,8 @@ func PostLongURL(uS URLStore, cf config.Config) http.HandlerFunc {
 				continue
 			}
 			break
-		}
+		}*/
+		shrtURL, errPSU := CreateShortURL(uS, longURL)
 		if errPSU != nil {
 			log.Println(errPSU.Error())
 		}
@@ -66,4 +70,58 @@ func GetLongURL(uS URLStore, srtURL string) http.HandlerFunc {
 		w.Header().Set("Location", lngURL)
 		w.WriteHeader(http.StatusTemporaryRedirect)
 	})
+}
+
+type URLReq struct {
+	URL string `json:"url"`
+}
+
+type URLResp struct {
+	Result string `json:"result"`
+}
+
+func PostURLApi(uS URLStore, cf config.Config) http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer r.Body.Close()
+		var buf bytes.Buffer
+		_, err := buf.ReadFrom(r.Body)
+		if err != nil {
+			logger.Log.Error(err.Error())
+		}
+
+		var urlReq URLReq
+
+		if err := json.Unmarshal(buf.Bytes(), &urlReq); err != nil {
+			logger.Log.Error(err.Error())
+			return
+		}
+
+		shrtURL, err := CreateShortURL(uS, urlReq.URL)
+		if err != nil {
+			logger.Log.Error(err.Error())
+			return
+		}
+		var urlResp URLResp
+		urlResp.Result = cf.BaseAddr + "/" + shrtURL
+		resp, err := json.MarshalIndent(urlResp.Result, "", "   ")
+		w.Header().Set("Content-Type", "application/json")
+		//w.Header().Set("Content-Length", string(resp))
+		w.WriteHeader(http.StatusCreated)
+		w.Write(resp)
+	})
+}
+
+func CreateShortURL(uS URLStore, longURL string) (string, error) {
+	var shrtURL string
+	cntr := 0
+	var errPSU error
+	for cntr < 100 {
+		shrtURL = shorting()
+		if errPSU = uS.PostShortURL(shrtURL, longURL); errPSU != nil {
+			cntr++
+			continue
+		}
+		break
+	}
+	return shrtURL, errPSU
 }

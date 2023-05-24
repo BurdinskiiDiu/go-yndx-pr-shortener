@@ -68,6 +68,7 @@ func NewRouter(uS handler.URLStore, conf config.Config) chi.Router {
 		id := chi.URLParam(r, "id")
 		handler.GetLongURL(uS, id).ServeHTTP(w, r)
 	}))
+	rt.Post("/api/shorten", handler.PostURLApi(uS, conf))
 	return rt
 }
 func (sr *Server) Run() {
