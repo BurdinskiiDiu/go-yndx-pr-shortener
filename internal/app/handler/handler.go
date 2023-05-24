@@ -109,7 +109,7 @@ func PostURLApi(uS URLStore, cf config.Config) http.HandlerFunc {
 			return
 		}
 		w.Header().Set("Content-Type", "application/json")
-		w.Header().Set("Content-Length", string(resp))
+		//w.Header().Set("Content-Length", ))
 		w.WriteHeader(http.StatusCreated)
 		w.Write(resp)
 	})
