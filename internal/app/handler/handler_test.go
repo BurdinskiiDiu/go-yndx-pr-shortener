@@ -32,7 +32,7 @@ func TestURLShortenerRequest(t *testing.T) {
 		testURL             string
 		shortURL            string
 	}{
-		{method: http.MethodPost, expectedCode: http.StatusCreated, target: "/", expectedBody: "" /*testURL: "http://yandex.practicum.com"*/},
+		{method: http.MethodPost, expectedCode: http.StatusCreated, target: "/", expectedBody: ""},
 	}
 
 	for i, tc := range testCases {
@@ -78,7 +78,7 @@ func TestGetlongURLRequest(t *testing.T) {
 		testURL             string
 		shortURL            string
 	}{
-		{method: http.MethodGet, expectedCode: http.StatusTemporaryRedirect, target: "/", expectedBody: "" /*testURL: "http://yandex.practicum.com", shortURL: "abcdefj"*/},
+		{method: http.MethodGet, expectedCode: http.StatusTemporaryRedirect, target: "/", expectedBody: ""},
 	}
 
 	for i, tc := range testCase {
