@@ -77,8 +77,9 @@ func GZipMiddleware(h http.HandlerFunc) http.HandlerFunc {
 		suppGZip := strings.Contains(accptEnc, "gzip")
 		if suppGZip {
 			cw := newCompressWriter(w)
-			cw.Header().Set("Content-Encoding", "gzip")
+			//cw.Header().Set("Content-Encoding", "gzip")
 			ow = cw
+			ow.Header().Set("Content-Encoding", "gzip")
 			defer cw.Close()
 		}
 		cntntEnc := r.Header.Get("Content-Encoding")
