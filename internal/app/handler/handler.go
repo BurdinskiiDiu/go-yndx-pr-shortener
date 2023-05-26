@@ -70,6 +70,7 @@ func GetLongURL(uS URLStore, srtURL string) http.HandlerFunc {
 		}
 		w.Header().Set("Location", lngURL)
 		w.WriteHeader(http.StatusTemporaryRedirect)
+		w.Write([]byte(lngURL))
 	})
 }
 
