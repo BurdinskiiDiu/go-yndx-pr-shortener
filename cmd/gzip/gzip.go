@@ -76,16 +76,17 @@ func GZipMiddleware(h http.HandlerFunc) http.HandlerFunc {
 		suppGZip := strings.Contains(accptEnc, "gzip")
 		if suppGZip {
 			cw := newCompressWriter(w)
+			cw.w.Header().Set("Content-Encoding", "gzip")
 			ow = cw
 			defer cw.Close()
 		}
 
-		cntnEnc := r.Header.Get("Content-Encoding")
-		sendGZip := strings.Contains(cntnEnc, "gzip")
+		sendGZip := suppGZip
 		if sendGZip {
 			cr, err := newCompressReader(r.Body)
 			if err != nil {
 				logger.Log.Debug("compersReader creation err", zap.String("err", err.Error()))
+				return
 			}
 			r.Body = cr
 			defer cr.Close()
