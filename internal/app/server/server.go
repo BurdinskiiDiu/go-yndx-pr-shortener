@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/cmd/config"
-	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/cmd/gzip"
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/app/handler"
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/logger"
 	"github.com/go-chi/chi/middleware"
@@ -72,12 +71,12 @@ func NewRouter(uS handler.URLStore, conf config.Config) chi.Router {
 	logger.Log.Debug("server starting", zap.String("addr", conf.ServAddr))
 	rt := chi.NewRouter()
 	rt.Use(middleware.Timeout(10 * time.Second))
-	rt.Post("/", logger.LoggingHandler(gzip.GZipMiddleware(handler.PostLongURL(uS, conf)).ServeHTTP))
-	rt.Get("/{id}", logger.LoggingHandler(gzip.GZipMiddleware(func(w http.ResponseWriter, r *http.Request) {
+	rt.Post("/", logger.LoggingHandler( /*gzip.GZipMiddleware*/ (handler.PostLongURL(uS, conf)).ServeHTTP))
+	rt.Get("/{id}", logger.LoggingHandler( /*gzip.GZipMiddleware*/ (func(w http.ResponseWriter, r *http.Request) {
 		id := chi.URLParam(r, "id")
 		handler.GetLongURL(uS, id).ServeHTTP(w, r)
 	})))
-	rt.Post("/api/shorten", logger.LoggingHandler(gzip.GZipMiddleware(handler.PostURLApi(uS, conf))))
+	rt.Post("/api/shorten", logger.LoggingHandler( /*gzip.GZipMiddleware*/ (handler.PostURLApi(uS, conf))))
 	return rt
 }
 
