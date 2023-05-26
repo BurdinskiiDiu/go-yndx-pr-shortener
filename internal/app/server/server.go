@@ -15,14 +15,22 @@ import (
 )
 
 type Server struct {
-	rt   chi.Router
-	conf config.Config
+	rt chi.Router
+	wS *handler.WorkStruct
 }
 
+/*
 func NewServer(uS handler.URLStore, conf config.Config) *Server {
 	return &Server{
 		rt:   NewRouter(uS, conf),
 		conf: conf,
+	}
+}*/
+
+func NewServer(wS *handler.WorkStruct) *Server {
+	return &Server{
+		rt: NewRouter(wS),
+		wS: wS,
 	}
 }
 
@@ -58,6 +66,7 @@ type CompleRespWriter struct {
 	chiData *ChiData
 }
 
+/*
 func NewRouter(uS handler.URLStore, conf config.Config) chi.Router {
 	conf = ValidConfig(&conf)
 	logger.Log.Debug("server starting", zap.String("addr", conf.ServAddr))
@@ -70,7 +79,21 @@ func NewRouter(uS handler.URLStore, conf config.Config) chi.Router {
 	}))
 	rt.Post("/api/shorten", handler.PostURLApi(uS, conf))
 	return rt
+}*/
+
+func NewRouter(wS *handler.WorkStruct) chi.Router {
+	logger.Log.Debug("server starting", zap.String("addr", wS.Config.ServAddr))
+	rt := chi.NewRouter()
+	rt.Use(middleware.Timeout(10 * time.Second))
+	rt.Post("/", logger.LoggingHandler(wS.PostLongURL()).ServeHTTP)
+	rt.Get("/{id}", logger.LoggingHandler(func(w http.ResponseWriter, r *http.Request) {
+		id := chi.URLParam(r, "id")
+		wS.GetLongURL(id).ServeHTTP(w, r)
+	}))
+	rt.Post("/api/shorten", wS.PostURLApi())
+	return rt
 }
+
 func (sr *Server) Run() {
-	http.ListenAndServe(sr.conf.ServAddr, sr.rt)
+	http.ListenAndServe(sr.wS.Config.ServAddr, sr.rt)
 }
