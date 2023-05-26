@@ -40,20 +40,20 @@ type (
 		size   int
 	}
 	LoggingRespWrt struct {
-		w http.ResponseWriter
+		http.ResponseWriter
 		//RequestData  *RequestData
 		ResponseData *ResponseData
 	}
 )
 
 func (lRW *LoggingRespWrt) Write(b []byte) (int, error) {
-	size, err := lRW.w.Write(b)
+	size, err := lRW.ResponseWriter.Write(b)
 	lRW.ResponseData.size += size
 	return size, err
 }
 
 func (lRW *LoggingRespWrt) WriteHeader(stCode int) {
-	lRW.w.WriteHeader(stCode)
+	lRW.ResponseWriter.WriteHeader(stCode)
 	lRW.ResponseData.status = stCode
 }
 
@@ -67,11 +67,11 @@ func LoggingHandler(h http.HandlerFunc) http.HandlerFunc {
 		}
 
 		LgRspWrt := LoggingRespWrt{
-			w:            w,
-			ResponseData: responseData,
+			ResponseWriter: w,
+			ResponseData:   responseData,
 		}
 
-		h.ServeHTTP(LgRspWrt.w, r)
+		h.ServeHTTP(&LgRspWrt, r)
 		duration := time.Since(start)
 
 		Log.Debug("incoming request data",
