@@ -129,7 +129,7 @@ func TestPostlongURLRequestApi(t *testing.T) {
 
 	for i, tc := range testCase {
 		_, tc := i, tc
-		for k, _ := range uS.URLStr {
+		for k := range uS.URLStr {
 			tc.shortURL = k
 		}
 		t.Run(tc.method, func(t *testing.T) {
