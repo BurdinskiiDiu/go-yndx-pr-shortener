@@ -21,7 +21,7 @@ func TestURLShortenerRequest(t *testing.T) {
 		ServAddr: ":8080",
 		BaseAddr: "http://localhost:8080/",
 	}
-	wS := NewWorkStruct(uS, conf)
+	wS := NewWorkStruct(uS, &conf)
 	testCases := []struct {
 		name                string
 		method              string
@@ -67,7 +67,7 @@ func TestGetlongURLRequest(t *testing.T) {
 		ServAddr: ":8080",
 		BaseAddr: "http://localhost:8080/",
 	}
-	wS := NewWorkStruct(uS, conf)
+	wS := NewWorkStruct(uS, &conf)
 	testCase := []struct {
 		name                string
 		method              string
@@ -112,7 +112,7 @@ func TestPostlongURLRequestApi(t *testing.T) {
 		ServAddr: ":8080",
 		BaseAddr: "http://localhost:8080/",
 	}
-	wS := NewWorkStruct(uS, conf)
+	wS := NewWorkStruct(uS, &conf)
 	testCase := []struct {
 		name                string
 		method              string

@@ -25,10 +25,10 @@ type WorkStruct struct {
 	Config config.Config
 }
 
-func NewWorkStruct(st URLStore, cf config.Config) *WorkStruct {
+func NewWorkStruct(st URLStore, cf *config.Config) *WorkStruct {
 	return &WorkStruct{
 		Store:  st,
-		Config: ValidConfig(&cf),
+		Config: ValidConfig(cf),
 	}
 }
 

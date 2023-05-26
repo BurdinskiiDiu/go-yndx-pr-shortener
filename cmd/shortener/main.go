@@ -18,7 +18,7 @@ func main() {
 	}
 
 	uS := store.NewURLStorage()
-	wS := handler.NewWorkStruct(uS, *conf)
+	wS := handler.NewWorkStruct(uS, conf)
 	rt := server.NewServer(wS)
 	rt.Run()
 }
