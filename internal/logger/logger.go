@@ -27,21 +27,17 @@ func InitLog(conf *config.Config) error {
 	}
 
 	Log = zapLogger
+	defer Log.Sync()
 	return nil
 }
 
 type (
-	RequestData struct {
-		URI    string
-		method string
-	}
 	ResponseData struct {
 		status int
 		size   int
 	}
 	LoggingRespWrt struct {
 		http.ResponseWriter
-		//RequestData  *RequestData
 		ResponseData *ResponseData
 	}
 )
@@ -74,7 +70,7 @@ func LoggingHandler(h http.HandlerFunc) http.HandlerFunc {
 		h.ServeHTTP(&LgRspWrt, r)
 		duration := time.Since(start)
 
-		Log.Debug("incoming request data",
+		Log.Info("incoming request data",
 			zap.String("URl", r.RequestURI),
 			zap.String("method", r.Method),
 			zap.String("status", strconv.Itoa(responseData.status)),
