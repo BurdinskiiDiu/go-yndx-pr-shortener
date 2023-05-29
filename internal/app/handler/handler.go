@@ -38,6 +38,7 @@ func PostLongURL(uS URLStore, cf config.Config) http.HandlerFunc {
 			return
 		}
 		longURL := string(content)
+		logger.Log.Info("got post message", zap.String("body", longURL))
 		/*var shrtURL string
 		cntr := 0
 		var errPSU error
