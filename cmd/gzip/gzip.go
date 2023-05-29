@@ -97,6 +97,6 @@ func GZipMiddleware(h http.HandlerFunc) http.HandlerFunc {
 		}
 		logger.Log.Info("response", zap.String("response", r.RequestURI))
 
-		h.ServeHTTP(ow, r)
+		h(ow, r)
 	}
 }
