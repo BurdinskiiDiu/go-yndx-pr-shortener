@@ -11,19 +11,19 @@ import (
 )
 
 type compressWriter struct {
-	w  http.ResponseWriter
+	http.ResponseWriter
 	zw *gzip.Writer
 }
 
 func newCompressWriter(w http.ResponseWriter) *compressWriter {
 	return &compressWriter{
-		w:  w,
-		zw: gzip.NewWriter(w),
+		ResponseWriter: w,
+		zw:             gzip.NewWriter(w),
 	}
 }
 
 func (c *compressWriter) Header() http.Header {
-	return c.w.Header()
+	return c.ResponseWriter.Header()
 }
 
 func (c *compressWriter) Write(p []byte) (int, error) {
@@ -32,9 +32,9 @@ func (c *compressWriter) Write(p []byte) (int, error) {
 
 func (c *compressWriter) WriteHeader(statusCode int) {
 	if statusCode < 300 {
-		c.w.Header().Set("Content-Encoding", "gzip")
+		c.ResponseWriter.Header().Set("Content-Encoding", "gzip")
 	}
-	c.w.WriteHeader(statusCode)
+	c.ResponseWriter.WriteHeader(statusCode)
 }
 
 func (c *compressWriter) Close() error {
@@ -74,14 +74,16 @@ func GZipMiddleware(h http.HandlerFunc) http.HandlerFunc {
 		ow := w
 		accptEnc := r.Header.Get("Accept-Encoding")
 		suppGZip := strings.Contains(accptEnc, "gzip")
+		logger.Log.Info("acceptEnc", zap.String("accptEnc", string(accptEnc)))
 		if suppGZip {
 			cw := newCompressWriter(w)
 			//cw.Header().Set("Content-Encoding", "gzip")
 			ow = cw
-			ow.Header().Set("Content-Encoding", "gzip")
+			//ow.Header().Set("Content-Encoding", "gzip")
 			defer cw.Close()
 		}
 		cntntEnc := r.Header.Get("Content-Encoding")
+		logger.Log.Info("cntntEnc", zap.String("cntntEnc", string(cntntEnc)))
 		sendGZip := strings.Contains(cntntEnc, "gzip")
 		//sendGZip := suppGZip
 		if sendGZip {
@@ -93,6 +95,8 @@ func GZipMiddleware(h http.HandlerFunc) http.HandlerFunc {
 			r.Body = cr
 			defer cr.Close()
 		}
+		logger.Log.Info("response", zap.String("response", r.RequestURI))
+
 		h.ServeHTTP(ow, r)
 	}
 }
