@@ -13,16 +13,18 @@ import (
 )
 
 type URLStorage struct {
-	URLStr map[string]string
-	mutex  *sync.Mutex
-	uuid   int
+	URLStr  map[string]string
+	mutex   *sync.Mutex
+	uuid    int
+	fileInf *filestore.FileExst
 }
 
 func NewURLStorage() *URLStorage {
 	return &URLStorage{
-		URLStr: make(map[string]string),
-		mutex:  new(sync.Mutex),
-		uuid:   0,
+		URLStr:  make(map[string]string),
+		mutex:   new(sync.Mutex),
+		uuid:    0,
+		fileInf: new(filestore.FileExst),
 	}
 }
 
@@ -34,6 +36,7 @@ func (uS *URLStorage) PostShortURL(shortURL, longURL string) error {
 		return errors.New("this short url is already involved")
 	}
 	uS.URLStr[shortURL] = longURL
+	uS.FileFilling(shortURL, longURL)
 	return nil
 
 }
@@ -82,8 +85,39 @@ func (uS *URLStorage) GetStoreBackup(fE *filestore.FileExst) {
 		uS.URLStr[urlDataStr.ShrtURL] = urlDataStr.LngURL
 	}
 	uS.uuid, err = strconv.Atoi(urlDataStr.UUID)
+	uS.fileInf = fE
 	if err != nil {
 		logger.Log.Info("gettitng last uuid error")
 		return
 	}
+}
+
+func (uS *URLStorage) FileFilling(shrtURL, lngURL string) error {
+	if !uS.fileInf.Existed {
+		logger.Log.Info("there are no backUpFile to fill with new data")
+		return errors.New("filling filestore error")
+	}
+	file, err := os.OpenFile(uS.fileInf.FileName, os.O_WRONLY|os.O_APPEND, 0666)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	writer := bufio.NewWriter(file)
+	var raw []byte
+	urlDataStr := new(URLDataStruct)
+	uS.uuid++
+	urlDataStr.UUID = strconv.Itoa(uS.uuid)
+	urlDataStr.ShrtURL = shrtURL
+	urlDataStr.LngURL = lngURL
+	raw, err = json.Marshal(urlDataStr)
+	if err != nil {
+		return err
+	}
+	if _, err := writer.Write(raw); err != nil {
+		return err
+	}
+	if err := writer.WriteByte('\n'); err != nil {
+		return err
+	}
+	return nil
 }
