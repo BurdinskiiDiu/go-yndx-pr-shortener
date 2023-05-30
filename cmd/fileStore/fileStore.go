@@ -1,4 +1,4 @@
-package fileStore
+package filestore
 
 import (
 	"os"

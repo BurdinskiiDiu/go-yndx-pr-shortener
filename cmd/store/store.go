@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"sync"
 
-	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/cmd/fileStore"
+	filestore "github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/cmd/fileStore"
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/logger"
 )
 
@@ -56,7 +56,7 @@ type URLDataStruct struct {
 	LngURL  string `json:"original_url"`
 }
 
-func (uS *URLStorage) GetStoreBackup(fE *fileStore.FileExst) {
+func (uS *URLStorage) GetStoreBackup(fE *filestore.FileExst) {
 	if !fE.Existed {
 		logger.Log.Info("there are new empty backUpFile")
 		return
