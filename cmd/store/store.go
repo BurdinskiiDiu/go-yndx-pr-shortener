@@ -55,8 +55,6 @@ func (uS *URLStorage) GetLongURL(shrtURL string) (string, error) {
 	return lngURL, nil
 }
 
-// file implementation
-
 type URLDataStruct struct {
 	UUID    string `json:"uuid"`
 	ShrtURL string `json:"short_url"`

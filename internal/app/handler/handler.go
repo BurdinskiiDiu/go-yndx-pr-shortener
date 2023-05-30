@@ -39,17 +39,7 @@ func PostLongURL(uS URLStore, cf config.Config) http.HandlerFunc {
 		}
 		longURL := string(content)
 		logger.Log.Info("got post message", zap.String("body", longURL))
-		/*var shrtURL string
-		cntr := 0
-		var errPSU error
-		for cntr < 100 {
-			shrtURL = shorting()
-			if errPSU = uS.PostShortURL(shrtURL, longURL); errPSU != nil {
-				cntr++
-				continue
-			}
-			break
-		}*/
+
 		shrtURL, errPSU := CreateShortURL(uS, longURL)
 		if errPSU != nil {
 			log.Println(errPSU.Error())
@@ -111,20 +101,13 @@ func PostURLApi(uS URLStore, cf config.Config) http.HandlerFunc {
 		logger.Log.Info("short url", zap.String("shortURL", shrtURL))
 		var urlResp URLResp
 		urlResp.Result = cf.BaseAddr + "/" + shrtURL
-		//contLen := urlResp.Result[1:]
-		//contLen = urlResp.Result[0:len(urlResp.Result)]
-		//resp, err := json.MarshalIndent(urlResp, "", " ")
+
 		resp, err := json.Marshal(urlResp)
 		logger.Log.Info("resp for postURLApi", zap.String("resp", string(resp)))
 		if err != nil {
 			logger.Log.Error(err.Error())
 			return
-		} /*
-			respString := string(resp)
-			respString = respString[1:]
-			respString = respString[:len(respString)-1]
-			fmt.Println(string(resp))
-			fmt.Println(string(respString))*/
+		}
 		logger.Log.Info("response for postApi request", zap.String("response", string(resp)))
 		w.Header().Set("Content-Type", "application/json")
 		w.Header().Set("Content-Length", strconv.Itoa(len(string(resp))))

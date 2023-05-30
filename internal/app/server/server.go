@@ -27,14 +27,6 @@ func NewServer(uS handler.URLStore, conf config.Config) *Server {
 	}
 }
 
-/*
-func NewServer(wS *handler.WorkStruct) *Server {
-	return &Server{
-		rt: NewRouter(wS),
-		wS: wS,
-	}
-}*/
-
 func ValidConfig(cf *config.Config) config.Config {
 	da := strings.Split(cf.ServAddr, ":")
 	if len(da) == 2 {
@@ -81,21 +73,6 @@ func NewRouter(uS handler.URLStore, conf config.Config) chi.Router {
 	rt.Post("/api/shorten", logger.LoggingHandler(gzip.GZipMiddleware(handler.PostURLApi(uS, conf).ServeHTTP)))
 	return rt
 }
-
-/*
-func NewRouter(wS *handler.WorkStruct) chi.Router {
-	logger.Log.Debug("server starting", zap.String("addr", wS.Config.ServAddr))
-	rt := chi.NewRouter()
-	rt.Use(middleware.Timeout(10 * time.Second))
-	rt.Post("/", logger.LoggingHandler /*gzip.GZipMiddleware*/ /*(wS.PostLongURL()).ServeHTTP)
-rt.Get("/{id}" /*gzip.GZipMiddleware,*/ /*logger.LoggingHandler(func(w http.ResponseWriter, r *http.Request) {
-	id := chi.URLParam(r, "id")
-	logger.Log.Debug("short url is", zap.String("url", id))
-	wS.GetLongURL(id)
-}).ServeHTTP)
-rt.Post("/api/shorten", logger.LoggingHandler /*gzip.GZipMiddleware*/ /*(wS.PostURLApi()))
-	return rt
-}*/
 
 func (sr *Server) Run() {
 	http.ListenAndServe(sr.conf.ServAddr, sr.rt)
