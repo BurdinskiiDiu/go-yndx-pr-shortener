@@ -10,6 +10,7 @@ import (
 
 	filestore "github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/cmd/fileStore"
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/logger"
+	"go.uber.org/zap"
 )
 
 type URLStorage struct {
@@ -36,9 +37,12 @@ func (uS *URLStorage) PostShortURL(shortURL, longURL string) error {
 		return errors.New("this short url is already involved")
 	}
 	uS.URLStr[shortURL] = longURL
-	uS.FileFilling(shortURL, longURL)
+	logger.Log.Info("storefile addr from post req", zap.String("path", uS.fileInf.FileName))
+	err := uS.FileFilling(shortURL, longURL)
+	if err != nil {
+		logger.Log.Info("file filling error")
+	}
 	return nil
-
 }
 
 func (uS *URLStorage) GetLongURL(shrtURL string) (string, error) {
@@ -60,12 +64,14 @@ type URLDataStruct struct {
 }
 
 func (uS *URLStorage) GetStoreBackup(fE *filestore.FileExst) {
+	uS.fileInf = fE
+	logger.Log.Info("storefile addr from createfile", zap.String("path", uS.fileInf.FileName))
 	if !fE.Existed {
 		logger.Log.Info("there are new empty backUpFile")
 		return
 	}
 
-	file, err := os.OpenFile(fE.FileName, os.O_RDONLY, 0666)
+	file, err := os.OpenFile(fE.FileName, os.O_RDONLY, 0777)
 	if err != nil {
 		logger.Log.Info("open storeFile error")
 		return
@@ -85,7 +91,7 @@ func (uS *URLStorage) GetStoreBackup(fE *filestore.FileExst) {
 		uS.URLStr[urlDataStr.ShrtURL] = urlDataStr.LngURL
 	}
 	uS.uuid, err = strconv.Atoi(urlDataStr.UUID)
-	uS.fileInf = fE
+
 	if err != nil {
 		logger.Log.Info("gettitng last uuid error")
 		return
@@ -93,11 +99,14 @@ func (uS *URLStorage) GetStoreBackup(fE *filestore.FileExst) {
 }
 
 func (uS *URLStorage) FileFilling(shrtURL, lngURL string) error {
-	if !uS.fileInf.Existed {
-		logger.Log.Info("there are no backUpFile to fill with new data")
-		return errors.New("filling filestore error")
+	if _, err := os.Stat(uS.fileInf.FileName); err != nil {
+		if os.IsNotExist(err) {
+			logger.Log.Info("there are no backUpFile to fill with new data")
+			return errors.New("filling filestore error")
+		}
 	}
-	file, err := os.OpenFile(uS.fileInf.FileName, os.O_WRONLY|os.O_APPEND, 0666)
+	logger.Log.Info("storefile addr from fillins method", zap.String("path", uS.fileInf.FileName))
+	file, err := os.OpenFile(uS.fileInf.FileName, os.O_RDWR|os.O_APPEND, 0777)
 	if err != nil {
 		return err
 	}
@@ -119,5 +128,5 @@ func (uS *URLStorage) FileFilling(shrtURL, lngURL string) error {
 	if err := writer.WriteByte('\n'); err != nil {
 		return err
 	}
-	return nil
+	return writer.Flush()
 }

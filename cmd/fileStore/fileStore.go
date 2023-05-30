@@ -21,7 +21,7 @@ func NewFileExist() *FileExst {
 
 func CreateFileStore(cf config.Config) *FileExst {
 	fE := NewFileExist()
-
+	fE.FileName = cf.FileStorePath
 	if _, err := os.Stat(cf.FileStorePath); err != nil {
 		if os.IsNotExist(err) {
 			logger.Log.Info("store file is not exist. creating file")
@@ -37,7 +37,6 @@ func CreateFileStore(cf config.Config) *FileExst {
 			logger.Log.Info("creating store file err: " + err.Error())
 			return nil
 		}
-		fE.FileName = cf.FileStorePath
 		defer file.Close()
 	}
 
