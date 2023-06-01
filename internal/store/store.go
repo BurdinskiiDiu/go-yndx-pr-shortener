@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"strconv"
 	"sync"
@@ -40,6 +41,7 @@ func (uS *URLStorage) PostShortURL(shortURL, longURL string, logger *zap.Logger)
 	err := uS.FileFilling(shortURL, longURL, logger)
 	if err != nil {
 		logger.Info("file filling error")
+		return errors.New("file filling error")
 	}
 	return nil
 }
@@ -123,8 +125,8 @@ func (uS *URLStorage) GetStoreBackup(cf *config.Config, logger *zap.Logger) erro
 	file, err := os.OpenFile(uS.dbFileName, os.O_RDONLY|os.O_CREATE, 0777)
 	if err != nil {
 		logger.Info("open storeFile error")
-		//return fmt.Errorf("open store_file error: %w", err)
-		return err
+		return fmt.Errorf("open store_file error: %w", err)
+
 	}
 	defer file.Close()
 
@@ -161,7 +163,7 @@ func (uS *URLStorage) FileFilling(shrtURL, lngURL string, logger *zap.Logger) er
 	file, err := os.OpenFile(uS.dbFileName, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0777)
 	if err != nil {
 		logger.Error("open db file error")
-		return err
+		return fmt.Errorf("open db file error: %w", err)
 	}
 	defer file.Close()
 	writer := bufio.NewWriter(file)
@@ -173,13 +175,13 @@ func (uS *URLStorage) FileFilling(shrtURL, lngURL string, logger *zap.Logger) er
 	urlDataStr.LngURL = lngURL
 	raw, err = json.Marshal(urlDataStr)
 	if err != nil {
-		return err
+		return fmt.Errorf("marshalling data to db file error: %w", err)
 	}
 	if _, err := writer.Write(raw); err != nil {
-		return err
+		return fmt.Errorf("writing data to db file error: %w", err)
 	}
 	if err := writer.WriteByte('\n'); err != nil {
-		return err
+		return fmt.Errorf("making indent in db file error: %w", err)
 	}
 	return writer.Flush()
 }
