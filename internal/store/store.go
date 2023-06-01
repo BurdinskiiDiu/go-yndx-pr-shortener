@@ -9,23 +9,22 @@ import (
 	"sync"
 
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/config"
-	filestore "github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/fileStore"
 	"go.uber.org/zap"
 )
 
 type URLStorage struct {
-	URLStr  map[string]string
-	mutex   *sync.Mutex
-	uuid    int
-	fileInf *filestore.FileExst
+	URLStr     map[string]string
+	mutex      *sync.Mutex
+	uuid       int
+	dbFileName string
 }
 
 func NewURLStorage() *URLStorage {
 	return &URLStorage{
-		URLStr:  make(map[string]string),
-		mutex:   new(sync.Mutex),
-		uuid:    0,
-		fileInf: new(filestore.FileExst),
+		URLStr:     make(map[string]string),
+		mutex:      new(sync.Mutex),
+		uuid:       0,
+		dbFileName: "",
 	}
 }
 
@@ -37,7 +36,7 @@ func (uS *URLStorage) PostShortURL(shortURL, longURL string, logger *zap.Logger)
 		return errors.New("this short url is already involved")
 	}
 	uS.URLStr[shortURL] = longURL
-	logger.Info("storefile addr from post req", zap.String("path", uS.fileInf.FileName))
+	logger.Info("storefile addr from post req", zap.String("path", uS.dbFileName))
 	err := uS.FileFilling(shortURL, longURL, logger)
 	if err != nil {
 		logger.Info("file filling error")
@@ -98,30 +97,30 @@ type URLDataStruct struct {
 	}
 */
 func (uS *URLStorage) GetStoreBackup(cf *config.Config, logger *zap.Logger) error {
-	uS.fileInf.FileName = cf.FileStorePath
+	uS.dbFileName = cf.FileStorePath
+	/*
+		if _, err := os.Stat(uS.fileInf.FileName); err != nil {
+			if os.IsNotExist(err) {
+				logger.Info("store file is not exist. creating file")
+			}
+		} else {
+			uS.fileInf.Existed = true
+		}*/
 
-	if _, err := os.Stat(uS.fileInf.FileName); err != nil {
-		if os.IsNotExist(err) {
-			logger.Info("store file is not exist. creating file")
-		}
-	} else {
-		uS.fileInf.Existed = true
-	}
+	logger.Info("storefile addr from createfile", zap.String("path", uS.dbFileName))
+	/*
+		if !uS.fileInf.Existed {
+			file, err := os.Create(cf.FileStorePath)
+			if err != nil {
+				logger.Info("creating store_file err")
+				//return fmt.Errorf("creating store_file err: %w", err)
+				return err
+			}
+			uS.fileInf.Existed = true
+			file.Close()
+		}*/
 
-	logger.Info("storefile addr from createfile", zap.String("path", uS.fileInf.FileName))
-
-	if !uS.fileInf.Existed {
-		file, err := os.Create(cf.FileStorePath)
-		if err != nil {
-			logger.Info("creating store_file err")
-			//return fmt.Errorf("creating store_file err: %w", err)
-			return err
-		}
-		uS.fileInf.Existed = true
-		file.Close()
-	}
-
-	file, err := os.OpenFile(uS.fileInf.FileName, os.O_RDONLY, 0777)
+	file, err := os.OpenFile(uS.dbFileName, os.O_RDONLY|os.O_CREATE, 0777)
 	if err != nil {
 		logger.Info("open storeFile error")
 		//return fmt.Errorf("open store_file error: %w", err)
@@ -145,29 +144,23 @@ func (uS *URLStorage) GetStoreBackup(cf *config.Config, logger *zap.Logger) erro
 	if urlDataStr.UUID != "" {
 		uS.uuid, err = strconv.Atoi(urlDataStr.UUID)
 		if err != nil {
-			logger.Info("gettitng last uuid error, file is damaged, creating new file")
-			//logger.Info("gettitng last uuid error")
-			uS.fileInf.Existed = false
-			err = uS.GetStoreBackup(cf, logger)
-			if err != nil {
-				logger.Info("creating new file error")
-				return err
-			}
+			logger.Info("gettitng last uuid error, file is damaged")
 		}
 	}
 	return nil
 }
 
 func (uS *URLStorage) FileFilling(shrtURL, lngURL string, logger *zap.Logger) error {
-	if _, err := os.Stat(uS.fileInf.FileName); err != nil {
+	/*if _, err := os.Stat(uS.fileInf.FileName); err != nil {
 		if os.IsNotExist(err) {
 			logger.Info("there are no backUpFile to fill with new data")
 			return errors.New("filling filestore error")
 		}
-	}
-	logger.Info("storefile addr from fillins method", zap.String("path", uS.fileInf.FileName))
-	file, err := os.OpenFile(uS.fileInf.FileName, os.O_RDWR|os.O_APPEND, 0777)
+	}*/
+	logger.Info("storefile addr from fillins method", zap.String("path", uS.dbFileName))
+	file, err := os.OpenFile(uS.dbFileName, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0777)
 	if err != nil {
+		logger.Error("open db file error")
 		return err
 	}
 	defer file.Close()

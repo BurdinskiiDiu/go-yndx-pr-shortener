@@ -1,5 +1,6 @@
 package filestore
 
+/*
 import (
 	"os"
 
@@ -42,3 +43,4 @@ func CreateFileStore(cf config.Config, logger *zap.Logger) *FileExst {
 
 	return fE
 }
+*/
