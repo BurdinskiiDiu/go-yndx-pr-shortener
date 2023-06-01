@@ -15,19 +15,32 @@ import (
 	"go.uber.org/zap"
 )
 
+/*
 type Server struct {
 	rt   chi.Router
 	conf config.Config
-}
-
+}*/
+/*
 func NewServer(uS handler.URLStore, conf config.Config) *Server {
 	return &Server{
 		rt:   NewRouter(uS, conf),
 		conf: conf,
 	}
+}*/
+
+type Server struct {
+	rt chi.Router
+	cf *config.Config
 }
 
-func ValidConfig(cf *config.Config) config.Config {
+func NewServer(wS *handler.WorkStruct) *Server {
+	return &Server{
+		rt: NewRouter(wS),
+		cf: wS.Cf,
+	}
+}
+
+func ValidConfig(cf *config.Config) *config.Config {
 	da := strings.Split(cf.ServAddr, ":")
 	if len(da) == 2 {
 		cf.ServAddr = ":" + da[1]
@@ -47,7 +60,7 @@ func ValidConfig(cf *config.Config) config.Config {
 		log.Printf("Need address in a form host:port")
 		cf.BaseAddr = "http://localhost:8080"
 	}
-	return *cf
+	return cf
 }
 
 type ChiData struct {
@@ -59,6 +72,26 @@ type CompleRespWriter struct {
 	chiData *ChiData
 }
 
+func NewRouter(wS *handler.WorkStruct) chi.Router {
+	wS.Cf = ValidConfig(wS.Cf)
+	logger.Log.Info("server starting", zap.String("addr", wS.Cf.ServAddr))
+	rt := chi.NewRouter()
+	rt.Use(middleware.Timeout(10 * time.Second))
+	rt.Post("/", logger.LoggingHandler(gzip.GZipMiddleware(wS.PostLongURL().ServeHTTP)))
+	rt.Get("/{id}", logger.LoggingHandler(gzip.GZipMiddleware(func(w http.ResponseWriter, r *http.Request) {
+		id := chi.URLParam(r, "id")
+		logger.Log.Info("chi id is:", zap.String("id", id))
+		wS.GetLongURL(id).ServeHTTP(w, r)
+	})))
+	rt.Post("/api/shorten", logger.LoggingHandler(gzip.GZipMiddleware(wS.PostURLApi().ServeHTTP)))
+	return rt
+}
+
+func (sr *Server) Run() {
+	http.ListenAndServe(sr.cf.ServAddr, sr.rt)
+}
+
+/*
 func NewRouter(uS handler.URLStore, conf config.Config) chi.Router {
 	conf = ValidConfig(&conf)
 	logger.Log.Info("server starting", zap.String("addr", conf.ServAddr))
@@ -76,4 +109,4 @@ func NewRouter(uS handler.URLStore, conf config.Config) chi.Router {
 
 func (sr *Server) Run() {
 	http.ListenAndServe(sr.conf.ServAddr, sr.rt)
-}
+}*/

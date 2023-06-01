@@ -6,6 +6,7 @@ import (
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/cmd/config"
 	filestore "github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/cmd/fileStore"
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/cmd/store"
+	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/app/handler"
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/app/server"
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/logger"
 )
@@ -19,6 +20,7 @@ func main() {
 	eF := filestore.CreateFileStore(*conf)
 	uS := store.NewURLStorage()
 	uS.GetStoreBackup(eF)
-	rt := server.NewServer(uS, *conf)
+	wS := handler.NewWorkStruct(uS, conf)
+	rt := server.NewServer(wS)
 	rt.Run()
 }

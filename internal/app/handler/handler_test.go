@@ -17,14 +17,18 @@ import (
 func TestURLShortenerRequest(t *testing.T) {
 	uS := store.NewURLStorage()
 	uS.URLStr["abcdefj"] = "http://yandex.practicum.com"
-	conf := config.Config{
+	conf := new(config.Config)
+	conf.ServAddr = ":8080"
+	conf.BaseAddr = "http://localhost:8080/"
+	/*{
 		ServAddr: ":8080",
 		BaseAddr: "http://localhost:8080/",
-	}
+	}*/
+	wS := NewWorkStruct(uS, conf)
+
 	testCases := []struct {
 		name                string
 		method              string
-		fun                 http.HandlerFunc
 		expectedCode        int
 		target              string
 		expectedBody        string
@@ -32,15 +36,21 @@ func TestURLShortenerRequest(t *testing.T) {
 		testURL             string
 		shortURL            string
 	}{
-		{method: http.MethodPost, fun: PostLongURL(uS, conf), expectedCode: http.StatusCreated, target: "/", expectedBody: "", testURL: "http://yandex.practicum.com"},
+		{method: http.MethodPost, expectedCode: http.StatusCreated, target: "/", expectedBody: ""},
 	}
 
 	for i, tc := range testCases {
 		_, tc := i, tc
+		for k, v := range uS.URLStr {
+			tc.shortURL = k
+			tc.testURL = v
+		}
+		log.Println("post req shortURL is: " + tc.shortURL)
 		t.Run(tc.method, func(t *testing.T) {
+			log.Println("1st test start")
 			r := httptest.NewRequest(tc.method, tc.target, strings.NewReader(tc.testURL))
 			w := httptest.NewRecorder()
-			h := http.HandlerFunc(tc.fun)
+			h := http.HandlerFunc(wS.PostLongURL())
 			h(w, r)
 
 			result := w.Result()
@@ -50,8 +60,10 @@ func TestURLShortenerRequest(t *testing.T) {
 			require.NotEqual(t, "", string(getBody), "empty short url")
 			words := strings.Split(string(getBody), "/")
 			tc.shortURL = words[len(words)-1]
+			log.Println("post req shortURL is: " + tc.shortURL)
 			err = result.Body.Close()
 			require.NoError(t, err)
+			log.Println("1st test finish")
 		})
 	}
 }
@@ -59,11 +71,17 @@ func TestURLShortenerRequest(t *testing.T) {
 func TestGetlongURLRequest(t *testing.T) {
 	uS := store.NewURLStorage()
 	uS.URLStr["abcdefj"] = "http://yandex.practicum.com"
-
+	conf := new(config.Config)
+	conf.ServAddr = ":8080"
+	conf.BaseAddr = "http://localhost:8080/"
+	/*{
+		ServAddr: ":8080",
+		BaseAddr: "http://localhost:8080/",
+	}*/
+	wS := NewWorkStruct(uS, conf)
 	testCase := []struct {
 		name                string
 		method              string
-		fun                 http.HandlerFunc
 		expectedCode        int
 		target              string
 		expectedBody        string
@@ -71,16 +89,24 @@ func TestGetlongURLRequest(t *testing.T) {
 		testURL             string
 		shortURL            string
 	}{
-		{method: http.MethodGet, fun: GetLongURL(uS, "abcdefj"), expectedCode: http.StatusTemporaryRedirect, target: "/", expectedBody: "", testURL: "http://yandex.practicum.com", shortURL: "abcdefj"},
+		{method: http.MethodGet, expectedCode: http.StatusTemporaryRedirect, target: "/", expectedBody: ""},
 	}
 
 	for i, tc := range testCase {
 		_, tc := i, tc
+		for k, v := range uS.URLStr {
+			tc.shortURL = k
+			tc.testURL = v
+		}
+		log.Println("testURL is: " + tc.testURL)
 		t.Run(tc.method, func(t *testing.T) {
+			log.Println("2nd test start")
+			log.Println("get req shortURL is: " + tc.shortURL)
 			tc.target += tc.target + tc.shortURL
+			log.Println("post req target is: " + tc.target)
 			r := httptest.NewRequest(tc.method, tc.target, nil)
 			w := httptest.NewRecorder()
-			h := http.HandlerFunc(tc.fun)
+			h := http.HandlerFunc(wS.GetLongURL(tc.shortURL))
 			h(w, r)
 
 			result := w.Result()
@@ -89,6 +115,7 @@ func TestGetlongURLRequest(t *testing.T) {
 			require.Equal(t, tc.testURL, result.Header.Get("Location"))
 			err := result.Body.Close()
 			require.NoError(t, err)
+			log.Println("2nd test finish")
 		})
 	}
 
@@ -97,14 +124,17 @@ func TestGetlongURLRequest(t *testing.T) {
 func TestPostlongURLRequestApi(t *testing.T) {
 	uS := store.NewURLStorage()
 	uS.URLStr["abcdefj"] = "http://yandex.practicum.com"
-	conf := config.Config{
+	conf := new(config.Config)
+	conf.ServAddr = ":8080"
+	conf.BaseAddr = "http://localhost:8080/"
+	/*{
 		ServAddr: ":8080",
 		BaseAddr: "http://localhost:8080/",
-	}
+	}*/
+	wS := NewWorkStruct(uS, conf)
 	testCase := []struct {
 		name                string
 		method              string
-		fun                 http.HandlerFunc
 		expectedCode        int
 		target              string
 		expectedBody        string
@@ -112,15 +142,19 @@ func TestPostlongURLRequestApi(t *testing.T) {
 		testURL             string
 		shortURL            string
 	}{
-		{method: http.MethodPost, fun: PostURLApi(uS, conf), expectedCode: http.StatusCreated, target: "/api/shorten", expectedBody: "", testURL: "{\"url\":\"https://practicum.yandex.ru\"}"},
+		{method: http.MethodPost, expectedCode: http.StatusCreated, target: "/api/shorten", expectedBody: "", testURL: "{\"url\":\"https://practicum.yandex.ru\"}"},
 	}
 
 	for i, tc := range testCase {
 		_, tc := i, tc
+		for k := range uS.URLStr {
+			tc.shortURL = k
+		}
 		t.Run(tc.method, func(t *testing.T) {
+			log.Println("3d test start")
 			r := httptest.NewRequest(tc.method, tc.target, strings.NewReader(tc.testURL))
 			w := httptest.NewRecorder()
-			h := http.HandlerFunc(tc.fun)
+			h := http.HandlerFunc(wS.PostURLApi())
 			h(w, r)
 
 			result := w.Result()
@@ -133,6 +167,7 @@ func TestPostlongURLRequestApi(t *testing.T) {
 			tc.shortURL = words[len(words)-1]
 			err = result.Body.Close()
 			require.NoError(t, err)
+			log.Println("3nd test finish")
 		})
 	}
 }
