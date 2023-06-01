@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
-	"log"
 	"math/rand"
 	"net/http"
 	"strconv"
@@ -159,7 +158,7 @@ func (wS *WorkStruct) PostLongURL(logger *zap.Logger) http.HandlerFunc {
 
 		shrtURL, err := CreateShortURL(wS.US, longURL, logger)
 		if err != nil {
-			logger.Error("error while crearing shortURL", zap.String("err", err.Error()))
+			logger.Error("error while crearing shortURL", zap.Error(err))
 		}
 		bodyResp := wS.Cf.BaseAddr + "/" + shrtURL
 		logger.Debug("response body message", zap.String("body", bodyResp))
@@ -176,7 +175,7 @@ func (wS *WorkStruct) GetLongURL(srtURL string, logger *zap.Logger) http.Handler
 		lngURL, err := wS.US.GetLongURL(srtURL)
 		logger.Debug("longURL is:", zap.String("longURL", lngURL))
 		if err != nil {
-			log.Fatal(err.Error())
+			logger.Error("getLongURL handler, error while getting long url from store", zap.Error(err))
 			return
 		}
 		w.Header().Set("Location", lngURL)
@@ -191,20 +190,22 @@ func (wS *WorkStruct) PostURLApi(logger *zap.Logger) http.HandlerFunc {
 		var buf bytes.Buffer
 		_, err := buf.ReadFrom(r.Body)
 		if err != nil {
-			logger.Error(err.Error())
+			logger.Error("posrURLApi handler, read from request body err", zap.Error(err))
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
 		}
 		logger.Debug("got postApi message", zap.String("body", buf.String()))
 
 		var urlReq URLReq
 		if err := json.Unmarshal(buf.Bytes(), &urlReq); err != nil {
-			logger.Error(err.Error())
+			logger.Error("postURLApi handler, unmarshal func err", zap.Error(err))
 			return
 		}
 		logger.Debug("unmarshaled url from postApi message", zap.String("longURL", urlReq.URL))
 
 		shrtURL, err := CreateShortURL(wS.US, urlReq.URL, logger)
 		if err != nil {
-			logger.Error(err.Error())
+			logger.Error("postURLApi handler, creating short url err", zap.Error(err))
 			return
 		}
 		logger.Debug("short url", zap.String("shortURL", shrtURL))
@@ -214,7 +215,7 @@ func (wS *WorkStruct) PostURLApi(logger *zap.Logger) http.HandlerFunc {
 		resp, err := json.Marshal(urlResp)
 		logger.Debug("resp for postURLApi", zap.String("resp", string(resp)))
 		if err != nil {
-			logger.Error(err.Error())
+			logger.Error("postURLApi handler, marshal func error", zap.Error(err))
 			return
 		}
 		logger.Debug("response for postApi request", zap.String("response", string(resp)))
