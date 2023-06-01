@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"sync"
 
+	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/config"
 	filestore "github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/fileStore"
 	"go.uber.org/zap"
 )
@@ -60,18 +61,68 @@ type URLDataStruct struct {
 	LngURL  string `json:"original_url"`
 }
 
-func (uS *URLStorage) GetStoreBackup(fE *filestore.FileExst, logger *zap.Logger) {
-	uS.fileInf = fE
-	logger.Info("storefile addr from createfile", zap.String("path", uS.fileInf.FileName))
-	if !fE.Existed {
-		logger.Info("there are new empty backUpFile")
-		return
+/*
+	func (uS *URLStorage) GetStoreBackup(fE *filestore.FileExst, logger *zap.Logger) {
+		uS.fileInf = fE
+		logger.Info("storefile addr from createfile", zap.String("path", uS.fileInf.FileName))
+		if !fE.Existed {
+			logger.Info("there are new empty backUpFile")
+			return
+		}
+
+		file, err := os.OpenFile(fE.FileName, os.O_RDONLY, 0777)
+		if err != nil {
+			logger.Info("open storeFile error")
+			return
+		}
+		defer file.Close()
+
+		scanner := bufio.NewScanner(file)
+		urlDataStr := new(URLDataStruct)
+		var raw string
+		for scanner.Scan() {
+			raw = scanner.Text()
+			err := json.Unmarshal([]byte(raw), urlDataStr)
+			if err != nil {
+				logger.Info("unmarhalling storeFile error")
+				return
+			}
+			uS.URLStr[urlDataStr.ShrtURL] = urlDataStr.LngURL
+		}
+		uS.uuid, err = strconv.Atoi(urlDataStr.UUID)
+
+		if err != nil {
+			logger.Info("gettitng last uuid error")
+			return
+		}
+	}
+*/
+func (uS *URLStorage) GetStoreBackup(cf *config.Config, logger *zap.Logger) error {
+	uS.fileInf.FileName = cf.FileStorePath
+
+	if _, err := os.Stat(uS.fileInf.FileName); err != nil {
+		if os.IsNotExist(err) {
+			logger.Info("store file is not exist. creating file")
+		}
+	} else {
+		uS.fileInf.Existed = true
 	}
 
-	file, err := os.OpenFile(fE.FileName, os.O_RDONLY, 0777)
+	logger.Info("storefile addr from createfile", zap.String("path", uS.fileInf.FileName))
+
+	if !uS.fileInf.Existed {
+		file, err := os.Create(cf.FileStorePath)
+		if err != nil {
+			//return fmt.Errorf("creating store_file err: %w", err)
+			return err
+		}
+		file.Close()
+	}
+
+	file, err := os.OpenFile(uS.fileInf.FileName, os.O_RDONLY, 0777)
 	if err != nil {
-		logger.Info("open storeFile error")
-		return
+		//return fmt.Errorf("open store_file error: %w", err)
+		return err
 	}
 	defer file.Close()
 
@@ -82,17 +133,18 @@ func (uS *URLStorage) GetStoreBackup(fE *filestore.FileExst, logger *zap.Logger)
 		raw = scanner.Text()
 		err := json.Unmarshal([]byte(raw), urlDataStr)
 		if err != nil {
-			logger.Info("unmarhalling storeFile error")
-			return
+			//return fmt.Errorf("unmarhalling store_file error: %w", err)
+			return err
 		}
 		uS.URLStr[urlDataStr.ShrtURL] = urlDataStr.LngURL
 	}
 	uS.uuid, err = strconv.Atoi(urlDataStr.UUID)
 
 	if err != nil {
-		logger.Info("gettitng last uuid error")
-		return
+		//logger.Info("gettitng last uuid error")
+		return err
 	}
+	return nil
 }
 
 func (uS *URLStorage) FileFilling(shrtURL, lngURL string, logger *zap.Logger) error {
