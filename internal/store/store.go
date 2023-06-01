@@ -37,10 +37,10 @@ func (uS *URLStorage) PostShortURL(shortURL, longURL string, logger *zap.Logger)
 		return errors.New("this short url is already involved")
 	}
 	uS.URLStr[shortURL] = longURL
-	logger.Info("storefile addr from post req", zap.String("path", uS.dbFileName))
+	logger.Debug("storefile addr from post req", zap.String("path", uS.dbFileName))
 	err := uS.FileFilling(shortURL, longURL, logger)
 	if err != nil {
-		logger.Info("file filling error")
+		logger.Error("file filling error")
 		//return errors.New("file filling error")
 	}
 	return nil
@@ -109,7 +109,7 @@ func (uS *URLStorage) GetStoreBackup(cf *config.Config, logger *zap.Logger) erro
 			uS.fileInf.Existed = true
 		}*/
 
-	logger.Info("storefile addr from createfile", zap.String("path", uS.dbFileName))
+	logger.Debug("storefile addr from createfile", zap.String("path", uS.dbFileName))
 	/*
 		if !uS.fileInf.Existed {
 			file, err := os.Create(cf.FileStorePath)
@@ -124,7 +124,7 @@ func (uS *URLStorage) GetStoreBackup(cf *config.Config, logger *zap.Logger) erro
 
 	file, err := os.OpenFile(uS.dbFileName, os.O_RDONLY|os.O_CREATE, 0777)
 	if err != nil {
-		logger.Info("open storeFile error")
+		logger.Error("open storeFile error")
 		return fmt.Errorf("open store_file error: %w", err)
 
 	}
@@ -137,7 +137,7 @@ func (uS *URLStorage) GetStoreBackup(cf *config.Config, logger *zap.Logger) erro
 		raw = scanner.Text()
 		err := json.Unmarshal([]byte(raw), urlDataStr)
 		if err != nil {
-			logger.Info("unmarhalling store_file error")
+			logger.Error("unmarhalling store_file error")
 			//return fmt.Errorf("unmarhalling store_file error: %w", err)
 			return err
 		}
@@ -146,7 +146,7 @@ func (uS *URLStorage) GetStoreBackup(cf *config.Config, logger *zap.Logger) erro
 	if urlDataStr.UUID != "" {
 		uS.uuid, err = strconv.Atoi(urlDataStr.UUID)
 		if err != nil {
-			logger.Info("gettitng last uuid error, file is damaged")
+			logger.Error("gettitng last uuid error, file is damaged")
 		}
 	}
 	return nil
@@ -159,7 +159,7 @@ func (uS *URLStorage) FileFilling(shrtURL, lngURL string, logger *zap.Logger) er
 			return errors.New("filling filestore error")
 		}
 	}*/
-	logger.Info("storefile addr from fillins method", zap.String("path", uS.dbFileName))
+	logger.Debug("storefile addr from fillins method", zap.String("path", uS.dbFileName))
 	file, err := os.OpenFile(uS.dbFileName, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0777)
 	if err != nil {
 		logger.Error("open db file error")
