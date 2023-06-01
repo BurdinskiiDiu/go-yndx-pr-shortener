@@ -11,7 +11,7 @@ import (
 )
 
 func InitLog(conf *config.Config) (*zap.Logger, error) {
-	var logger *zap.Logger = zap.NewNop()
+	var logger = zap.NewNop()
 	lvl, err := zap.ParseAtomicLevel(conf.LogLevel)
 	if err != nil {
 		return nil, errors.New("parse logger level err")
