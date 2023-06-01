@@ -10,12 +10,11 @@ import (
 	"strconv"
 
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/config"
-	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/logger"
 	"go.uber.org/zap"
 )
 
 type URLStore interface {
-	PostShortURL(string, string) error
+	PostShortURL(string, string, *zap.Logger) error
 	GetLongURL(string) (string, error)
 }
 
@@ -29,7 +28,7 @@ func shorting() string {
 	return string(b)
 }
 
-func PostLongURL(uS URLStore, cf config.Config) http.HandlerFunc {
+func PostLongURL(uS URLStore, cf config.Config, logger *zap.Logger) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
 		content, err := io.ReadAll(r.Body)
@@ -38,14 +37,14 @@ func PostLongURL(uS URLStore, cf config.Config) http.HandlerFunc {
 			return
 		}
 		longURL := string(content)
-		logger.Log.Info("got post message", zap.String("body", longURL))
+		logger.Info("got post message", zap.String("body", longURL))
 
-		shrtURL, errPSU := CreateShortURL(uS, longURL)
+		shrtURL, errPSU := CreateShortURL(uS, longURL, logger)
 		if errPSU != nil {
 			log.Println(errPSU.Error())
 		}
 		bodyResp := cf.BaseAddr + "/" + shrtURL
-		logger.Log.Info("response body message", zap.String("body", bodyResp))
+		logger.Info("response body message", zap.String("body", bodyResp))
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		w.Header().Set("Content-Length", strconv.Itoa(len(bodyResp)))
 		w.WriteHeader(http.StatusCreated)
@@ -53,11 +52,11 @@ func PostLongURL(uS URLStore, cf config.Config) http.HandlerFunc {
 	})
 }
 
-func GetLongURL(uS URLStore, srtURL string) http.HandlerFunc {
+func GetLongURL(uS URLStore, srtURL string, logger *zap.Logger) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		logger.Log.Info("shortURL is:", zap.String("shortURL", srtURL))
+		logger.Info("shortURL is:", zap.String("shortURL", srtURL))
 		lngURL, err := uS.GetLongURL(srtURL)
-		logger.Log.Info("longURL is:", zap.String("longURL", lngURL))
+		logger.Info("longURL is:", zap.String("longURL", lngURL))
 		if err != nil {
 			log.Fatal(err.Error())
 			return
@@ -76,39 +75,39 @@ type URLResp struct {
 	Result string `json:"result"`
 }
 
-func PostURLApi(uS URLStore, cf config.Config) http.HandlerFunc {
+func PostURLApi(uS URLStore, cf config.Config, logger *zap.Logger) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
 		var buf bytes.Buffer
 		_, err := buf.ReadFrom(r.Body)
 		if err != nil {
-			logger.Log.Error(err.Error())
+			logger.Error(err.Error())
 		}
-		logger.Log.Info("got postApi message", zap.String("body", buf.String()))
+		logger.Info("got postApi message", zap.String("body", buf.String()))
 
 		var urlReq URLReq
 		if err := json.Unmarshal(buf.Bytes(), &urlReq); err != nil {
-			logger.Log.Error(err.Error())
+			logger.Error(err.Error())
 			return
 		}
-		logger.Log.Info("unmarshaled url from postApi message", zap.String("longURL", urlReq.URL))
+		logger.Info("unmarshaled url from postApi message", zap.String("longURL", urlReq.URL))
 
-		shrtURL, err := CreateShortURL(uS, urlReq.URL)
+		shrtURL, err := CreateShortURL(uS, urlReq.URL, logger)
 		if err != nil {
-			logger.Log.Error(err.Error())
+			logger.Error(err.Error())
 			return
 		}
-		logger.Log.Info("short url", zap.String("shortURL", shrtURL))
+		logger.Info("short url", zap.String("shortURL", shrtURL))
 		var urlResp URLResp
 		urlResp.Result = cf.BaseAddr + "/" + shrtURL
 
 		resp, err := json.Marshal(urlResp)
-		logger.Log.Info("resp for postURLApi", zap.String("resp", string(resp)))
+		logger.Info("resp for postURLApi", zap.String("resp", string(resp)))
 		if err != nil {
-			logger.Log.Error(err.Error())
+			logger.Error(err.Error())
 			return
 		}
-		logger.Log.Info("response for postApi request", zap.String("response", string(resp)))
+		logger.Info("response for postApi request", zap.String("response", string(resp)))
 		w.Header().Set("Content-Type", "application/json")
 		w.Header().Set("Content-Length", strconv.Itoa(len(string(resp))))
 		w.WriteHeader(http.StatusCreated)
@@ -116,13 +115,13 @@ func PostURLApi(uS URLStore, cf config.Config) http.HandlerFunc {
 	})
 }
 
-func CreateShortURL(uS URLStore, longURL string) (string, error) {
+func CreateShortURL(uS URLStore, longURL string, logger *zap.Logger) (string, error) {
 	var shrtURL string
 	cntr := 0
 	var errPSU error
 	for cntr < 100 {
 		shrtURL = shorting()
-		if errPSU = uS.PostShortURL(shrtURL, longURL); errPSU != nil {
+		if errPSU = uS.PostShortURL(shrtURL, longURL, logger); errPSU != nil {
 			cntr++
 			continue
 		}
@@ -145,7 +144,7 @@ func NewWorkStruct(uS URLStore, cf *config.Config) *WorkStruct {
 	}
 }
 
-func (wS *WorkStruct) PostLongURL() http.HandlerFunc {
+func (wS *WorkStruct) PostLongURL(logger *zap.Logger) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
 		content, err := io.ReadAll(r.Body)
@@ -154,14 +153,14 @@ func (wS *WorkStruct) PostLongURL() http.HandlerFunc {
 			return
 		}
 		longURL := string(content)
-		logger.Log.Info("got post message", zap.String("body", longURL))
+		logger.Info("got post message", zap.String("body", longURL))
 
-		shrtURL, errPSU := CreateShortURL(wS.US, longURL)
+		shrtURL, errPSU := CreateShortURL(wS.US, longURL, logger)
 		if errPSU != nil {
 			log.Println(errPSU.Error())
 		}
 		bodyResp := wS.Cf.BaseAddr + "/" + shrtURL
-		logger.Log.Info("response body message", zap.String("body", bodyResp))
+		logger.Info("response body message", zap.String("body", bodyResp))
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		w.Header().Set("Content-Length", strconv.Itoa(len(bodyResp)))
 		w.WriteHeader(http.StatusCreated)
@@ -169,11 +168,11 @@ func (wS *WorkStruct) PostLongURL() http.HandlerFunc {
 	})
 }
 
-func (wS *WorkStruct) GetLongURL(srtURL string) http.HandlerFunc {
+func (wS *WorkStruct) GetLongURL(srtURL string, logger *zap.Logger) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		logger.Log.Info("shortURL is:", zap.String("shortURL", srtURL))
+		logger.Info("shortURL is:", zap.String("shortURL", srtURL))
 		lngURL, err := wS.US.GetLongURL(srtURL)
-		logger.Log.Info("longURL is:", zap.String("longURL", lngURL))
+		logger.Info("longURL is:", zap.String("longURL", lngURL))
 		if err != nil {
 			log.Fatal(err.Error())
 			return
@@ -184,39 +183,39 @@ func (wS *WorkStruct) GetLongURL(srtURL string) http.HandlerFunc {
 	})
 }
 
-func (wS *WorkStruct) PostURLApi() http.HandlerFunc {
+func (wS *WorkStruct) PostURLApi(logger *zap.Logger) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
 		var buf bytes.Buffer
 		_, err := buf.ReadFrom(r.Body)
 		if err != nil {
-			logger.Log.Error(err.Error())
+			logger.Error(err.Error())
 		}
-		logger.Log.Info("got postApi message", zap.String("body", buf.String()))
+		logger.Info("got postApi message", zap.String("body", buf.String()))
 
 		var urlReq URLReq
 		if err := json.Unmarshal(buf.Bytes(), &urlReq); err != nil {
-			logger.Log.Error(err.Error())
+			logger.Error(err.Error())
 			return
 		}
-		logger.Log.Info("unmarshaled url from postApi message", zap.String("longURL", urlReq.URL))
+		logger.Info("unmarshaled url from postApi message", zap.String("longURL", urlReq.URL))
 
-		shrtURL, err := CreateShortURL(wS.US, urlReq.URL)
+		shrtURL, err := CreateShortURL(wS.US, urlReq.URL, logger)
 		if err != nil {
-			logger.Log.Error(err.Error())
+			logger.Error(err.Error())
 			return
 		}
-		logger.Log.Info("short url", zap.String("shortURL", shrtURL))
+		logger.Info("short url", zap.String("shortURL", shrtURL))
 		var urlResp URLResp
 		urlResp.Result = wS.Cf.BaseAddr + "/" + shrtURL
 
 		resp, err := json.Marshal(urlResp)
-		logger.Log.Info("resp for postURLApi", zap.String("resp", string(resp)))
+		logger.Info("resp for postURLApi", zap.String("resp", string(resp)))
 		if err != nil {
-			logger.Log.Error(err.Error())
+			logger.Error(err.Error())
 			return
 		}
-		logger.Log.Info("response for postApi request", zap.String("response", string(resp)))
+		logger.Info("response for postApi request", zap.String("response", string(resp)))
 		w.Header().Set("Content-Type", "application/json")
 		w.Header().Set("Content-Length", strconv.Itoa(len(string(resp))))
 		w.WriteHeader(http.StatusCreated)

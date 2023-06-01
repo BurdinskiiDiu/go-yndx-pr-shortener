@@ -9,7 +9,6 @@ import (
 	"sync"
 
 	filestore "github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/fileStore"
-	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/logger"
 	"go.uber.org/zap"
 )
 
@@ -29,7 +28,7 @@ func NewURLStorage() *URLStorage {
 	}
 }
 
-func (uS *URLStorage) PostShortURL(shortURL, longURL string) error {
+func (uS *URLStorage) PostShortURL(shortURL, longURL string, logger *zap.Logger) error {
 	uS.mutex.Lock()
 	defer uS.mutex.Unlock()
 	_, ok := uS.URLStr[shortURL]
@@ -37,10 +36,10 @@ func (uS *URLStorage) PostShortURL(shortURL, longURL string) error {
 		return errors.New("this short url is already involved")
 	}
 	uS.URLStr[shortURL] = longURL
-	logger.Log.Info("storefile addr from post req", zap.String("path", uS.fileInf.FileName))
-	err := uS.FileFilling(shortURL, longURL)
+	logger.Info("storefile addr from post req", zap.String("path", uS.fileInf.FileName))
+	err := uS.FileFilling(shortURL, longURL, logger)
 	if err != nil {
-		logger.Log.Info("file filling error")
+		logger.Info("file filling error")
 	}
 	return nil
 }
@@ -61,17 +60,17 @@ type URLDataStruct struct {
 	LngURL  string `json:"original_url"`
 }
 
-func (uS *URLStorage) GetStoreBackup(fE *filestore.FileExst) {
+func (uS *URLStorage) GetStoreBackup(fE *filestore.FileExst, logger *zap.Logger) {
 	uS.fileInf = fE
-	logger.Log.Info("storefile addr from createfile", zap.String("path", uS.fileInf.FileName))
+	logger.Info("storefile addr from createfile", zap.String("path", uS.fileInf.FileName))
 	if !fE.Existed {
-		logger.Log.Info("there are new empty backUpFile")
+		logger.Info("there are new empty backUpFile")
 		return
 	}
 
 	file, err := os.OpenFile(fE.FileName, os.O_RDONLY, 0777)
 	if err != nil {
-		logger.Log.Info("open storeFile error")
+		logger.Info("open storeFile error")
 		return
 	}
 	defer file.Close()
@@ -83,7 +82,7 @@ func (uS *URLStorage) GetStoreBackup(fE *filestore.FileExst) {
 		raw = scanner.Text()
 		err := json.Unmarshal([]byte(raw), urlDataStr)
 		if err != nil {
-			logger.Log.Info("unmarhalling storeFile error")
+			logger.Info("unmarhalling storeFile error")
 			return
 		}
 		uS.URLStr[urlDataStr.ShrtURL] = urlDataStr.LngURL
@@ -91,19 +90,19 @@ func (uS *URLStorage) GetStoreBackup(fE *filestore.FileExst) {
 	uS.uuid, err = strconv.Atoi(urlDataStr.UUID)
 
 	if err != nil {
-		logger.Log.Info("gettitng last uuid error")
+		logger.Info("gettitng last uuid error")
 		return
 	}
 }
 
-func (uS *URLStorage) FileFilling(shrtURL, lngURL string) error {
+func (uS *URLStorage) FileFilling(shrtURL, lngURL string, logger *zap.Logger) error {
 	if _, err := os.Stat(uS.fileInf.FileName); err != nil {
 		if os.IsNotExist(err) {
-			logger.Log.Info("there are no backUpFile to fill with new data")
+			logger.Info("there are no backUpFile to fill with new data")
 			return errors.New("filling filestore error")
 		}
 	}
-	logger.Log.Info("storefile addr from fillins method", zap.String("path", uS.fileInf.FileName))
+	logger.Info("storefile addr from fillins method", zap.String("path", uS.fileInf.FileName))
 	file, err := os.OpenFile(uS.fileInf.FileName, os.O_RDWR|os.O_APPEND, 0777)
 	if err != nil {
 		return err

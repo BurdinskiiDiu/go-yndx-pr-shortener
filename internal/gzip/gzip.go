@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/logger"
 	"go.uber.org/zap"
 )
 
@@ -69,24 +68,24 @@ func (c *compressReader) Close() error {
 	return c.zr.Close()
 }
 
-func GZipMiddleware(h http.HandlerFunc) http.HandlerFunc {
+func GZipMiddleware(h http.HandlerFunc, logger *zap.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ow := w
 		accptEnc := r.Header.Get("Accept-Encoding")
-		logger.Log.Info("acceptEnc", zap.String("accptEnc", string(accptEnc)))
+		logger.Info("acceptEnc", zap.String("accptEnc", string(accptEnc)))
 		cntntEnc := r.Header.Get("Content-Encoding")
-		logger.Log.Info("cntntEnc", zap.String("cntntEnc", string(cntntEnc)))
+		logger.Info("cntntEnc", zap.String("cntntEnc", string(cntntEnc)))
 		sendGZip := strings.Contains(cntntEnc, "gzip")
 		if sendGZip {
 			cr, err := newCompressReader(r.Body)
 			if err != nil {
-				logger.Log.Debug("compersReader creation err", zap.String("err", err.Error()))
+				logger.Debug("compersReader creation err", zap.String("err", err.Error()))
 				return
 			}
 			r.Body = cr
 			defer cr.Close()
 		}
-		logger.Log.Info("response", zap.String("response", r.RequestURI))
+		logger.Info("response", zap.String("response", r.RequestURI))
 
 		h(ow, r)
 	}

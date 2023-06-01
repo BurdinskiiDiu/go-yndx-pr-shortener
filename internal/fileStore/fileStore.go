@@ -4,7 +4,7 @@ import (
 	"os"
 
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/config"
-	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/logger"
+	"go.uber.org/zap"
 )
 
 type FileExst struct {
@@ -19,12 +19,12 @@ func NewFileExist() *FileExst {
 	}
 }
 
-func CreateFileStore(cf config.Config) *FileExst {
+func CreateFileStore(cf config.Config, logger *zap.Logger) *FileExst {
 	fE := NewFileExist()
 	fE.FileName = cf.FileStorePath
 	if _, err := os.Stat(cf.FileStorePath); err != nil {
 		if os.IsNotExist(err) {
-			logger.Log.Info("store file is not exist. creating file")
+			logger.Info("store file is not exist. creating file")
 		}
 	} else {
 		fE.Existed = true
@@ -34,7 +34,7 @@ func CreateFileStore(cf config.Config) *FileExst {
 	if !fE.Existed {
 		file, err := os.Create(cf.FileStorePath)
 		if err != nil {
-			logger.Log.Info("creating store file err: " + err.Error())
+			logger.Info("creating store file err: " + err.Error())
 			return nil
 		}
 		defer file.Close()

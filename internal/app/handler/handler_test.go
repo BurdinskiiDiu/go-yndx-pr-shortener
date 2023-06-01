@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/config"
+	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/logg"
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/store"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -25,7 +26,10 @@ func TestURLShortenerRequest(t *testing.T) {
 		BaseAddr: "http://localhost:8080/",
 	}*/
 	wS := NewWorkStruct(uS, conf)
-
+	logger, err := logg.InitLog(conf)
+	if err != nil {
+		log.Fatal(err)
+	}
 	testCases := []struct {
 		name                string
 		method              string
@@ -50,7 +54,7 @@ func TestURLShortenerRequest(t *testing.T) {
 			log.Println("1st test start")
 			r := httptest.NewRequest(tc.method, tc.target, strings.NewReader(tc.testURL))
 			w := httptest.NewRecorder()
-			h := http.HandlerFunc(wS.PostLongURL())
+			h := http.HandlerFunc(wS.PostLongURL(logger))
 			h(w, r)
 
 			result := w.Result()
@@ -79,6 +83,10 @@ func TestGetlongURLRequest(t *testing.T) {
 		BaseAddr: "http://localhost:8080/",
 	}*/
 	wS := NewWorkStruct(uS, conf)
+	logger, err := logg.InitLog(conf)
+	if err != nil {
+		log.Fatal(err)
+	}
 	testCase := []struct {
 		name                string
 		method              string
@@ -106,7 +114,7 @@ func TestGetlongURLRequest(t *testing.T) {
 			log.Println("post req target is: " + tc.target)
 			r := httptest.NewRequest(tc.method, tc.target, nil)
 			w := httptest.NewRecorder()
-			h := http.HandlerFunc(wS.GetLongURL(tc.shortURL))
+			h := http.HandlerFunc(wS.GetLongURL(tc.shortURL, logger))
 			h(w, r)
 
 			result := w.Result()
@@ -132,6 +140,10 @@ func TestPostlongURLRequestApi(t *testing.T) {
 		BaseAddr: "http://localhost:8080/",
 	}*/
 	wS := NewWorkStruct(uS, conf)
+	logger, err := logg.InitLog(conf)
+	if err != nil {
+		log.Fatal(err)
+	}
 	testCase := []struct {
 		name                string
 		method              string
@@ -154,7 +166,7 @@ func TestPostlongURLRequestApi(t *testing.T) {
 			log.Println("3d test start")
 			r := httptest.NewRequest(tc.method, tc.target, strings.NewReader(tc.testURL))
 			w := httptest.NewRecorder()
-			h := http.HandlerFunc(wS.PostURLApi())
+			h := http.HandlerFunc(wS.PostURLApi(logger))
 			h(w, r)
 
 			result := w.Result()

@@ -7,20 +7,20 @@ import (
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/app/server"
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/config"
 	filestore "github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/fileStore"
-	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/logger"
+	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/logg"
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/store"
 )
 
 func main() {
 	conf := config.GetConfig()
-	err := logger.InitLog(conf)
+	logger, err := logg.InitLog(conf)
 	if err != nil {
 		log.Fatal(err)
 	}
-	eF := filestore.CreateFileStore(*conf)
+	eF := filestore.CreateFileStore(*conf, logger)
 	uS := store.NewURLStorage()
-	uS.GetStoreBackup(eF)
+	uS.GetStoreBackup(eF, logger)
 	wS := handler.NewWorkStruct(uS, conf)
-	rt := server.NewServer(wS)
+	rt := server.NewServer(wS, logger)
 	rt.Run()
 }

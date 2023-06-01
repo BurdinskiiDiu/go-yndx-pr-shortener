@@ -1,4 +1,4 @@
-package logger
+package logg
 
 import (
 	"errors"
@@ -10,12 +10,11 @@ import (
 	"go.uber.org/zap"
 )
 
-var Log *zap.Logger = zap.NewNop()
-
-func InitLog(conf *config.Config) error {
+func InitLog(conf *config.Config) (*zap.Logger, error) {
+	var logger *zap.Logger = zap.NewNop()
 	lvl, err := zap.ParseAtomicLevel(conf.LogLevel)
 	if err != nil {
-		return errors.New("parse logger level err")
+		return nil, errors.New("parse logger level err")
 	}
 
 	logCfg := zap.NewProductionConfig()
@@ -23,12 +22,12 @@ func InitLog(conf *config.Config) error {
 
 	zapLogger, err := logCfg.Build()
 	if err != nil {
-		return errors.New("builging new zap logger error")
+		return nil, errors.New("builging new zap logger error")
 	}
 
-	Log = zapLogger
-	defer Log.Sync()
-	return nil
+	logger = zapLogger
+	defer logger.Sync()
+	return logger, nil
 }
 
 type (
@@ -53,7 +52,7 @@ func (lRW *LoggingRespWrt) WriteHeader(stCode int) {
 	lRW.ResponseData.status = stCode
 }
 
-func LoggingHandler(h http.HandlerFunc) http.HandlerFunc {
+func LoggingHandler(h http.HandlerFunc, logger *zap.Logger) http.HandlerFunc {
 	logFn := func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 
@@ -70,7 +69,7 @@ func LoggingHandler(h http.HandlerFunc) http.HandlerFunc {
 		h.ServeHTTP(&LgRspWrt, r)
 		duration := time.Since(start)
 
-		Log.Info("incoming request data",
+		logger.Info("incoming request data",
 			zap.String("URl", r.RequestURI),
 			zap.String("method", r.Method),
 			zap.String("status", strconv.Itoa(responseData.status)),
