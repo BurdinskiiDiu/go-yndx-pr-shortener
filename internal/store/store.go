@@ -113,14 +113,17 @@ func (uS *URLStorage) GetStoreBackup(cf *config.Config, logger *zap.Logger) erro
 	if !uS.fileInf.Existed {
 		file, err := os.Create(cf.FileStorePath)
 		if err != nil {
+			logger.Info("creating store_file err")
 			//return fmt.Errorf("creating store_file err: %w", err)
 			return err
 		}
+		uS.fileInf.Existed = true
 		file.Close()
 	}
 
 	file, err := os.OpenFile(uS.fileInf.FileName, os.O_RDONLY, 0777)
 	if err != nil {
+		logger.Info("open storeFile error")
 		//return fmt.Errorf("open store_file error: %w", err)
 		return err
 	}
@@ -133,6 +136,7 @@ func (uS *URLStorage) GetStoreBackup(cf *config.Config, logger *zap.Logger) erro
 		raw = scanner.Text()
 		err := json.Unmarshal([]byte(raw), urlDataStr)
 		if err != nil {
+			logger.Info("unmarhalling store_file error")
 			//return fmt.Errorf("unmarhalling store_file error: %w", err)
 			return err
 		}
@@ -141,8 +145,14 @@ func (uS *URLStorage) GetStoreBackup(cf *config.Config, logger *zap.Logger) erro
 	if urlDataStr.UUID != "" {
 		uS.uuid, err = strconv.Atoi(urlDataStr.UUID)
 		if err != nil {
+			logger.Info("gettitng last uuid error, file is damaged, creating new file")
 			//logger.Info("gettitng last uuid error")
-			return err
+			uS.fileInf.Existed = false
+			err = uS.GetStoreBackup(cf, logger)
+			if err != nil {
+				logger.Info("creating new file error")
+				return err
+			}
 		}
 	}
 	return nil
