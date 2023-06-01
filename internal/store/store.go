@@ -41,7 +41,7 @@ func (uS *URLStorage) PostShortURL(shortURL, longURL string, logger *zap.Logger)
 	err := uS.FileFilling(shortURL, longURL, logger)
 	if err != nil {
 		logger.Info("file filling error")
-		return errors.New("file filling error")
+		//return errors.New("file filling error")
 	}
 	return nil
 }
