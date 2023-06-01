@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/cmd/config"
+	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/config"
 	"go.uber.org/zap"
 )
 

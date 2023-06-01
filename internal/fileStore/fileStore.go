@@ -3,7 +3,7 @@ package filestore
 import (
 	"os"
 
-	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/cmd/config"
+	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/config"
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/logger"
 )
 

@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/cmd/config"
-	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/cmd/store"
+	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/config"
+	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/store"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

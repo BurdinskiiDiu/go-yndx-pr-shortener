@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"sync"
 
-	filestore "github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/cmd/fileStore"
+	filestore "github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/fileStore"
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/logger"
 	"go.uber.org/zap"
 )

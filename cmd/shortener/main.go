@@ -3,12 +3,12 @@ package main
 import (
 	"log"
 
-	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/cmd/config"
-	filestore "github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/cmd/fileStore"
-	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/cmd/store"
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/app/handler"
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/app/server"
+	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/config"
+	filestore "github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/fileStore"
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/logger"
+	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/store"
 )
 
 func main() {
