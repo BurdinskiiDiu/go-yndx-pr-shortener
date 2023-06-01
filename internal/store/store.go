@@ -160,7 +160,7 @@ func (uS *URLStorage) FileFilling(shrtURL, lngURL string, logger *zap.Logger) er
 		}
 	}*/
 	logger.Info("storefile addr from fillins method", zap.String("path", uS.dbFileName))
-	file, err := os.OpenFile(uS.dbFileName, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0777)
+	file, err := os.OpenFile(uS.dbFileName, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0777)
 	if err != nil {
 		logger.Error("open db file error")
 		return fmt.Errorf("open db file error: %w", err)
