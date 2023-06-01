@@ -138,11 +138,12 @@ func (uS *URLStorage) GetStoreBackup(cf *config.Config, logger *zap.Logger) erro
 		}
 		uS.URLStr[urlDataStr.ShrtURL] = urlDataStr.LngURL
 	}
-	uS.uuid, err = strconv.Atoi(urlDataStr.UUID)
-
-	if err != nil {
-		//logger.Info("gettitng last uuid error")
-		return err
+	if urlDataStr.UUID != "" {
+		uS.uuid, err = strconv.Atoi(urlDataStr.UUID)
+		if err != nil {
+			//logger.Info("gettitng last uuid error")
+			return err
+		}
 	}
 	return nil
 }
