@@ -43,8 +43,8 @@ func TestURLShortenerRequest(t *testing.T) {
 		{method: http.MethodPost, expectedCode: http.StatusCreated, target: "/", expectedBody: ""},
 	}
 
-	for i, tc := range testCases {
-		_, tc := i, tc
+	for _, tc := range testCases {
+		tc := tc
 		for k, v := range uS.URLStr {
 			tc.shortURL = k
 			tc.testURL = v
@@ -100,8 +100,8 @@ func TestGetlongURLRequest(t *testing.T) {
 		{method: http.MethodGet, expectedCode: http.StatusTemporaryRedirect, target: "/", expectedBody: ""},
 	}
 
-	for i, tc := range testCase {
-		_, tc := i, tc
+	for _, tc := range testCase {
+		tc := tc
 		for k, v := range uS.URLStr {
 			tc.shortURL = k
 			tc.testURL = v
@@ -157,8 +157,8 @@ func TestPostlongURLRequestApi(t *testing.T) {
 		{method: http.MethodPost, expectedCode: http.StatusCreated, target: "/api/shorten", expectedBody: "", testURL: "{\"url\":\"https://practicum.yandex.ru\"}"},
 	}
 
-	for i, tc := range testCase {
-		_, tc := i, tc
+	for _, tc := range testCase {
+		tc := tc
 		for k := range uS.URLStr {
 			tc.shortURL = k
 		}

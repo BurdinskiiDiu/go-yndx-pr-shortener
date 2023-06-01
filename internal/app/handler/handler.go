@@ -211,13 +211,12 @@ func (wS *WorkStruct) PostURLApi(logger *zap.Logger) http.HandlerFunc {
 		logger.Debug("short url", zap.String("shortURL", shrtURL))
 		var urlResp URLResp
 		urlResp.Result = wS.Cf.BaseAddr + "/" + shrtURL
-
 		resp, err := json.Marshal(urlResp)
-		logger.Debug("resp for postURLApi", zap.String("resp", string(resp)))
 		if err != nil {
 			logger.Error("postURLApi handler, marshal func error", zap.Error(err))
 			return
 		}
+
 		logger.Debug("response for postApi request", zap.String("response", string(resp)))
 		w.Header().Set("Content-Type", "application/json")
 		w.Header().Set("Content-Length", strconv.Itoa(len(string(resp))))
