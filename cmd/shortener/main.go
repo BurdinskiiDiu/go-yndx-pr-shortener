@@ -22,7 +22,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	wS := handler.NewWorkStruct(uS, conf)
+	wS := handler.NewWorkStruct(uS, conf, logger)
 	rt := server.NewServer(wS, logger)
 	rt.Run()
 }

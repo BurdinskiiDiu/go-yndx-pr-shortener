@@ -4,39 +4,36 @@ import (
 	"compress/gzip"
 	"io"
 	"net/http"
-	"strings"
-
-	"go.uber.org/zap"
 )
 
-type compressWriter struct {
+type CompressWriter struct {
 	http.ResponseWriter
 	zw *gzip.Writer
 }
 
-func newCompressWriter(w http.ResponseWriter) *compressWriter {
-	return &compressWriter{
+func newCompressWriter(w http.ResponseWriter) *CompressWriter {
+	return &CompressWriter{
 		ResponseWriter: w,
 		zw:             gzip.NewWriter(w),
 	}
 }
 
-func (c *compressWriter) Header() http.Header {
+func (c *CompressWriter) Header() http.Header {
 	return c.ResponseWriter.Header()
 }
 
-func (c *compressWriter) Write(p []byte) (int, error) {
+func (c *CompressWriter) Write(p []byte) (int, error) {
 	return c.zw.Write(p)
 }
 
-func (c *compressWriter) WriteHeader(statusCode int) {
+func (c *CompressWriter) WriteHeader(statusCode int) {
 	if statusCode < 300 {
 		c.ResponseWriter.Header().Set("Content-Encoding", "gzip")
 	}
 	c.ResponseWriter.WriteHeader(statusCode)
 }
 
-func (c *compressWriter) Close() error {
+func (c *CompressWriter) Close() error {
 	return c.zw.Close()
 }
 
@@ -45,7 +42,7 @@ type compressReader struct {
 	zr *gzip.Reader
 }
 
-func newCompressReader(r io.ReadCloser) (*compressReader, error) {
+func NewCompressReader(r io.ReadCloser) (*compressReader, error) {
 	zr, err := gzip.NewReader(r)
 	if err != nil {
 		return nil, err
@@ -68,8 +65,9 @@ func (c *compressReader) Close() error {
 	return c.zr.Close()
 }
 
-func GZipMiddleware(h http.HandlerFunc, logger *zap.Logger) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+/*
+func GZipMiddleware(h http.Handler, logger *zap.Logger) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ow := w
 		accptEnc := r.Header.Get("Accept-Encoding")
 		logger.Info("acceptEnc", zap.String("accptEnc", string(accptEnc)))
@@ -77,7 +75,7 @@ func GZipMiddleware(h http.HandlerFunc, logger *zap.Logger) http.HandlerFunc {
 		logger.Info("cntntEnc", zap.String("cntntEnc", string(cntntEnc)))
 		sendGZip := strings.Contains(cntntEnc, "gzip")
 		if sendGZip {
-			cr, err := newCompressReader(r.Body)
+			cr, err := NewCompressReader(r.Body)
 			if err != nil {
 				logger.Debug("compersReader creation err", zap.String("err", err.Error()))
 				return
@@ -87,6 +85,6 @@ func GZipMiddleware(h http.HandlerFunc, logger *zap.Logger) http.HandlerFunc {
 		}
 		logger.Info("response", zap.String("response", r.RequestURI))
 
-		h(ow, r)
-	}
-}
+		h.ServeHTTP(ow, r)
+	})
+}*/

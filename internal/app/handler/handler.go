@@ -3,12 +3,16 @@ package handler
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"math/rand"
 	"net/http"
 	"strconv"
+	"strings"
+	"time"
 
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/config"
+	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/gzip"
 	"go.uber.org/zap"
 )
 
@@ -115,8 +119,7 @@ func PostURLApi(uS URLStore, cf config.Config, logger *zap.Logger) http.HandlerF
 		w.Write(resp)
 	})
 }*/
-
-func CreateShortURL(uS URLStore, longURL string, logger *zap.Logger) (string, error) {
+/*func CreateShortURL(uS URLStore, longURL string, logger *zap.Logger) (string, error) {
 	var shrtURL string
 	cntr := 0
 	var errPSU error
@@ -129,23 +132,39 @@ func CreateShortURL(uS URLStore, longURL string, logger *zap.Logger) (string, er
 		break
 	}
 	return shrtURL, errPSU
-}
-
+}*/
 //handler implementation with methods
 
 type WorkStruct struct {
-	US URLStore
-	Cf *config.Config
+	US     URLStore
+	Cf     *config.Config
+	logger *zap.Logger
 }
 
-func NewWorkStruct(uS URLStore, cf *config.Config) *WorkStruct {
+func (wS *WorkStruct) CreateShortURL(longURL string) (string, error) {
+	var shrtURL string
+	cntr := 0
+	var errPSU error
+	for cntr < 100 {
+		shrtURL = shorting()
+		if errPSU = wS.US.PostShortURL(shrtURL, longURL, wS.logger); errPSU != nil {
+			cntr++
+			continue
+		}
+		break
+	}
+	return shrtURL, errPSU
+}
+
+func NewWorkStruct(uS URLStore, cf *config.Config, logger *zap.Logger) *WorkStruct {
 	return &WorkStruct{
-		US: uS,
-		Cf: cf,
+		US:     uS,
+		Cf:     cf,
+		logger: logger,
 	}
 }
 
-func (wS *WorkStruct) PostLongURL(logger *zap.Logger) http.HandlerFunc {
+func (wS *WorkStruct) PostLongURL() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		//defer r.Body.Close()
 		content, err := io.ReadAll(r.Body)
@@ -154,14 +173,14 @@ func (wS *WorkStruct) PostLongURL(logger *zap.Logger) http.HandlerFunc {
 			return
 		}
 		longURL := string(content)
-		logger.Debug("got post message", zap.String("body", longURL))
+		wS.logger.Debug("got post message", zap.String("body", longURL))
 
-		shrtURL, err := CreateShortURL(wS.US, longURL, logger)
+		shrtURL, err := wS.CreateShortURL(longURL)
 		if err != nil {
-			logger.Error("error while crearing shortURL", zap.Error(err))
+			wS.logger.Error("error while crearing shortURL", zap.Error(err))
 		}
 		bodyResp := wS.Cf.BaseAddr + "/" + shrtURL
-		logger.Debug("response body message", zap.String("body", bodyResp))
+		wS.logger.Debug("response body message", zap.String("body", bodyResp))
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		w.Header().Set("Content-Length", strconv.Itoa(len(bodyResp)))
 		w.WriteHeader(http.StatusCreated)
@@ -169,13 +188,13 @@ func (wS *WorkStruct) PostLongURL(logger *zap.Logger) http.HandlerFunc {
 	})
 }
 
-func (wS *WorkStruct) GetLongURL(srtURL string, logger *zap.Logger) http.HandlerFunc {
+func (wS *WorkStruct) GetLongURL(srtURL string) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		logger.Debug("shortURL is:", zap.String("shortURL", srtURL))
+		wS.logger.Debug("shortURL is:", zap.String("shortURL", srtURL))
 		lngURL, err := wS.US.GetLongURL(srtURL)
-		logger.Debug("longURL is:", zap.String("longURL", lngURL))
+		wS.logger.Debug("longURL is:", zap.String("longURL", lngURL))
 		if err != nil {
-			logger.Error("getLongURL handler, error while getting long url from store", zap.Error(err))
+			wS.logger.Error("getLongURL handler, error while getting long url from store", zap.Error(err))
 			return
 		}
 		w.Header().Set("Location", lngURL)
@@ -184,43 +203,123 @@ func (wS *WorkStruct) GetLongURL(srtURL string, logger *zap.Logger) http.Handler
 	})
 }
 
-func (wS *WorkStruct) PostURLApi(logger *zap.Logger) http.HandlerFunc {
+func (wS *WorkStruct) PostURLApi() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		//defer r.Body.Close()
 		var buf bytes.Buffer
 		_, err := buf.ReadFrom(r.Body)
 		if err != nil {
-			logger.Error("posrURLApi handler, read from request body err", zap.Error(err))
+			wS.logger.Error("posrURLApi handler, read from request body err", zap.Error(err))
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		logger.Debug("got postApi message", zap.String("body", buf.String()))
+		wS.logger.Debug("got postApi message", zap.String("body", buf.String()))
 
 		var urlReq URLReq
 		if err := json.Unmarshal(buf.Bytes(), &urlReq); err != nil {
-			logger.Error("postURLApi handler, unmarshal func err", zap.Error(err))
+			wS.logger.Error("postURLApi handler, unmarshal func err", zap.Error(err))
 			return
 		}
-		logger.Debug("unmarshaled url from postApi message", zap.String("longURL", urlReq.URL))
+		wS.logger.Debug("unmarshaled url from postApi message", zap.String("longURL", urlReq.URL))
 
-		shrtURL, err := CreateShortURL(wS.US, urlReq.URL, logger)
+		shrtURL, err := wS.CreateShortURL(urlReq.URL)
 		if err != nil {
-			logger.Error("postURLApi handler, creating short url err", zap.Error(err))
+			wS.logger.Error("postURLApi handler, creating short url err", zap.Error(err))
 			return
 		}
-		logger.Debug("short url", zap.String("shortURL", shrtURL))
+		wS.logger.Debug("short url", zap.String("shortURL", shrtURL))
 		var urlResp URLResp
 		urlResp.Result = wS.Cf.BaseAddr + "/" + shrtURL
 		resp, err := json.Marshal(urlResp)
 		if err != nil {
-			logger.Error("postURLApi handler, marshal func error", zap.Error(err))
+			wS.logger.Error("postURLApi handler, marshal func error", zap.Error(err))
 			return
 		}
 
-		logger.Debug("response for postApi request", zap.String("response", string(resp)))
+		wS.logger.Debug("response for postApi request", zap.String("response", string(resp)))
 		w.Header().Set("Content-Type", "application/json")
 		w.Header().Set("Content-Length", strconv.Itoa(len(string(resp))))
 		w.WriteHeader(http.StatusCreated)
 		w.Write(resp)
+	})
+}
+
+//log middleware
+
+type (
+	responseData struct {
+		status int
+		size   int
+	}
+	LoggingRespWrt struct {
+		http.ResponseWriter
+		responseData *responseData
+	}
+)
+
+func (lRW *LoggingRespWrt) Write(b []byte) (int, error) {
+	size, err := lRW.ResponseWriter.Write(b)
+	if err != nil {
+		return 0, fmt.Errorf("logger internal err: %w", err)
+	}
+	lRW.responseData.size += size
+	return size, nil
+}
+
+func (lRW *LoggingRespWrt) WriteHeader(stCode int) {
+	lRW.ResponseWriter.WriteHeader(stCode)
+	lRW.responseData.status = stCode
+}
+
+func (wS *WorkStruct) LoggingHandler(h http.Handler) http.Handler {
+	//func LoggingHandler(h http.Handler, logger *zap.Logger) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		responseData := &responseData{
+			status: 0,
+			size:   0,
+		}
+
+		lgRspWrt := LoggingRespWrt{
+			ResponseWriter: w,
+			responseData:   responseData,
+		}
+		start := time.Now()
+		h.ServeHTTP(&lgRspWrt, r)
+		duration := time.Since(start)
+
+		wS.logger.Info("incoming request data",
+			zap.String("URl", r.RequestURI),
+			zap.String("method", r.Method),
+			zap.Int("status", responseData.status),
+			zap.Int("size", responseData.size),
+			zap.Int("duration", int(duration.Milliseconds())),
+		)
+	})
+}
+
+//log gzip
+
+func (wS *WorkStruct) GZipMiddleware(h http.Handler) http.Handler {
+	//func GZipMiddleware(h http.HandlerFunc, logger *zap.Logger) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ow := w
+		accptEnc := r.Header.Get("Accept-Encoding")
+		wS.logger.Info("acceptEnc", zap.String("accptEnc", string(accptEnc)))
+		cntntEnc := r.Header.Get("Content-Encoding")
+		wS.logger.Info("cntntEnc", zap.String("cntntEnc", string(cntntEnc)))
+		sendGZip := strings.Contains(cntntEnc, "gzip")
+		if sendGZip {
+			cr, err := gzip.NewCompressReader(r.Body)
+			if err != nil {
+				wS.logger.Debug("compersReader creation err", zap.String("err", err.Error()))
+				return
+			}
+			r.Body = cr
+			defer cr.Close()
+		}
+		wS.logger.Info("response", zap.String("response", r.RequestURI))
+
+		h.ServeHTTP(ow, r)
 	})
 }

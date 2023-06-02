@@ -54,8 +54,8 @@ func (lRW *LoggingRespWrt) WriteHeader(stCode int) {
 	lRW.responseData.status = stCode
 }
 
-func LoggingHandler(h http.HandlerFunc, logger *zap.Logger) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+func LoggingHandler(h http.Handler, logger *zap.Logger) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		responseData := &responseData{
 			status: 0,
@@ -77,6 +77,5 @@ func LoggingHandler(h http.HandlerFunc, logger *zap.Logger) http.HandlerFunc {
 			zap.Int("size", responseData.size),
 			zap.Int("duration", int(duration.Milliseconds())),
 		)
-
-	}
+	})
 }

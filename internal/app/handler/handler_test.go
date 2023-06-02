@@ -25,8 +25,9 @@ func TestURLShortenerRequest(t *testing.T) {
 		ServAddr: ":8080",
 		BaseAddr: "http://localhost:8080/",
 	}*/
-	wS := NewWorkStruct(uS, conf)
 	logger, err := logg.InitLog(conf)
+	wS := NewWorkStruct(uS, conf, logger)
+
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -54,7 +55,7 @@ func TestURLShortenerRequest(t *testing.T) {
 			log.Println("1st test start")
 			r := httptest.NewRequest(tc.method, tc.target, strings.NewReader(tc.testURL))
 			w := httptest.NewRecorder()
-			h := http.HandlerFunc(wS.PostLongURL(logger))
+			h := http.HandlerFunc(wS.PostLongURL())
 			h(w, r)
 
 			result := w.Result()
@@ -82,8 +83,9 @@ func TestGetlongURLRequest(t *testing.T) {
 		ServAddr: ":8080",
 		BaseAddr: "http://localhost:8080/",
 	}*/
-	wS := NewWorkStruct(uS, conf)
 	logger, err := logg.InitLog(conf)
+	wS := NewWorkStruct(uS, conf, logger)
+
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -114,7 +116,7 @@ func TestGetlongURLRequest(t *testing.T) {
 			log.Println("post req target is: " + tc.target)
 			r := httptest.NewRequest(tc.method, tc.target, nil)
 			w := httptest.NewRecorder()
-			h := http.HandlerFunc(wS.GetLongURL(tc.shortURL, logger))
+			h := http.HandlerFunc(wS.GetLongURL(tc.shortURL))
 			h(w, r)
 
 			result := w.Result()
@@ -139,8 +141,9 @@ func TestPostlongURLRequestApi(t *testing.T) {
 		ServAddr: ":8080",
 		BaseAddr: "http://localhost:8080/",
 	}*/
-	wS := NewWorkStruct(uS, conf)
 	logger, err := logg.InitLog(conf)
+	wS := NewWorkStruct(uS, conf, logger)
+
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -166,7 +169,7 @@ func TestPostlongURLRequestApi(t *testing.T) {
 			log.Println("3d test start")
 			r := httptest.NewRequest(tc.method, tc.target, strings.NewReader(tc.testURL))
 			w := httptest.NewRecorder()
-			h := http.HandlerFunc(wS.PostURLApi(logger))
+			h := http.HandlerFunc(wS.PostURLApi())
 			h(w, r)
 
 			result := w.Result()
