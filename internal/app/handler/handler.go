@@ -85,7 +85,7 @@ func (wS *WorkStruct) PostLongURL() http.HandlerFunc {
 			wS.logger.Error("error while crearing shortURL", zap.Error(err))
 		}
 		bodyResp := wS.Cf.BaseAddr + "/" + shrtURL
-		wS.logger.Debug("response body message", zap.String("body", bodyResp))
+		wS.logger.Info("response body message", zap.String("body", bodyResp))
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		w.Header().Set("Content-Length", strconv.Itoa(len(bodyResp)))
 		w.WriteHeader(http.StatusCreated)
@@ -104,6 +104,7 @@ func (wS *WorkStruct) GetLongURL(srtURL string) http.HandlerFunc {
 		}
 		w.Header().Set("Location", lngURL)
 		w.WriteHeader(http.StatusTemporaryRedirect)
+		wS.logger.Debug("longURL is:", zap.String("longURL", lngURL))
 		w.Write([]byte(lngURL))
 	})
 }
