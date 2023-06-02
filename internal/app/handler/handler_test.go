@@ -21,10 +21,6 @@ func TestURLShortenerRequest(t *testing.T) {
 	conf := new(config.Config)
 	conf.ServAddr = ":8080"
 	conf.BaseAddr = "http://localhost:8080/"
-	/*{
-		ServAddr: ":8080",
-		BaseAddr: "http://localhost:8080/",
-	}*/
 	logger, err := logg.InitLog(conf)
 	wS := NewWorkStruct(uS, conf, logger)
 
@@ -79,10 +75,6 @@ func TestGetlongURLRequest(t *testing.T) {
 	conf := new(config.Config)
 	conf.ServAddr = ":8080"
 	conf.BaseAddr = "http://localhost:8080/"
-	/*{
-		ServAddr: ":8080",
-		BaseAddr: "http://localhost:8080/",
-	}*/
 	logger, err := logg.InitLog(conf)
 	wS := NewWorkStruct(uS, conf, logger)
 
@@ -137,10 +129,6 @@ func TestPostlongURLRequestApi(t *testing.T) {
 	conf := new(config.Config)
 	conf.ServAddr = ":8080"
 	conf.BaseAddr = "http://localhost:8080/"
-	/*{
-		ServAddr: ":8080",
-		BaseAddr: "http://localhost:8080/",
-	}*/
 	logger, err := logg.InitLog(conf)
 	wS := NewWorkStruct(uS, conf, logger)
 

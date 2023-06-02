@@ -16,7 +16,6 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	//eF := filestore.CreateFileStore(*conf, logger)
 	uS := store.NewURLStorage()
 	err = uS.GetStoreBackup(conf, logger)
 	if err != nil {

@@ -52,30 +52,3 @@ func (lRW *LoggingRespWrt) WriteHeader(stCode int) {
 	lRW.ResponseWriter.WriteHeader(stCode)
 	lRW.responseData.status = stCode
 }
-
-/*
-func LoggingHandler(h http.Handler, logger *zap.Logger) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
-		responseData := &responseData{
-			status: 0,
-			size:   0,
-		}
-
-		lgRspWrt := LoggingRespWrt{
-			ResponseWriter: w,
-			responseData:   responseData,
-		}
-		start := time.Now()
-		h.ServeHTTP(&lgRspWrt, r)
-		duration := time.Since(start)
-
-		logger.Info("incoming request data",
-			zap.String("URl", r.RequestURI),
-			zap.String("method", r.Method),
-			zap.Int("status", responseData.status),
-			zap.Int("size", responseData.size),
-			zap.Int("duration", int(duration.Milliseconds())),
-		)
-	})
-}*/

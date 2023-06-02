@@ -65,27 +65,3 @@ func (c *compressReader) Close() error {
 	}
 	return c.zr.Close()
 }
-
-/*
-func GZipMiddleware(h http.Handler, logger *zap.Logger) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ow := w
-		accptEnc := r.Header.Get("Accept-Encoding")
-		logger.Info("acceptEnc", zap.String("accptEnc", string(accptEnc)))
-		cntntEnc := r.Header.Get("Content-Encoding")
-		logger.Info("cntntEnc", zap.String("cntntEnc", string(cntntEnc)))
-		sendGZip := strings.Contains(cntntEnc, "gzip")
-		if sendGZip {
-			cr, err := NewCompressReader(r.Body)
-			if err != nil {
-				logger.Debug("compersReader creation err", zap.String("err", err.Error()))
-				return
-			}
-			r.Body = cr
-			defer cr.Close()
-		}
-		logger.Info("response", zap.String("response", r.RequestURI))
-
-		h.ServeHTTP(ow, r)
-	})
-}*/

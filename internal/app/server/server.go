@@ -12,19 +12,6 @@ import (
 	"go.uber.org/zap"
 )
 
-/*
-type Server struct {
-	rt   chi.Router
-	conf config.Config
-}*/
-/*
-func NewServer(uS handler.URLStore, conf config.Config) *Server {
-	return &Server{
-		rt:   NewRouter(uS, conf),
-		conf: conf,
-	}
-}*/
-
 type Server struct {
 	rt chi.Router
 	cf *config.Config
@@ -76,7 +63,7 @@ func NewRouter(wS *handler.WorkStruct, logger *zap.Logger) chi.Router {
 	rt.Use(middleware.Timeout(10 * time.Second))
 	rt.Use(wS.LoggingHandler)
 	rt.Use(wS.GZipMiddleware)
-	rt.Post("/", wS.PostLongURL().ServeHTTP)
+	rt.Post("/", wS.PostLongURL())
 	rt.Get("/{id}", func(w http.ResponseWriter, r *http.Request) {
 		id := chi.URLParam(r, "id")
 		logger.Info("chi id is:", zap.String("id", id))
@@ -86,42 +73,6 @@ func NewRouter(wS *handler.WorkStruct, logger *zap.Logger) chi.Router {
 	return rt
 }
 
-/*
-func NewRouter(wS *handler.WorkStruct, logger *zap.Logger) chi.Router {
-	wS.Cf = ValidConfig(wS.Cf, logger)
-	logger.Info("server starting", zap.String("addr", wS.Cf.ServAddr))
-	rt := chi.NewRouter()
-	rt.Use(middleware.Timeout(10 * time.Second))
-	rt.Post("/", logg.LoggingHandler(gzip.GZipMiddleware(wS.PostLongURL(logger).ServeHTTP, logger), logger))
-	rt.Get("/{id}", logg.LoggingHandler(gzip.GZipMiddleware(func(w http.ResponseWriter, r *http.Request) {
-		id := chi.URLParam(r, "id")
-		logger.Info("chi id is:", zap.String("id", id))
-		wS.GetLongURL(id, logger).ServeHTTP(w, r)
-	}, logger), logger))
-	rt.Post("/api/shorten", logg.LoggingHandler(gzip.GZipMiddleware(wS.PostURLApi(logger).ServeHTTP, logger), logger))
-	return rt
-}*/
-
 func (sr *Server) Run() {
 	http.ListenAndServe(sr.cf.ServAddr, sr.rt)
 }
-
-/*
-func NewRouter(uS handler.URLStore, conf config.Config) chi.Router {
-	conf = ValidConfig(&conf)
-	logger.Log.Info("server starting", zap.String("addr", conf.ServAddr))
-	rt := chi.NewRouter()
-	rt.Use(middleware.Timeout(10 * time.Second))
-	rt.Post("/", logger.LoggingHandler(gzip.GZipMiddleware(handler.PostLongURL(uS, conf).ServeHTTP)))
-	rt.Get("/{id}", logger.LoggingHandler(gzip.GZipMiddleware(func(w http.ResponseWriter, r *http.Request) {
-		id := chi.URLParam(r, "id")
-		logger.Log.Info("chi id is:", zap.String("id", id))
-		handler.GetLongURL(uS, id).ServeHTTP(w, r)
-	})))
-	rt.Post("/api/shorten", logger.LoggingHandler(gzip.GZipMiddleware(handler.PostURLApi(uS, conf).ServeHTTP)))
-	return rt
-}
-
-func (sr *Server) Run() {
-	http.ListenAndServe(sr.conf.ServAddr, sr.rt)
-}*/
