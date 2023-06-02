@@ -23,7 +23,7 @@ func (c *CompressWriter) Header() http.Header {
 }
 
 func (c *CompressWriter) Write(p []byte) (int, error) {
-	//defer c.Close()
+	defer c.Close()
 	return c.zw.Write(p)
 }
 
