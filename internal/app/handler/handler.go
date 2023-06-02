@@ -304,7 +304,14 @@ func (wS *WorkStruct) GZipMiddleware(h http.Handler) http.Handler {
 	//func GZipMiddleware(h http.HandlerFunc, logger *zap.Logger) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ow := w
+
 		accptEnc := r.Header.Get("Accept-Encoding")
+		suppGZip := strings.Contains(accptEnc, "gzip")
+		if suppGZip {
+			cw := gzip.NewCompressWriter(ow)
+			ow = cw
+			defer cw.Close()
+		}
 		wS.logger.Debug("acceptEnc", zap.String("accptEnc", accptEnc))
 		cntntEnc := r.Header.Get("Content-Encoding")
 		wS.logger.Debug("cntntEnc", zap.String("cntntEnc", cntntEnc))
