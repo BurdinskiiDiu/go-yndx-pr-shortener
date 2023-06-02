@@ -252,13 +252,13 @@ type (
 		size   int
 	}
 	LoggingRespWrt struct {
-		w            http.ResponseWriter
+		http.ResponseWriter
 		responseData *responseData
 	}
 )
 
 func (lRW *LoggingRespWrt) Write(b []byte) (int, error) {
-	size, err := lRW. /*ResponseWriter*/ w.Write(b)
+	size, err := lRW.ResponseWriter.Write(b)
 	if err != nil {
 		return 0, fmt.Errorf("logger internal err: %w", err)
 	}
@@ -267,7 +267,7 @@ func (lRW *LoggingRespWrt) Write(b []byte) (int, error) {
 }
 
 func (lRW *LoggingRespWrt) WriteHeader(stCode int) {
-	lRW. /*ResponseWriter*/ w.WriteHeader(stCode)
+	lRW.ResponseWriter.WriteHeader(stCode)
 	lRW.responseData.status = stCode
 }
 
@@ -281,11 +281,11 @@ func (wS *WorkStruct) LoggingHandler(h http.Handler) http.Handler {
 		}
 
 		lgRspWrt := LoggingRespWrt{
-			/*ResponseWriter*/ w: w,
-			responseData:         responseData,
+			ResponseWriter: w,
+			responseData:   responseData,
 		}
 		start := time.Now()
-		h.ServeHTTP(lgRspWrt.w, r)
+		h.ServeHTTP(&lgRspWrt, r)
 		duration := time.Since(start)
 
 		wS.logger.Info("incoming request data",
@@ -328,6 +328,7 @@ func (wS *WorkStruct) GZipMiddleware(h http.Handler) http.Handler {
 			}
 			r.Body = cr
 			defer cr.Close()
+			defer r.Body.Close()
 		}
 		wS.logger.Debug("response", zap.String("response", r.RequestURI))
 

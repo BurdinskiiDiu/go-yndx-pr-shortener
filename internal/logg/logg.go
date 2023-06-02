@@ -3,7 +3,6 @@ package logg
 import (
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/config"
 	"go.uber.org/zap"
@@ -54,6 +53,7 @@ func (lRW *LoggingRespWrt) WriteHeader(stCode int) {
 	lRW.responseData.status = stCode
 }
 
+/*
 func LoggingHandler(h http.Handler, logger *zap.Logger) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
@@ -78,4 +78,4 @@ func LoggingHandler(h http.Handler, logger *zap.Logger) http.Handler {
 			zap.Int("duration", int(duration.Milliseconds())),
 		)
 	})
-}
+}*/
