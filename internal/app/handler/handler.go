@@ -166,7 +166,7 @@ func NewWorkStruct(uS URLStore, cf *config.Config, logger *zap.Logger) *WorkStru
 
 func (wS *WorkStruct) PostLongURL() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		//defer r.Body.Close()
+		defer r.Body.Close()
 		content, err := io.ReadAll(r.Body)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
