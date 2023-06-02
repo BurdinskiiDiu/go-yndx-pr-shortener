@@ -61,9 +61,8 @@ func NewRouter(wS *handler.WorkStruct, logger *zap.Logger) chi.Router {
 	logger.Info("server starting", zap.String("addr", wS.Cf.ServAddr))
 	rt := chi.NewRouter()
 	rt.Use(middleware.Timeout(10 * time.Second))
-	rt.Use(wS.GZipMiddleware)
 	rt.Use(wS.LoggingHandler)
-	//rt.Use(wS.GZipMiddleware)
+	rt.Use(wS.GZipMiddleware)
 	rt.Post("/", wS.PostLongURL())
 	rt.Get("/{id}", func(w http.ResponseWriter, r *http.Request) {
 		id := chi.URLParam(r, "id")
