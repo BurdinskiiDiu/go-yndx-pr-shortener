@@ -305,20 +305,20 @@ func (wS *WorkStruct) GZipMiddleware(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ow := w
 		accptEnc := r.Header.Get("Accept-Encoding")
-		wS.logger.Info("acceptEnc", zap.String("accptEnc", string(accptEnc)))
+		wS.logger.Debug("acceptEnc", zap.String("accptEnc", accptEnc))
 		cntntEnc := r.Header.Get("Content-Encoding")
-		wS.logger.Info("cntntEnc", zap.String("cntntEnc", string(cntntEnc)))
+		wS.logger.Debug("cntntEnc", zap.String("cntntEnc", cntntEnc))
 		sendGZip := strings.Contains(cntntEnc, "gzip")
 		if sendGZip {
 			cr, err := gzip.NewCompressReader(r.Body)
 			if err != nil {
-				wS.logger.Debug("compersReader creation err", zap.String("err", err.Error()))
+				wS.logger.Error("compersReader creation err", zap.Error(err))
 				return
 			}
 			r.Body = cr
 			defer cr.Close()
 		}
-		wS.logger.Info("response", zap.String("response", r.RequestURI))
+		wS.logger.Debug("response", zap.String("response", r.RequestURI))
 
 		h.ServeHTTP(ow, r)
 	})
