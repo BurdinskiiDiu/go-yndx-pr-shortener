@@ -306,10 +306,12 @@ func (wS *WorkStruct) GZipMiddleware(h http.Handler) http.Handler {
 		ow := w
 
 		accptEnc := r.Header.Get("Accept-Encoding")
+		wS.logger.Info("acceptEnc", zap.String("accptEnc", accptEnc))
 		contType := r.Header.Get("Content-Type")
-		permissContType := strings.Contains(contType, "text/plain") && strings.Contains(contType, "application/json")
+		wS.logger.Info("contType", zap.String("contType", contType))
+		permissContType := strings.Contains(contType, "text/plain") || strings.Contains(contType, "application/json")
 		suppGZip := strings.Contains(accptEnc, "gzip")
-		if suppGZip || permissContType {
+		if suppGZip && permissContType {
 			cw := gzip.NewCompressWriter(ow)
 			ow = cw
 			defer cw.Close()
