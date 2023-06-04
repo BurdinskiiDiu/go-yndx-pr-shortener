@@ -219,7 +219,7 @@ func (wS *WorkStruct) GZipMiddleware(h http.Handler) http.Handler {
 			//cw := gzp.NewCompressWriter(w)
 			//w.Header.("Content-Encoding", "gzip")
 			gz := gzip.NewWriter(w)
-			cw := gzp.NewCompressWriter(&w, gz)
+			cw := gzp.NewCompressWriter(w, gz)
 			ow = cw
 			ow.Header().Set("Content-Encoding", "gzip")
 			defer cw.Close()
