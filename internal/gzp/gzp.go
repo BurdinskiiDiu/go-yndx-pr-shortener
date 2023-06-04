@@ -11,7 +11,7 @@ import (
 type CompressWriter struct {
 	http.ResponseWriter
 	bf     bytes.Buffer
-	writer io.Writer
+	writer *gzip.Writer
 }
 
 func NewCompressWriter(w http.ResponseWriter, bf bytes.Buffer) *CompressWriter {
@@ -27,6 +27,7 @@ func (cW *CompressWriter) Write(p []byte) (int, error) {
 	lenBf, _ := cW.writer.Write(p)
 	cW.ResponseWriter.Header().Set("Content-Length", strconv.Itoa(lenBf))
 	return cW.ResponseWriter.Write(cW.bf.Bytes())
+
 }
 
 func (cW *CompressWriter) WriteHeader(statusCode int) {
@@ -36,10 +37,9 @@ func (cW *CompressWriter) WriteHeader(statusCode int) {
 	cW.ResponseWriter.WriteHeader(statusCode)
 }
 
-/*
 func (cW *CompressWriter) Close() error {
 	return cW.writer.Close()
-}*/
+}
 
 type compressReader struct {
 	r  io.ReadCloser
