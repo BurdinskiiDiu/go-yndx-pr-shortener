@@ -213,20 +213,20 @@ func (wS *WorkStruct) GZipMiddleware(h http.Handler) http.Handler {
 		wS.logger.Info("acceptEnc", zap.String("accptEnc", accptEnc))
 		contType := r.Header.Get("Content-Type")
 		wS.logger.Info("contType", zap.String("contType", contType))
-		permissContType := strings.Contains(contType, "text/plain") || strings.Contains(contType, "application/json")
+		//permissContType := strings.Contains(contType, "text/plain") || strings.Contains(contType, "application/json")
 		suppGZip := strings.Contains(accptEnc, "gzip")
-		if suppGZip && permissContType {
+		if suppGZip /*&& permissContType*/ {
 			//cw := gzp.NewCompressWriter(w)
 			//w.Header.("Content-Encoding", "gzip")
 			gz := gzip.NewWriter(w)
-			cw := gzp.NewCompressWriter(w, gz)
+			cw := gzp.NewCompressWriter(&w, gz)
 			ow = cw
 			ow.Header().Set("Content-Encoding", "gzip")
 			defer cw.Close()
 		}
-		wS.logger.Debug("acceptEnc", zap.String("accptEnc", accptEnc))
+		wS.logger.Info("acceptEnc", zap.String("accptEnc", accptEnc))
 		cntntEnc := r.Header.Get("Content-Encoding")
-		wS.logger.Debug("cntntEnc", zap.String("cntntEnc", cntntEnc))
+		wS.logger.Info("cntntEnc", zap.String("cntntEnc", cntntEnc))
 		sendGZip := strings.Contains(cntntEnc, "gzip")
 		if sendGZip {
 			cr, err := gzp.NewCompressReader(r.Body)
@@ -238,7 +238,7 @@ func (wS *WorkStruct) GZipMiddleware(h http.Handler) http.Handler {
 			//defer cr.Close()
 			defer r.Body.Close()
 		}
-		wS.logger.Debug("response", zap.String("response", r.RequestURI))
+		wS.logger.Info("response", zap.String("response", r.RequestURI))
 
 		h.ServeHTTP(ow, r)
 	})

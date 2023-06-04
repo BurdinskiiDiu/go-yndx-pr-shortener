@@ -11,9 +11,9 @@ type CompressWriter struct {
 	writer io.WriteCloser
 }
 
-func NewCompressWriter(w http.ResponseWriter, wr io.WriteCloser) *CompressWriter {
+func NewCompressWriter(w *http.ResponseWriter, wr io.WriteCloser) *CompressWriter {
 	return &CompressWriter{
-		ResponseWriter: w,
+		ResponseWriter: *w,
 		writer:         wr,
 	}
 }
