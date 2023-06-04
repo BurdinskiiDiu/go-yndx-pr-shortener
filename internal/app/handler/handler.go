@@ -8,7 +8,6 @@ import (
 	"io"
 	"math/rand"
 	"net/http"
-	"strconv"
 	"strings"
 	"time"
 
@@ -144,7 +143,7 @@ func (wS *WorkStruct) PostURLApi() http.HandlerFunc {
 
 		wS.logger.Debug("response for postApi request", zap.String("response", string(resp)))
 		w.Header().Set("Content-Type", "application/json")
-		w.Header().Set("Content-Length", strconv.Itoa(len(string(resp))))
+		//w.Header().Set("Content-Length", strconv.Itoa(len(string(resp))))
 		w.WriteHeader(http.StatusCreated)
 		w.Write(resp)
 	})
