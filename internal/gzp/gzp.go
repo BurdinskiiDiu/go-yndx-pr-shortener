@@ -1,6 +1,7 @@
 package gzp
 
 import (
+	"bytes"
 	"compress/gzip"
 	"io"
 	"net/http"
@@ -9,21 +10,23 @@ import (
 
 type CompressWriter struct {
 	http.ResponseWriter
-	writer io.WriteCloser
+	bf     bytes.Buffer
+	writer io.Writer
 }
 
-func NewCompressWriter(w http.ResponseWriter, wr io.WriteCloser) *CompressWriter {
+func NewCompressWriter(w http.ResponseWriter, bf bytes.Buffer) *CompressWriter {
 	return &CompressWriter{
 		ResponseWriter: w,
-		writer:         wr,
+		bf:             bf,
+		writer:         gzip.NewWriter(&bf),
 	}
 }
 
 func (cW *CompressWriter) Write(p []byte) (int, error) {
-	cW.ResponseWriter.Header().Set("Content-Encoding", "gzip")
-	cntLen, _ := cW.writer.Write(p)
-	cW.ResponseWriter.Header().Set("Content-Length", strconv.Itoa(cntLen))
-	return cW.writer.Write(p)
+	//cW.ResponseWriter.Header().Set("Content-Encoding", "gzip")
+	lenBf, _ := cW.writer.Write(p)
+	cW.ResponseWriter.Header().Set("Content-Length", strconv.Itoa(lenBf))
+	return cW.ResponseWriter.Write(cW.bf.Bytes())
 }
 
 func (cW *CompressWriter) WriteHeader(statusCode int) {
@@ -33,9 +36,10 @@ func (cW *CompressWriter) WriteHeader(statusCode int) {
 	cW.ResponseWriter.WriteHeader(statusCode)
 }
 
+/*
 func (cW *CompressWriter) Close() error {
 	return cW.writer.Close()
-}
+}*/
 
 type compressReader struct {
 	r  io.ReadCloser
