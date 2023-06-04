@@ -86,7 +86,6 @@ func (wS *WorkStruct) PostLongURL() http.HandlerFunc {
 		bodyResp := wS.Cf.BaseAddr + "/" + shrtURL
 		wS.logger.Info("response body message", zap.String("body", bodyResp))
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-		//w.Header().Set("Content-Length", strconv.Itoa(len(bodyResp)))
 		w.WriteHeader(http.StatusCreated)
 		w.Write([]byte(bodyResp))
 	})
@@ -142,7 +141,6 @@ func (wS *WorkStruct) PostURLApi() http.HandlerFunc {
 
 		wS.logger.Debug("response for postApi request", zap.String("response", string(resp)))
 		w.Header().Set("Content-Type", "application/json")
-		//w.Header().Set("Content-Length", strconv.Itoa(len(string(resp))))
 		w.WriteHeader(http.StatusCreated)
 		w.Write(resp)
 	})
@@ -208,18 +206,18 @@ func (wS *WorkStruct) GZipMiddleware(h http.Handler) http.Handler {
 		ow := w
 
 		accptEnc := r.Header.Get("Accept-Encoding")
-		wS.logger.Info("acceptEnc", zap.String("accptEnc", accptEnc))
+		wS.logger.Debug("acceptEnc", zap.String("accptEnc", accptEnc))
 		contType := r.Header.Get("Content-Type")
-		wS.logger.Info("contType", zap.String("contType", contType))
+		wS.logger.Debug("contType", zap.String("contType", contType))
 		suppGZip := strings.Contains(accptEnc, "gzip")
 		if suppGZip {
 			cw := gzp.NewCompressWriter(w)
 			ow = cw
 			defer cw.Close()
 		}
-		wS.logger.Info("acceptEnc", zap.String("accptEnc", accptEnc))
+		wS.logger.Debug("acceptEnc", zap.String("accptEnc", accptEnc))
 		cntntEnc := r.Header.Get("Content-Encoding")
-		wS.logger.Info("cntntEnc", zap.String("cntntEnc", cntntEnc))
+		wS.logger.Debug("cntntEnc", zap.String("cntntEnc", cntntEnc))
 		sendGZip := strings.Contains(cntntEnc, "gzip")
 		if sendGZip {
 			cr, err := gzp.NewCompressReader(r.Body)
@@ -230,7 +228,7 @@ func (wS *WorkStruct) GZipMiddleware(h http.Handler) http.Handler {
 			r.Body = cr
 			defer cr.Close()
 		}
-		wS.logger.Info("response", zap.String("response", r.RequestURI))
+		wS.logger.Debug("response", zap.String("response", r.RequestURI))
 
 		h.ServeHTTP(ow, r)
 	})
