@@ -23,6 +23,11 @@ func (cW *CompressWriter) Write(p []byte) (int, error) {
 }
 
 /*
+func (cW *CompressWriter) Close() error {
+	return cW.writer.Close()
+}*/
+
+/*
 type CompressWriter struct {
 	w  http.ResponseWriter
 	zw *gzip.Writer
