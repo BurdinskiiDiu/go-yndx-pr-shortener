@@ -19,6 +19,7 @@ func NewCompressWriter(w http.ResponseWriter, wr io.WriteCloser) *CompressWriter
 }
 
 func (cW *CompressWriter) Write(p []byte) (int, error) {
+	cW.ResponseWriter.Header().Set("Content-Encoding", "gzip")
 	return cW.writer.Write(p)
 }
 
