@@ -1,32 +1,26 @@
 package gzp
 
 import (
-	"bytes"
 	"compress/gzip"
 	"io"
 	"net/http"
-	"strconv"
 )
 
 type CompressWriter struct {
 	http.ResponseWriter
-	bf     bytes.Buffer
 	writer *gzip.Writer
 }
 
-func NewCompressWriter(w http.ResponseWriter, bf bytes.Buffer) *CompressWriter {
+func NewCompressWriter(w http.ResponseWriter) *CompressWriter {
 	return &CompressWriter{
 		ResponseWriter: w,
-		bf:             bf,
-		writer:         gzip.NewWriter(&bf),
+		writer:         gzip.NewWriter(w),
 	}
 }
 
 func (cW *CompressWriter) Write(p []byte) (int, error) {
 	//cW.ResponseWriter.Header().Set("Content-Encoding", "gzip")
-	lenBf, _ := cW.writer.Write(p)
-	cW.ResponseWriter.Header().Set("Content-Length", strconv.Itoa(lenBf))
-	return cW.ResponseWriter.Write(cW.bf.Bytes())
+	return cW.writer.Write(p)
 
 }
 

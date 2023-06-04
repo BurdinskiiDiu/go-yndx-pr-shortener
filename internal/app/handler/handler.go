@@ -213,9 +213,7 @@ func (wS *WorkStruct) GZipMiddleware(h http.Handler) http.Handler {
 		wS.logger.Info("contType", zap.String("contType", contType))
 		suppGZip := strings.Contains(accptEnc, "gzip")
 		if suppGZip {
-			//gz := gzip.NewWriter(w)
-			var bf bytes.Buffer
-			cw := gzp.NewCompressWriter(w, bf)
+			cw := gzp.NewCompressWriter(w)
 			ow = cw
 			defer cw.Close()
 		}
