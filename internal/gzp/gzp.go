@@ -6,23 +6,23 @@ import (
 	"net/http"
 )
 
+type CompressWriter struct {
+	http.ResponseWriter
+	writer io.Writer
+}
+
+func NewCompressWriter(w http.ResponseWriter, wr io.Writer) *CompressWriter {
+	return &CompressWriter{
+		ResponseWriter: w,
+		writer:         wr,
+	}
+}
+
+func (cW *CompressWriter) Write(p []byte) (int, error) {
+	return cW.writer.Write(p)
+}
+
 /*
-	type CompressWriter struct {
-		http.ResponseWriter
-		writer io.Writer
-	}
-
-	func NewCompressWriter(w http.ResponseWriter, wr io.Writer) *CompressWriter {
-		return &CompressWriter{
-			ResponseWriter: w,
-			writer:         wr,
-		}
-	}
-
-	func (cW *CompressWriter) Write(p []byte) (int, error) {
-		return cW.writer.Write(p)
-	}
-*/
 type CompressWriter struct {
 	w  http.ResponseWriter
 	zw *gzip.Writer
@@ -53,7 +53,7 @@ func (c *CompressWriter) WriteHeader(statusCode int) {
 func (c *CompressWriter) Close() error {
 	return c.zw.Close()
 }
-
+*/
 /*
 func (c *CompressWriter) Header() http.Header {
 	return c.w.Header()

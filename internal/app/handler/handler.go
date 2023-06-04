@@ -2,6 +2,7 @@ package handler
 
 import (
 	"bytes"
+	"compress/gzip"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -215,9 +216,11 @@ func (wS *WorkStruct) GZipMiddleware(h http.Handler) http.Handler {
 		permissContType := strings.Contains(contType, "text/plain") || strings.Contains(contType, "application/json")
 		suppGZip := strings.Contains(accptEnc, "gzip")
 		if suppGZip && permissContType {
-			cw := gzp.NewCompressWriter(w)
+			//cw := gzp.NewCompressWriter(w)
+			gz := gzip.NewWriter(w)
+			cw := gzp.NewCompressWriter(w, gz)
 			ow = cw
-			defer cw.Close()
+			defer gz.Close()
 		}
 		wS.logger.Debug("acceptEnc", zap.String("accptEnc", accptEnc))
 		cntntEnc := r.Header.Get("Content-Encoding")
