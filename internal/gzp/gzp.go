@@ -8,10 +8,10 @@ import (
 
 type CompressWriter struct {
 	http.ResponseWriter
-	writer io.Writer
+	writer io.WriteCloser
 }
 
-func NewCompressWriter(w http.ResponseWriter, wr io.Writer) *CompressWriter {
+func NewCompressWriter(w http.ResponseWriter, wr io.WriteCloser) *CompressWriter {
 	return &CompressWriter{
 		ResponseWriter: w,
 		writer:         wr,
@@ -27,6 +27,10 @@ func (cW *CompressWriter) WriteHeader(statusCode int) {
 		cW.ResponseWriter.Header().Set("Content-Encoding", "gzip")
 	}
 	cW.ResponseWriter.WriteHeader(statusCode)
+}
+
+func (cW *CompressWriter) Close() error {
+	return cW.writer.Close()
 }
 
 /*
