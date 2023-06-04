@@ -4,6 +4,7 @@ import (
 	"compress/gzip"
 	"io"
 	"net/http"
+	"strconv"
 )
 
 type CompressWriter struct {
@@ -20,6 +21,8 @@ func NewCompressWriter(w http.ResponseWriter, wr io.WriteCloser) *CompressWriter
 
 func (cW *CompressWriter) Write(p []byte) (int, error) {
 	cW.ResponseWriter.Header().Set("Content-Encoding", "gzip")
+	cntLen, _ := cW.writer.Write(p)
+	cW.ResponseWriter.Header().Set("Content-Length", strconv.Itoa(cntLen))
 	return cW.writer.Write(p)
 }
 
