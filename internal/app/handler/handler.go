@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/config"
-	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/gzip"
+	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/gzp"
 	"go.uber.org/zap"
 )
 
@@ -215,7 +215,7 @@ func (wS *WorkStruct) GZipMiddleware(h http.Handler) http.Handler {
 		permissContType := strings.Contains(contType, "text/plain") || strings.Contains(contType, "application/json")
 		suppGZip := strings.Contains(accptEnc, "gzip")
 		if suppGZip && permissContType {
-			cw := gzip.NewCompressWriter(ow)
+			cw := gzp.NewCompressWriter(w)
 			ow = cw
 			defer cw.Close()
 		}
@@ -224,7 +224,7 @@ func (wS *WorkStruct) GZipMiddleware(h http.Handler) http.Handler {
 		wS.logger.Debug("cntntEnc", zap.String("cntntEnc", cntntEnc))
 		sendGZip := strings.Contains(cntntEnc, "gzip")
 		if sendGZip {
-			cr, err := gzip.NewCompressReader(r.Body)
+			cr, err := gzp.NewCompressReader(r.Body)
 			if err != nil {
 				wS.logger.Error("compersReader creation err", zap.Error(err))
 				return

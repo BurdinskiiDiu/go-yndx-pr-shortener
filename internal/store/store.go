@@ -14,15 +14,24 @@ import (
 )
 
 type URLStorage struct {
-	URLStr     map[string]string
+	urlStr     map[string]string
 	mutex      *sync.Mutex
 	uuid       int
 	dbFileName string
 }
 
+func NewURLStorageTest(us *map[string]string) *URLStorage {
+	return &URLStorage{
+		urlStr:     *us,
+		mutex:      new(sync.Mutex),
+		uuid:       0,
+		dbFileName: "",
+	}
+}
+
 func NewURLStorage() *URLStorage {
 	return &URLStorage{
-		URLStr:     make(map[string]string),
+		urlStr:     make(map[string]string),
 		mutex:      new(sync.Mutex),
 		uuid:       0,
 		dbFileName: "",
@@ -32,11 +41,11 @@ func NewURLStorage() *URLStorage {
 func (uS *URLStorage) PostShortURL(shortURL, longURL string, logger *zap.Logger) error {
 	uS.mutex.Lock()
 	defer uS.mutex.Unlock()
-	_, ok := uS.URLStr[shortURL]
+	_, ok := uS.urlStr[shortURL]
 	if ok {
 		return errors.New("this short url is already involved")
 	}
-	uS.URLStr[shortURL] = longURL
+	uS.urlStr[shortURL] = longURL
 	logger.Debug("storefile addr from post req", zap.String("path", uS.dbFileName))
 	err := uS.FileFilling(shortURL, longURL, logger)
 	if err != nil {
@@ -48,7 +57,7 @@ func (uS *URLStorage) PostShortURL(shortURL, longURL string, logger *zap.Logger)
 func (uS *URLStorage) GetLongURL(shrtURL string) (string, error) {
 	uS.mutex.Lock()
 	defer uS.mutex.Unlock()
-	lngURL, ok := uS.URLStr[shrtURL]
+	lngURL, ok := uS.urlStr[shrtURL]
 	if !ok {
 		return "", errors.New("wrong short url")
 	}
@@ -84,7 +93,7 @@ func (uS *URLStorage) GetStoreBackup(cf *config.Config, logger *zap.Logger) erro
 			logger.Error("unmarhalling store_file error")
 			return err
 		}
-		uS.URLStr[urlDataStr.ShrtURL] = urlDataStr.LngURL
+		uS.urlStr[urlDataStr.ShrtURL] = urlDataStr.LngURL
 	}
 	if urlDataStr.UUID != "" {
 		uS.uuid, err = strconv.Atoi(urlDataStr.UUID)

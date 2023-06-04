@@ -1,4 +1,4 @@
-package gzip
+package gzp
 
 import (
 	"compress/gzip"
@@ -6,6 +6,23 @@ import (
 	"net/http"
 )
 
+/*
+	type CompressWriter struct {
+		http.ResponseWriter
+		writer io.Writer
+	}
+
+	func NewCompressWriter(w http.ResponseWriter, wr io.Writer) *CompressWriter {
+		return &CompressWriter{
+			ResponseWriter: w,
+			writer:         wr,
+		}
+	}
+
+	func (cW *CompressWriter) Write(p []byte) (int, error) {
+		return cW.writer.Write(p)
+	}
+*/
 type CompressWriter struct {
 	w  http.ResponseWriter
 	zw *gzip.Writer
@@ -36,6 +53,26 @@ func (c *CompressWriter) WriteHeader(statusCode int) {
 func (c *CompressWriter) Close() error {
 	return c.zw.Close()
 }
+
+/*
+func (c *CompressWriter) Header() http.Header {
+	return c.w.Header()
+}
+
+func (c *CompressWriter) Write(p []byte) (int, error) {
+	return c.zw.Write(p)
+}
+
+func (c *CompressWriter) WriteHeader(statusCode int) {
+	if statusCode < 300 {
+		c.w.Header().Set("Content-Encoding", "gzip")
+	}
+	c.w.WriteHeader(statusCode)
+}
+
+func (cW *CompressWriter) Close() error {
+	return cW.writer.Close()
+}*/
 
 type compressReader struct {
 	r  io.ReadCloser

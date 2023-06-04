@@ -16,8 +16,10 @@ import (
 )
 
 func TestURLShortenerRequest(t *testing.T) {
-	uS := store.NewURLStorage()
-	uS.URLStr["abcdefj"] = "http://yandex.practicum.com"
+
+	urlStr := make(map[string]string)
+	urlStr["abcdefj"] = "http://yandex.practicum.com"
+	uS := store.NewURLStorageTest(&urlStr)
 	conf := new(config.Config)
 	conf.ServAddr = ":8080"
 	conf.BaseAddr = "http://localhost:8080/"
@@ -42,7 +44,7 @@ func TestURLShortenerRequest(t *testing.T) {
 
 	for _, tc := range testCases {
 		tc := tc
-		for k, v := range uS.URLStr {
+		for k, v := range urlStr {
 			tc.shortURL = k
 			tc.testURL = v
 		}
@@ -70,8 +72,9 @@ func TestURLShortenerRequest(t *testing.T) {
 }
 
 func TestGetlongURLRequest(t *testing.T) {
-	uS := store.NewURLStorage()
-	uS.URLStr["abcdefj"] = "http://yandex.practicum.com"
+	urlStr := make(map[string]string)
+	urlStr["abcdefj"] = "http://yandex.practicum.com"
+	uS := store.NewURLStorageTest(&urlStr)
 	conf := new(config.Config)
 	conf.ServAddr = ":8080"
 	conf.BaseAddr = "http://localhost:8080/"
@@ -96,7 +99,7 @@ func TestGetlongURLRequest(t *testing.T) {
 
 	for _, tc := range testCase {
 		tc := tc
-		for k, v := range uS.URLStr {
+		for k, v := range urlStr {
 			tc.shortURL = k
 			tc.testURL = v
 		}
@@ -124,8 +127,9 @@ func TestGetlongURLRequest(t *testing.T) {
 }
 
 func TestPostlongURLRequestApi(t *testing.T) {
-	uS := store.NewURLStorage()
-	uS.URLStr["abcdefj"] = "http://yandex.practicum.com"
+	urlStr := make(map[string]string)
+	urlStr["abcdefj"] = "http://yandex.practicum.com"
+	uS := store.NewURLStorageTest(&urlStr)
 	conf := new(config.Config)
 	conf.ServAddr = ":8080"
 	conf.BaseAddr = "http://localhost:8080/"
@@ -150,7 +154,7 @@ func TestPostlongURLRequestApi(t *testing.T) {
 
 	for _, tc := range testCase {
 		tc := tc
-		for k := range uS.URLStr {
+		for k := range urlStr {
 			tc.shortURL = k
 		}
 		t.Run(tc.method, func(t *testing.T) {
