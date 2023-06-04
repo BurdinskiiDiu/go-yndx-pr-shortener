@@ -22,6 +22,13 @@ func (cW *CompressWriter) Write(p []byte) (int, error) {
 	return cW.writer.Write(p)
 }
 
+func (cW *CompressWriter) WriteHeader(statusCode int) {
+	if statusCode < 300 {
+		cW.ResponseWriter.Header().Set("Content-Encoding", "gzip")
+	}
+	cW.ResponseWriter.WriteHeader(statusCode)
+}
+
 /*
 func (cW *CompressWriter) Close() error {
 	return cW.writer.Close()
@@ -48,12 +55,7 @@ func (c *CompressWriter) Write(p []byte) (int, error) {
 	return c.zw.Write(p)
 }
 
-func (c *CompressWriter) WriteHeader(statusCode int) {
-	if statusCode < 300 {
-		c.w.Header().Set("Content-Encoding", "gzip")
-	}
-	c.w.WriteHeader(statusCode)
-}
+
 
 func (c *CompressWriter) Close() error {
 	return c.zw.Close()
