@@ -235,8 +235,7 @@ func (wS *WorkStruct) GZipMiddleware(h http.Handler) http.Handler {
 				return
 			}
 			r.Body = cr
-			//defer cr.Close()
-			defer r.Body.Close()
+			defer cr.Close()
 		}
 		wS.logger.Info("response", zap.String("response", r.RequestURI))
 
