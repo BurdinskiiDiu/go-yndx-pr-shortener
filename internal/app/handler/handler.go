@@ -213,7 +213,6 @@ func (wS *WorkStruct) GZipMiddleware(h http.Handler) http.Handler {
 		if suppGZip {
 			cw := gzp.NewCompressWriter(w)
 			ow = cw
-			defer cw.Close()
 		}
 		wS.logger.Debug("acceptEnc", zap.String("accptEnc", accptEnc))
 		cntntEnc := r.Header.Get("Content-Encoding")
