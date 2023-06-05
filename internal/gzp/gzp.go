@@ -10,7 +10,6 @@ import (
 
 type CompressWriter struct {
 	http.ResponseWriter
-	writer *gzip.Writer
 }
 
 func NewCompressWriter(w http.ResponseWriter) *CompressWriter {
