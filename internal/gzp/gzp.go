@@ -16,7 +16,6 @@ type CompressWriter struct {
 func NewCompressWriter(w http.ResponseWriter) *CompressWriter {
 	return &CompressWriter{
 		ResponseWriter: w,
-		//writer:         gzip.NewWriter(w),
 	}
 }
 
@@ -25,8 +24,6 @@ func (cW *CompressWriter) Write(p []byte) (int, error) {
 	wrt := gzip.NewWriter(&bf)
 	wrt.Write(p)
 	wrt.Close()
-	//strng := bf.String()
-	//log.Println("compessed response is: ", strng, "and it len is: ", len(strng))
 	cW.ResponseWriter.Header().Set("Content-Lenght", strconv.Itoa(len(bf.Bytes())))
 	return cW.ResponseWriter.Write(bf.Bytes())
 }
@@ -37,11 +34,6 @@ func (cW *CompressWriter) WriteHeader(statusCode int) {
 	}
 	cW.ResponseWriter.WriteHeader(statusCode)
 }
-
-/*
-func (cW *CompressWriter) Close() error {
-	return cW.writer.Close()
-}*/
 
 type compressReader struct {
 	r  io.ReadCloser
