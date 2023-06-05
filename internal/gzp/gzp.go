@@ -22,17 +22,13 @@ func NewCompressWriter(w http.ResponseWriter) *CompressWriter {
 }
 
 func (cW *CompressWriter) Write(p []byte) (int, error) {
-	//cW.ResponseWriter.Header().Set("Content-Encoding", "gzip")
 	var bf bytes.Buffer
 	wrt := gzip.NewWriter(&bf)
-	/*_, err := */ wrt.Write(p)
-	/*if err != nil {
-
-	} */
+	wrt.Write(p)
 	wrt.Close()
 	strng := bf.String()
 	log.Println("compessed response is: ", strng, "and it len is: ", len(strng))
-	cW.ResponseWriter.Header().Set("Content-lenght", strconv.Itoa(len(bf.Bytes())))
+	cW.ResponseWriter.Header().Set("Content-Lenght", strconv.Itoa(len(bf.Bytes())))
 	return cW.writer.Write(p)
 
 }
