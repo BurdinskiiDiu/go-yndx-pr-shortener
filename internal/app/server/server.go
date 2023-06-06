@@ -1,37 +1,37 @@
 package server
 
 import (
-	"log"
 	"net/http"
 	"strings"
 	"time"
 
-	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/cmd/config"
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/app/handler"
+	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/config"
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/chi/v5"
+	"go.uber.org/zap"
 )
 
 type Server struct {
-	rt   chi.Router
-	conf config.Config
+	rt chi.Router
+	cf *config.Config
 }
 
-func NewServer(uS handler.URLStore, conf config.Config) *Server {
+func NewServer(wS *handler.WorkStruct, logger *zap.Logger) *Server {
 	return &Server{
-		rt:   NewRouter(uS, conf),
-		conf: conf,
+		rt: NewRouter(wS, logger),
+		cf: wS.Cf,
 	}
 }
 
-func ValidConfig(cf *config.Config) config.Config {
+func ValidConfig(cf *config.Config, logger *zap.Logger) *config.Config {
 	da := strings.Split(cf.ServAddr, ":")
 	if len(da) == 2 {
 		cf.ServAddr = ":" + da[1]
 	} else if len(da) == 3 {
 		cf.ServAddr = ":" + da[2]
 	} else {
-		log.Printf("Need address in a form host:port")
+		logger.Error("Need address in a form host:port")
 		cf.ServAddr = ":8080"
 	}
 
@@ -41,10 +41,10 @@ func ValidConfig(cf *config.Config) config.Config {
 	} else if len(ba) == 3 {
 		cf.BaseAddr = ba[0] + ":" + ba[1] + cf.ServAddr
 	} else {
-		log.Printf("Need address in a form host:port")
+		logger.Error("Need address in a form host:port")
 		cf.BaseAddr = "http://localhost:8080"
 	}
-	return *cf
+	return cf
 }
 
 type ChiData struct {
@@ -56,17 +56,23 @@ type CompleRespWriter struct {
 	chiData *ChiData
 }
 
-func NewRouter(uS handler.URLStore, conf config.Config) chi.Router {
-	conf = ValidConfig(&conf)
+func NewRouter(wS *handler.WorkStruct, logger *zap.Logger) chi.Router {
+	wS.Cf = ValidConfig(wS.Cf, logger)
+	logger.Info("server starting", zap.String("addr", wS.Cf.ServAddr))
 	rt := chi.NewRouter()
 	rt.Use(middleware.Timeout(10 * time.Second))
-	rt.Post("/", handler.PostLongURL(uS, conf))
+	rt.Use(wS.LoggingHandler)
+	rt.Use(wS.GZipMiddleware)
+	rt.Post("/", wS.PostLongURL())
 	rt.Get("/{id}", func(w http.ResponseWriter, r *http.Request) {
 		id := chi.URLParam(r, "id")
-		handler.GetLongURL(uS, id).ServeHTTP(w, r)
+		logger.Info("chi id is:", zap.String("id", id))
+		wS.GetLongURL(id).ServeHTTP(w, r)
 	})
+	rt.Post("/api/shorten", wS.PostURLApi())
 	return rt
 }
+
 func (sr *Server) Run() {
-	http.ListenAndServe(sr.conf.ServAddr, sr.rt)
+	http.ListenAndServe(sr.cf.ServAddr, sr.rt)
 }
