@@ -86,7 +86,7 @@ func (wS *WorkStruct) CreateShortURL(longURL string) (string, error) {
 		}
 		break
 	}
-	return shrtURL, errPSU
+	return shrtURL, nil
 }
 
 func (wS *WorkStruct) PostLongURL() http.HandlerFunc {
