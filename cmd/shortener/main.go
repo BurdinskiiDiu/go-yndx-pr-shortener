@@ -20,7 +20,7 @@ func main() {
 		log.Fatal(err)
 	}
 	ctx := context.Background()
-	uS := store.NewURLStorage()
+	uS := store.NewURLStorage(logger)
 	err = uS.GetStoreBackup(conf)
 	if err != nil {
 		logger.Fatal(err.Error())
