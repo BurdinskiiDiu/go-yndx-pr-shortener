@@ -245,7 +245,9 @@ func (wS *WorkStruct) GetDBPing() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if err := wS.db.Ping(wS.ctx); err != nil {
 			wS.logger.Error("getDBping handler error", zap.Error(err))
+			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
+		w.WriteHeader(http.StatusOK)
 	})
 }
