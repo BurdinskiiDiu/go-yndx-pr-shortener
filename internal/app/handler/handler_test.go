@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"io"
 	"log"
 	"net/http"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/config"
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/logg"
+	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/postgresql"
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/store"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -24,7 +26,9 @@ func TestURLShortenerRequest(t *testing.T) {
 	conf.ServAddr = ":8080"
 	conf.BaseAddr = "http://localhost:8080/"
 	logger, err := logg.InitLog(conf)
-	wS := NewWorkStruct(uS, conf, logger)
+	ctx := context.TODO()
+	db := postgresql.NewClientDBStruct(conf.DBdsn, logger)
+	wS := NewWorkStruct(uS, conf, logger, db, ctx)
 
 	if err != nil {
 		log.Fatal(err)
@@ -79,7 +83,9 @@ func TestGetlongURLRequest(t *testing.T) {
 	conf.ServAddr = ":8080"
 	conf.BaseAddr = "http://localhost:8080/"
 	logger, err := logg.InitLog(conf)
-	wS := NewWorkStruct(uS, conf, logger)
+	ctx := context.TODO()
+	db := postgresql.NewClientDBStruct(conf.DBdsn, logger)
+	wS := NewWorkStruct(uS, conf, logger, db, ctx)
 
 	if err != nil {
 		log.Fatal(err)
@@ -134,7 +140,9 @@ func TestPostlongURLRequestApi(t *testing.T) {
 	conf.ServAddr = ":8080"
 	conf.BaseAddr = "http://localhost:8080/"
 	logger, err := logg.InitLog(conf)
-	wS := NewWorkStruct(uS, conf, logger)
+	ctx := context.TODO()
+	db := postgresql.NewClientDBStruct(conf.DBdsn, logger)
+	wS := NewWorkStruct(uS, conf, logger, db, ctx)
 
 	if err != nil {
 		log.Fatal(err)

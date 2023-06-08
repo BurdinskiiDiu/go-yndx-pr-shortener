@@ -70,6 +70,7 @@ func NewRouter(wS *handler.WorkStruct, logger *zap.Logger) chi.Router {
 		wS.GetLongURL(id).ServeHTTP(w, r)
 	})
 	rt.Post("/api/shorten", wS.PostURLApi())
+	rt.Get("/ping", wS.GetDBPing())
 	return rt
 }
 

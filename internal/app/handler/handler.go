@@ -2,6 +2,7 @@ package handler
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -12,6 +13,7 @@ import (
 
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/config"
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/gzp"
+	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/postgresql"
 	"go.uber.org/zap"
 )
 
@@ -44,6 +46,18 @@ type WorkStruct struct {
 	US     URLStore
 	Cf     *config.Config
 	logger *zap.Logger
+	db     *postgresql.ClientDBStruct
+	ctx    context.Context
+}
+
+func NewWorkStruct(uS URLStore, cf *config.Config, logger *zap.Logger, db *postgresql.ClientDBStruct, ctx context.Context) *WorkStruct {
+	return &WorkStruct{
+		US:     uS,
+		Cf:     cf,
+		logger: logger,
+		db:     db,
+		ctx:    ctx,
+	}
 }
 
 func (wS *WorkStruct) CreateShortURL(longURL string) (string, error) {
@@ -59,14 +73,6 @@ func (wS *WorkStruct) CreateShortURL(longURL string) (string, error) {
 		break
 	}
 	return shrtURL, errPSU
-}
-
-func NewWorkStruct(uS URLStore, cf *config.Config, logger *zap.Logger) *WorkStruct {
-	return &WorkStruct{
-		US:     uS,
-		Cf:     cf,
-		logger: logger,
-	}
 }
 
 func (wS *WorkStruct) PostLongURL() http.HandlerFunc {
@@ -230,5 +236,16 @@ func (wS *WorkStruct) GZipMiddleware(h http.Handler) http.Handler {
 		wS.logger.Debug("response", zap.String("response", r.RequestURI))
 
 		h.ServeHTTP(ow, r)
+	})
+}
+
+//db handler
+
+func (wS *WorkStruct) GetDBPing() http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if err := wS.db.Ping(wS.ctx); err != nil {
+			wS.logger.Error("getDBping handler error", zap.Error(err))
+			return
+		}
 	})
 }
