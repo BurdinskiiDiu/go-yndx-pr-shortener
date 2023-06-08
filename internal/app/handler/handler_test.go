@@ -18,16 +18,17 @@ import (
 )
 
 func TestURLShortenerRequest(t *testing.T) {
-
+	conf := new(config.Config)
+	logger, err := logg.InitLog(conf)
 	urlStr := make(map[string]string)
 	urlStr["abcdefj"] = "http://yandex.practicum.com"
-	uS := store.NewURLStorageTest(&urlStr)
-	conf := new(config.Config)
+	uS := store.NewURLStorageTest(&urlStr, logger)
+
 	conf.ServAddr = ":8080"
 	conf.BaseAddr = "http://localhost:8080/"
-	logger, err := logg.InitLog(conf)
+
 	ctx := context.TODO()
-	db := postgresql.NewClientDBStruct(conf.DBdsn, logger)
+	db := postgresql.NewClientDBStruct(ctx, conf.DBdsn, logger)
 	wS := NewWorkStruct(uS, conf, logger, db, ctx)
 
 	if err != nil {
@@ -76,15 +77,17 @@ func TestURLShortenerRequest(t *testing.T) {
 }
 
 func TestGetlongURLRequest(t *testing.T) {
+	conf := new(config.Config)
+	logger, err := logg.InitLog(conf)
 	urlStr := make(map[string]string)
 	urlStr["abcdefj"] = "http://yandex.practicum.com"
-	uS := store.NewURLStorageTest(&urlStr)
-	conf := new(config.Config)
+	uS := store.NewURLStorageTest(&urlStr, logger)
+
 	conf.ServAddr = ":8080"
 	conf.BaseAddr = "http://localhost:8080/"
-	logger, err := logg.InitLog(conf)
+
 	ctx := context.TODO()
-	db := postgresql.NewClientDBStruct(conf.DBdsn, logger)
+	db := postgresql.NewClientDBStruct(ctx, conf.DBdsn, logger)
 	wS := NewWorkStruct(uS, conf, logger, db, ctx)
 
 	if err != nil {
@@ -133,15 +136,17 @@ func TestGetlongURLRequest(t *testing.T) {
 }
 
 func TestPostlongURLRequestApi(t *testing.T) {
+	conf := new(config.Config)
+	logger, err := logg.InitLog(conf)
 	urlStr := make(map[string]string)
 	urlStr["abcdefj"] = "http://yandex.practicum.com"
-	uS := store.NewURLStorageTest(&urlStr)
-	conf := new(config.Config)
+	uS := store.NewURLStorageTest(&urlStr, logger)
+
 	conf.ServAddr = ":8080"
 	conf.BaseAddr = "http://localhost:8080/"
-	logger, err := logg.InitLog(conf)
+
 	ctx := context.TODO()
-	db := postgresql.NewClientDBStruct(conf.DBdsn, logger)
+	db := postgresql.NewClientDBStruct(ctx, conf.DBdsn, logger)
 	wS := NewWorkStruct(uS, conf, logger, db, ctx)
 
 	if err != nil {

@@ -18,14 +18,16 @@ type URLStorage struct {
 	mutex      *sync.Mutex
 	uuid       int
 	dbFileName string
+	logger     *zap.Logger
 }
 
-func NewURLStorageTest(us *map[string]string) *URLStorage {
+func NewURLStorageTest(us *map[string]string, logger *zap.Logger) *URLStorage {
 	return &URLStorage{
 		urlStr:     *us,
 		mutex:      new(sync.Mutex),
 		uuid:       0,
 		dbFileName: "",
+		logger:     logger,
 	}
 }
 
@@ -38,7 +40,7 @@ func NewURLStorage() *URLStorage {
 	}
 }
 
-func (uS *URLStorage) PostShortURL(shortURL, longURL string, logger *zap.Logger) error {
+func (uS *URLStorage) PostShortURL(shortURL, longURL string) error {
 	uS.mutex.Lock()
 	defer uS.mutex.Unlock()
 	_, ok := uS.urlStr[shortURL]
@@ -46,10 +48,10 @@ func (uS *URLStorage) PostShortURL(shortURL, longURL string, logger *zap.Logger)
 		return errors.New("this short url is already involved")
 	}
 	uS.urlStr[shortURL] = longURL
-	logger.Debug("storefile addr from post req", zap.String("path", uS.dbFileName))
-	err := uS.FileFilling(shortURL, longURL, logger)
+	uS.logger.Debug("storefile addr from post req", zap.String("path", uS.dbFileName))
+	err := uS.FileFilling(shortURL, longURL)
 	if err != nil {
-		logger.Error("file filling error")
+		uS.logger.Error("file filling error")
 	}
 	return nil
 }
@@ -70,14 +72,14 @@ type URLDataStruct struct {
 	LngURL  string `json:"original_url"`
 }
 
-func (uS *URLStorage) GetStoreBackup(cf *config.Config, logger *zap.Logger) error {
+func (uS *URLStorage) GetStoreBackup(cf *config.Config) error {
 	uS.dbFileName = cf.FileStorePath
 
-	logger.Debug("storefile addr from createfile", zap.String("path", uS.dbFileName))
+	uS.logger.Debug("storefile addr from createfile", zap.String("path", uS.dbFileName))
 
 	file, err := os.OpenFile(uS.dbFileName, os.O_RDONLY|os.O_CREATE, 0777)
 	if err != nil {
-		logger.Error("open storeFile error")
+		uS.logger.Error("open storeFile error")
 		return fmt.Errorf("open store_file error: %w", err)
 
 	}
@@ -90,7 +92,7 @@ func (uS *URLStorage) GetStoreBackup(cf *config.Config, logger *zap.Logger) erro
 		raw = scanner.Text()
 		err := json.Unmarshal([]byte(raw), urlDataStr)
 		if err != nil {
-			logger.Error("unmarhalling store_file error")
+			uS.logger.Error("unmarhalling store_file error")
 			return err
 		}
 		uS.urlStr[urlDataStr.ShrtURL] = urlDataStr.LngURL
@@ -98,17 +100,17 @@ func (uS *URLStorage) GetStoreBackup(cf *config.Config, logger *zap.Logger) erro
 	if urlDataStr.UUID != "" {
 		uS.uuid, err = strconv.Atoi(urlDataStr.UUID)
 		if err != nil {
-			logger.Error("gettitng last uuid error, file is damaged")
+			uS.logger.Error("gettitng last uuid error, file is damaged")
 		}
 	}
 	return nil
 }
 
-func (uS *URLStorage) FileFilling(shrtURL, lngURL string, logger *zap.Logger) error {
-	logger.Debug("storefile addr from fillins method", zap.String("path", uS.dbFileName))
+func (uS *URLStorage) FileFilling(shrtURL, lngURL string) error {
+	uS.logger.Debug("storefile addr from fillins method", zap.String("path", uS.dbFileName))
 	file, err := os.OpenFile(uS.dbFileName, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0777)
 	if err != nil {
-		logger.Error("open db file error")
+		uS.logger.Error("open db file error")
 		return fmt.Errorf("open db file error: %w", err)
 	}
 	defer file.Close()

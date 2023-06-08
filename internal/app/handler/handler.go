@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"math/rand"
@@ -18,7 +19,7 @@ import (
 )
 
 type URLStore interface {
-	PostShortURL(string, string, *zap.Logger) error
+	PostShortURL(string, string) error
 	GetLongURL(string) (string, error)
 }
 
@@ -64,11 +65,23 @@ func (wS *WorkStruct) CreateShortURL(longURL string) (string, error) {
 	var shrtURL string
 	cntr := 0
 	var errPSU error
+	existing := errors.New("this short url is already involved")
+	shrtURL = shorting()
+	var fn func(string, string) error
+	switch wS.Cf.StoreType {
+	case 1:
+		fn = wS.db.PostShortURL
+	default:
+		fn = wS.US.PostShortURL
+	}
+
 	for cntr < 100 {
-		shrtURL = shorting()
-		if errPSU = wS.US.PostShortURL(shrtURL, longURL, wS.logger); errPSU != nil {
-			cntr++
-			continue
+		if errPSU = fn(shrtURL, longURL); errPSU != nil {
+			if errPSU == existing {
+				cntr++
+				continue
+			}
+			return "", errPSU
 		}
 		break
 	}
@@ -100,7 +113,16 @@ func (wS *WorkStruct) PostLongURL() http.HandlerFunc {
 func (wS *WorkStruct) GetLongURL(srtURL string) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		wS.logger.Debug("shortURL is:", zap.String("shortURL", srtURL))
-		lngURL, err := wS.US.GetLongURL(srtURL)
+
+		var fn func(string) (string, error)
+		switch wS.Cf.StoreType {
+		case 1:
+			fn = wS.db.GetLongURL
+		default:
+			fn = wS.US.GetLongURL
+		}
+
+		lngURL, err := fn(srtURL)
 		wS.logger.Debug("longURL is:", zap.String("longURL", lngURL))
 		if err != nil {
 			wS.logger.Error("getLongURL handler, error while getting long url from store", zap.Error(err))
@@ -243,7 +265,7 @@ func (wS *WorkStruct) GZipMiddleware(h http.Handler) http.Handler {
 
 func (wS *WorkStruct) GetDBPing() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if err := wS.db.Ping(wS.ctx); err != nil {
+		if err := wS.db.Ping(); err != nil {
 			wS.logger.Error("getDBping handler error", zap.Error(err))
 			w.WriteHeader(http.StatusInternalServerError)
 			return

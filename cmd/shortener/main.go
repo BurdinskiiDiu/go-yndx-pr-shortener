@@ -10,6 +10,7 @@ import (
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/logg"
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/postgresql"
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/store"
+	"go.uber.org/zap"
 )
 
 func main() {
@@ -20,15 +21,16 @@ func main() {
 	}
 	ctx := context.Background()
 	uS := store.NewURLStorage()
-	err = uS.GetStoreBackup(conf, logger)
+	err = uS.GetStoreBackup(conf)
 	if err != nil {
 		logger.Fatal(err.Error())
 	}
 
-	db := postgresql.NewClientDBStruct(conf.DBdsn, logger)
+	db := postgresql.NewClientDBStruct(ctx, conf.DBdsn, logger)
 	err = db.Create()
 	if err != nil {
-		logger.Fatal(err.Error())
+		logger.Error("creating db err", zap.Error(err))
+		conf.StoreType = 0
 	}
 
 	wS := handler.NewWorkStruct(uS, conf, logger, db, ctx)

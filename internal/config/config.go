@@ -11,6 +11,7 @@ type Config struct {
 	LogLevel      string
 	FileStorePath string
 	DBdsn         string
+	StoreType     int
 }
 
 func GetConfig() *Config {
@@ -19,7 +20,7 @@ func GetConfig() *Config {
 	flag.StringVar(&cf.BaseAddr, "b", "http://localhost:8080", "base host addr for short URL response")
 	flag.StringVar(&cf.LogLevel, "l", "Info", "log level")
 	flag.StringVar(&cf.FileStorePath, "f", "/tmp/short-url-db.json", "full file name for storing url info")
-	flag.StringVar(&cf.DBdsn, "d", "host=`localhost` user=`user` password=`XXXXXXXX` dbname=`video` sslmode=disable", "dsn dor db connection")
+	flag.StringVar(&cf.DBdsn, "d", "", "dsn dor db connection")
 	flag.Parse()
 
 	if EnvServAddr := os.Getenv("SERVER_ADDRESS"); EnvServAddr != "" {
@@ -40,6 +41,10 @@ func GetConfig() *Config {
 
 	if EnvDBdsn := os.Getenv("DATABASE_DSN"); EnvDBdsn != "" {
 		cf.DBdsn = EnvDBdsn
+	}
+
+	if cf.DBdsn != "" {
+		cf.StoreType = 1
 	}
 
 	return cf
