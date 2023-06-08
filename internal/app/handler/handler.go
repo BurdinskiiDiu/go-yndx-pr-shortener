@@ -79,6 +79,7 @@ func (wS *WorkStruct) CreateShortURL(longURL string) (string, error) {
 		if errPSU = fn(shrtURL, longURL); errPSU != nil {
 			if errPSU == existing {
 				cntr++
+				shrtURL = shorting()
 				continue
 			}
 			return "", errPSU
