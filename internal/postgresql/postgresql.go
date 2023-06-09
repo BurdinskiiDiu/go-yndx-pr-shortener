@@ -47,6 +47,7 @@ func (cDBS *ClientDBStruct) Create() error {
 		cDBS.logger.Error("creating db method, error while creating new db", zap.Error(err))
 		return err
 	}
+	cDBS.logger.Info("db is successfuly created")
 	cDBS.db.SetMaxOpenConns(20)
 	cDBS.db.SetMaxIdleConns(20)
 	cDBS.db.SetConnMaxLifetime(time.Minute * 5)
@@ -60,6 +61,7 @@ func (cDBS *ClientDBStruct) Create() error {
 		cDBS.logger.Error("creating db method, error while creating new table", zap.Error(err))
 		return err
 	}
+	cDBS.logger.Info("table is successfuly created")
 	rows, err := res.RowsAffected()
 	if err != nil {
 		cDBS.logger.Error("Error %s when getting rows affected", zap.Error(err))
