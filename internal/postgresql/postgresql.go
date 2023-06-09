@@ -100,6 +100,7 @@ func (cDBS *ClientDBStruct) PostShortURL(shortURL, longURL string) error {
 			cDBS.logger.Error("insertUTL method, error while scaning", zap.Error(err))
 			return err
 		}
+		cDBS.logger.Info("checking short url, it is not exist, shortURL: " + checkURL)
 		ctx2, canselFunc2 := context.WithTimeout(cDBS.ctx, 3*time.Second)
 		defer canselFunc2()
 		_, err := cDBS.db.ExecContext(ctx2, `INSERT INTO urlstorage(short_url, long_url) VALUES ($N, $N)`, shortURL, longURL)
@@ -121,6 +122,7 @@ func (cDBS *ClientDBStruct) GetLongURL(shortURL string) (string, error) {
 	err := row.Scan(&longURL)
 	if err != nil {
 		cDBS.logger.Error("getLongURL metod, getting longURL error", zap.Error(err))
+		cDBS.logger.Info("getLongURL metod, getting longURL error" + longURL)
 		return "", errors.New("getLongURL metod, getting longURL error:" + err.Error())
 	}
 	return longURL, nil
