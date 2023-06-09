@@ -39,7 +39,7 @@ func NewClientDBStruct(ctx context.Context, dsn string, logger *zap.Logger, cf *
 func (cDBS *ClientDBStruct) Create() error {
 	var err error
 
-	if cDBS.cf.StoreType == 1 {
+	if cDBS.cf.StoreType == 0 {
 		return errors.New("db is not necessary")
 	}
 	cDBS.db, err = sql.Open("pgx", cDBS.dsn)
