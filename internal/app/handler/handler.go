@@ -91,6 +91,7 @@ func (wS *WorkStruct) CreateShortURL(longURL string) (string, error) {
 
 func (wS *WorkStruct) PostLongURL() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		wS.logger.Info("start post request")
 		content, err := io.ReadAll(r.Body)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
