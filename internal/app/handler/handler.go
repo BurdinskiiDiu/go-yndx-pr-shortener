@@ -77,6 +77,7 @@ func (wS *WorkStruct) CreateShortURL(longURL string) (string, error) {
 
 	for cntr < 100 {
 		if errPSU = fn(shrtURL, longURL); errPSU != nil {
+
 			if errPSU == existing {
 				cntr++
 				shrtURL = shorting()
@@ -98,8 +99,8 @@ func (wS *WorkStruct) PostLongURL() http.HandlerFunc {
 		}
 		longURL := string(content)
 		wS.logger.Debug("got post message", zap.String("body", longURL))
-
-		shrtURL, err := wS.CreateShortURL(longURL)
+		var shrtURL string
+		shrtURL, err = wS.CreateShortURL(longURL)
 		if err != nil {
 			wS.logger.Error("error while crearing shortURL", zap.Error(err))
 		}

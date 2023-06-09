@@ -26,7 +26,7 @@ func main() {
 		logger.Fatal(err.Error())
 	}
 
-	db := postgresql.NewClientDBStruct(ctx, conf.DBdsn, logger)
+	db := postgresql.NewClientDBStruct(ctx, conf.DBdsn, logger, conf)
 	err = db.Create()
 	if err != nil {
 		logger.Error("creating db err", zap.Error(err))

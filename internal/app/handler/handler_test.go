@@ -28,7 +28,7 @@ func TestURLShortenerRequest(t *testing.T) {
 	conf.BaseAddr = "http://localhost:8080/"
 
 	ctx := context.TODO()
-	db := postgresql.NewClientDBStruct(ctx, conf.DBdsn, logger)
+	db := postgresql.NewClientDBStruct(ctx, conf.DBdsn, logger, conf)
 	wS := NewWorkStruct(uS, conf, logger, db, ctx)
 
 	if err != nil {
@@ -87,7 +87,7 @@ func TestGetlongURLRequest(t *testing.T) {
 	conf.BaseAddr = "http://localhost:8080/"
 
 	ctx := context.TODO()
-	db := postgresql.NewClientDBStruct(ctx, conf.DBdsn, logger)
+	db := postgresql.NewClientDBStruct(ctx, conf.DBdsn, logger, conf)
 	wS := NewWorkStruct(uS, conf, logger, db, ctx)
 
 	if err != nil {
@@ -146,7 +146,7 @@ func TestPostlongURLRequestApi(t *testing.T) {
 	conf.BaseAddr = "http://localhost:8080/"
 
 	ctx := context.TODO()
-	db := postgresql.NewClientDBStruct(ctx, conf.DBdsn, logger)
+	db := postgresql.NewClientDBStruct(ctx, conf.DBdsn, logger, conf)
 	wS := NewWorkStruct(uS, conf, logger, db, ctx)
 
 	if err != nil {

@@ -6,6 +6,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/config"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"go.uber.org/zap"
 )
@@ -21,19 +22,26 @@ type ClientDBStruct struct {
 	dsn    string
 	logger *zap.Logger
 	ctx    context.Context
+	cf     *config.Config
 }
 
-func NewClientDBStruct(ctx context.Context, dsn string, logger *zap.Logger) *ClientDBStruct {
+func NewClientDBStruct(ctx context.Context, dsn string, logger *zap.Logger, cf *config.Config) *ClientDBStruct {
 	return &ClientDBStruct{
 		db:     new(sql.DB),
 		dsn:    dsn,
 		logger: logger,
 		ctx:    ctx,
+		cf:     cf,
 	}
 }
 
+// ///!!!!!!!!!!!!!!!!!!убрать create, усли это не нужно из конфига
 func (cDBS *ClientDBStruct) Create() error {
 	var err error
+
+	if cDBS.cf.StoreType == 1 {
+		return errors.New("db is not necessary")
+	}
 	cDBS.db, err = sql.Open("pgx", cDBS.dsn)
 	if err != nil {
 		cDBS.logger.Error("creating db method, error while creating new db", zap.Error(err))
