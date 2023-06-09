@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"math/rand"
@@ -65,8 +64,8 @@ func (wS *WorkStruct) CreateShortURL(longURL string) (string, error) {
 	var shrtURL string
 	cntr := 0
 	var errPSU error
-	existing := errors.New("this short url is already involved")
-	shrtURL = shorting()
+	//existing := errors.New("this short url is already involved")
+	//shrtURL = shorting()
 	var fn func(string, string) error
 	switch wS.Cf.StoreType {
 	case 1:
@@ -76,18 +75,18 @@ func (wS *WorkStruct) CreateShortURL(longURL string) (string, error) {
 	}
 
 	for cntr < 100 {
+		shrtURL = shorting()
 		if errPSU = fn(shrtURL, longURL); errPSU != nil {
+			cntr++
+			continue
+			/*if errPSU == existing {
 
-			if errPSU == existing {
-				cntr++
-				shrtURL = shorting()
-				continue
-			}
-			return "", errPSU
+			}*/
+			//return "", errPSU
 		}
 		break
 	}
-	return shrtURL, nil
+	return shrtURL, errPSU
 }
 
 func (wS *WorkStruct) PostLongURL() http.HandlerFunc {
