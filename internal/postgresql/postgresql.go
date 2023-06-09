@@ -52,11 +52,11 @@ func (cDBS *ClientDBStruct) Create() error {
 	cDBS.db.SetMaxIdleConns(20)
 	cDBS.db.SetConnMaxLifetime(time.Minute * 5)
 
-	query := `CREATE TABLE IF NOT EXIST URLStorage(URL_id integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY, short_URL text, long_URL text)`
+	//query := `CREATE TABLE IF NOT EXIST URLStorage(URL_id integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY, short_URL text, long_URL text)`
 	ctx, cansel := context.WithTimeout(cDBS.ctx, 5*time.Second)
 	defer cansel()
 
-	res, err := cDBS.db.ExecContext(ctx, query)
+	res, err := cDBS.db.ExecContext(ctx /*query*/, "CREATE TABLE IF NOT EXIST "+`URLStorage("id" SERIAL PRIMARY KEY, `+`"short_URL" text, "long_URL" text)`)
 	if err != nil {
 		cDBS.logger.Error("creating db method, error while creating new table", zap.Error(err))
 		return err
