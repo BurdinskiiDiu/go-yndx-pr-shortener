@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"strconv"
 	"time"
 
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/config"
@@ -38,10 +39,12 @@ func NewClientDBStruct(ctx context.Context, dsn string, logger *zap.Logger, cf *
 // ///!!!!!!!!!!!!!!!!!!убрать create, усли это не нужно из конфига
 func (cDBS *ClientDBStruct) Create() error {
 	var err error
+	cDBS.logger.Info("cDBS.cf.StoreType: " + strconv.Itoa(cDBS.cf.StoreType))
 
 	if cDBS.cf.StoreType == 0 {
 		return errors.New("db is not necessary")
 	}
+	cDBS.logger.Info("cDBS.dsn: " + cDBS.dsn)
 	cDBS.db, err = sql.Open("pgx", cDBS.dsn)
 	if err != nil {
 		cDBS.logger.Error("creating db method, error while creating new db", zap.Error(err))
