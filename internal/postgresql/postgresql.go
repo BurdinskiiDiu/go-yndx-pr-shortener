@@ -20,16 +20,14 @@ type ClientDB interface {
 
 type ClientDBStruct struct {
 	db     *sql.DB
-	dsn    string
 	logger *zap.Logger
 	ctx    context.Context
 	cf     *config.Config
 }
 
-func NewClientDBStruct(ctx context.Context, dsn string, logger *zap.Logger, cf *config.Config) *ClientDBStruct {
+func NewClientDBStruct(ctx context.Context, logger *zap.Logger, cf *config.Config) *ClientDBStruct {
 	return &ClientDBStruct{
 		db:     new(sql.DB),
-		dsn:    dsn,
 		logger: logger,
 		ctx:    ctx,
 		cf:     cf,
@@ -44,8 +42,8 @@ func (cDBS *ClientDBStruct) Create() error {
 	if cDBS.cf.StoreType == 0 {
 		return errors.New("db is not necessary")
 	}
-	cDBS.logger.Info("cDBS.dsn: " + cDBS.dsn)
-	cDBS.db, err = sql.Open("pgx", cDBS.dsn)
+	cDBS.logger.Info("cDBS.dsn: " + cDBS.cf.DBdsn)
+	cDBS.db, err = sql.Open("pgx", cDBS.cf.DBdsn)
 	if err != nil {
 		cDBS.logger.Error("creating db method, error while creating new db", zap.Error(err))
 		return err
