@@ -98,7 +98,7 @@ func (wS *WorkStruct) PostLongURL() http.HandlerFunc {
 			return
 		}
 		longURL := string(content)
-		wS.logger.Debug("got post message", zap.String("body", longURL))
+		wS.logger.Info("got post message", zap.String("body", longURL))
 		var shrtURL string
 		shrtURL, err = wS.CreateShortURL(longURL)
 		if err != nil {
