@@ -50,11 +50,11 @@ func GetConfig() *Config {
 		log.Println("db connString from flag: " + cf.DBdsn)
 		/*ps := fmt.Sprintf("host=%s user=%s password=%s dbname=%s sslmode=disable",
 		`localhost`, `video`, `XXXXXXXX`, `video`)*/
-		for i, v := range cf.DBdsn {
+		/*for i, v := range cf.DBdsn {
 			fmt.Printf("%d, %s\n", i, string(v))
 			i++
-		}
-		dbDsn := "host=" + cf.DBdsn[:8] + " port=" + cf.DBdsn[38:42] + " user=" + cf.DBdsn[0:8] + " dbname=" + cf.DBdsn[43:52] + " sslmode=disable"
+		}*/
+		dbDsn := "host=postgres port=5432 user=postgres password=postgres dbname=praktikum sslmode=disable"
 		fmt.Println("dbsn from config is: " + dbDsn)
 		cf.DBdsn = dbDsn
 		log.Println("new db connString from flag: " + cf.DBdsn)
