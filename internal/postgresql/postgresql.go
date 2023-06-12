@@ -94,7 +94,7 @@ func (cDBS *ClientDBStruct) Ping() error {
 func (cDBS *ClientDBStruct) PostShortURL(shortURL, longURL string) error {
 	ctx1, canselFunc1 := context.WithTimeout(cDBS.ctx, 1*time.Minute)
 	defer canselFunc1()
-	row := cDBS.db.QueryRowContext(ctx1, `SELECT long_url FROM urlstorage WHERE short_url=$N`, shortURL)
+	row := cDBS.db.QueryRowContext(ctx1, `SELECT long_url FROM urlstorage WHERE short_url=$1`, shortURL)
 	//row := cDBS.db.QueryRow(`SELECT long_url FROM urlstorage WHERE short_url=$1`, shortURL)
 	var checkURL string
 	err := row.Scan(&checkURL)
