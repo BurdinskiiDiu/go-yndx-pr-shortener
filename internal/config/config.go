@@ -51,7 +51,7 @@ func GetConfig() *Config {
 		/*ps := fmt.Sprintf("host=%s user=%s password=%s dbname=%s sslmode=disable",
 		`localhost`, `video`, `XXXXXXXX`, `video`)*/
 		for i, v := range cf.DBdsn {
-			fmt.Printf("%d,  %s", i, string(v))
+			fmt.Printf("%d, %s\n", i, string(v))
 			i++
 		}
 		dbDsn := "host=" + cf.DBdsn[12:16] + " user=" + cf.DBdsn[3:11] + " dbname=" + cf.DBdsn[17:26] + " sslmode=disable"
