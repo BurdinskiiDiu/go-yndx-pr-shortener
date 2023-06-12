@@ -2,6 +2,8 @@ package config
 
 import (
 	"flag"
+	"fmt"
+	"log"
 	"os"
 )
 
@@ -22,7 +24,11 @@ func GetConfig() *Config {
 	flag.StringVar(&cf.FileStorePath, "f", "/tmp/short-url-db.json", "full file name for storing url info")
 	flag.StringVar(&cf.DBdsn, "d", "***postgres:5432/praktikum?sslmode=disable", "dsn for db connection")
 	flag.Parse()
-
+	log.Println("flag a: " + cf.ServAddr)
+	log.Println("flag b: " + cf.BaseAddr)
+	log.Println("flag l: " + cf.LogLevel)
+	log.Println("flag f: " + cf.FileStorePath)
+	log.Println("flag d: " + cf.DBdsn)
 	if EnvServAddr := os.Getenv("SERVER_ADDRESS"); EnvServAddr != "" {
 		cf.ServAddr = EnvServAddr
 	}
@@ -45,17 +51,17 @@ func GetConfig() *Config {
 
 	if cf.DBdsn != "" {
 		cf.StoreType = 1
-		/*log.Println("db connString from flag: " + cf.DBdsn)
-		/*ps := fmt.Sprintf("host=%s user=%s password=%s dbname=%s sslmode=disable",
-		`localhost`, `video`, `XXXXXXXX`, `video`)*/
+		/*log.Println("db connString from flag: " + cf.DBdsn)*/
+		dbDsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s sslmode=disable",
+			`postgres`, `postgres`, `postgres`, `praktikum`)
 		/*for i, v := range cf.DBdsn {
 			fmt.Printf("%d, %s\n", i, string(v))
 			i++
 		}*/ /*
 			dbDsn := "host=postgres port=5432 user=postgres password=postgres dbname=praktikum sslmode=disable"
-			fmt.Println("dbsn from config is: " + dbDsn)
-			cf.DBdsn = dbDsn
-			log.Println("new db connString from flag: " + cf.DBdsn)*/
+			fmt.Println("dbsn from config is: " + dbDsn)*/
+		cf.DBdsn = dbDsn
+		/*log.Println("new db connString from flag: " + cf.DBdsn)*/
 	}
 
 	return cf
