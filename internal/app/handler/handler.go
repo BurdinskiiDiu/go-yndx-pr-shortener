@@ -62,7 +62,7 @@ func NewWorkStruct(uS URLStore, cf *config.Config, logger *zap.Logger, db *postg
 		logger: logger,
 		db:     db,
 		ctx:    ctx,
-		uuid:   0,
+		uuid:   1,
 	}
 }
 
