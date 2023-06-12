@@ -2,6 +2,7 @@ package config
 
 import (
 	"flag"
+	"fmt"
 	"os"
 )
 
@@ -45,6 +46,12 @@ func GetConfig() *Config {
 
 	if cf.DBdsn != "" {
 		cf.StoreType = 1
+		/*ps := fmt.Sprintf("host=%s user=%s password=%s dbname=%s sslmode=disable",
+		`localhost`, `video`, `XXXXXXXX`, `video`)*/
+		dbDsn := fmt.Sprintf("host=%s user=%s dbname=%s sslmode=disable",
+			cf.DBdsn[12:16], cf.DBdsn[3:11], cf.DBdsn[17:26])
+		fmt.Println("dbsn from config is: " + dbDsn)
+		cf.DBdsn = dbDsn
 	}
 
 	return cf
