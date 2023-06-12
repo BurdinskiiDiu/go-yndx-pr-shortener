@@ -58,7 +58,7 @@ func (cDBS *ClientDBStruct) Create() error {
 	defer cansel()
 
 	//res, err := cDBS.db.ExecContext(ctx /*query*/, `CREATE TABLE IF NOT EXISTS urlstorage("id" SERIAL PRIMARY KEY, "short_url" TEXT, "long_url" TEXT)`)
-	res, err := cDBS.db.ExecContext(ctx /*query*/, `CREATE TABLE IF NOT EXISTS urlstorage("id" INT, "short_url" TEXT, "long_url" TEXT)`)
+	res, err := cDBS.db.ExecContext(ctx /*query*/, `CREATE TABLE IF NOT EXISTS urlstorage("id" INTEGER, "short_url" TEXT, "long_url" TEXT)`)
 	//res, err := cDBS.db.Exec( /*query*/ `CREATE TABLE IF NOT EXISTS urlstorage("short_url" TEXT, "long_url" TEXT)`)
 
 	if err != nil {
