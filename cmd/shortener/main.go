@@ -21,10 +21,6 @@ func main() {
 	}
 	ctx := context.Background()
 	uS := store.NewURLStorage(logger)
-	err = uS.GetStoreBackup(conf)
-	if err != nil {
-		logger.Fatal(err.Error())
-	}
 
 	db := postgresql.NewClientDBStruct(ctx, logger, conf)
 	err = db.Create()
@@ -34,7 +30,10 @@ func main() {
 	}
 
 	wS := handler.NewWorkStruct(uS, conf, logger, db, ctx)
-
+	err = wS.GetStoreBackup()
+	if err != nil {
+		logger.Fatal(err.Error())
+	}
 	rt := server.NewServer(wS, logger)
 	rt.Run()
 	defer db.Close()

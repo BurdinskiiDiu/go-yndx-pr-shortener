@@ -1,13 +1,17 @@
 package handler
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"math/rand"
 	"net/http"
+	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -18,7 +22,7 @@ import (
 )
 
 type URLStore interface {
-	PostShortURL(string, string) error
+	PostShortURL(string, string, int) error
 	GetLongURL(string) (string, error)
 }
 
@@ -48,6 +52,7 @@ type WorkStruct struct {
 	logger *zap.Logger
 	db     *postgresql.ClientDBStruct
 	ctx    context.Context
+	uuid   int
 }
 
 func NewWorkStruct(uS URLStore, cf *config.Config, logger *zap.Logger, db *postgresql.ClientDBStruct, ctx context.Context) *WorkStruct {
@@ -57,6 +62,7 @@ func NewWorkStruct(uS URLStore, cf *config.Config, logger *zap.Logger, db *postg
 		logger: logger,
 		db:     db,
 		ctx:    ctx,
+		uuid:   0,
 	}
 }
 
@@ -66,17 +72,17 @@ func (wS *WorkStruct) CreateShortURL(longURL string) (string, error) {
 	var errPSU error
 	//existing := errors.New("this short url is already involved")
 	//shrtURL = shorting()
-	var fn func(string, string) error
+	var fn func(string, string, int) error
 	switch wS.Cf.StoreType {
 	case 1:
 		fn = wS.db.PostShortURL
 	default:
 		fn = wS.US.PostShortURL
 	}
-
+	wS.uuid++
 	for cntr < 100 {
 		shrtURL = shorting()
-		if errPSU = fn(shrtURL, longURL); errPSU != nil {
+		if errPSU = fn(shrtURL, longURL, wS.uuid); errPSU != nil {
 			cntr++
 			continue
 			/*if errPSU == existing {
@@ -85,6 +91,10 @@ func (wS *WorkStruct) CreateShortURL(longURL string) (string, error) {
 			//return "", errPSU
 		}
 		break
+	}
+	if err := wS.FileFilling(shrtURL, longURL); err != nil {
+		wS.logger.Error("createShortURL method, err while filling file", zap.Error(err))
+		return "", err
 	}
 	return shrtURL, errPSU
 }
@@ -274,4 +284,96 @@ func (wS *WorkStruct) GetDBPing() http.HandlerFunc {
 		}
 		w.WriteHeader(http.StatusOK)
 	})
+}
+
+//workStruct init
+
+type URLDataStruct struct {
+	UUID    string `json:"uuid"`
+	ShrtURL string `json:"short_url"`
+	LngURL  string `json:"original_url"`
+}
+
+func (wS *WorkStruct) GetStoreBackup() error {
+	//uS.dbFileName = cf.FileStorePath
+
+	wS.logger.Debug("storefile addr from createfile", zap.String("path", wS.Cf.FileStorePath))
+
+	file, err := os.OpenFile(wS.Cf.FileStorePath, os.O_RDONLY|os.O_CREATE, 0777)
+	if err != nil {
+		wS.logger.Error("open storeFile error")
+		return fmt.Errorf("open store_file error: %w", err)
+
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	urlDataStr := new(URLDataStruct)
+	var raw string
+	for scanner.Scan() {
+		raw = scanner.Text()
+		err := json.Unmarshal([]byte(raw), urlDataStr)
+		if err != nil {
+			wS.logger.Error("unmarhalling store_file error")
+			return err
+		}
+		uuid, err := strconv.Atoi(urlDataStr.UUID)
+		switch wS.Cf.StoreType {
+		case 1:
+
+			if err != nil {
+				return errors.New("error while filling db from backup file, uuid conv to int err:" + err.Error())
+			}
+			err = wS.db.PostShortURL(urlDataStr.ShrtURL, urlDataStr.LngURL, uuid)
+			if err != nil {
+				wS.logger.Error("getStoreBackup error, try to write itno db", zap.Error(err))
+				return err
+			}
+		default:
+			//fn = wS.US.PostShortURL
+			wS.US.PostShortURL(urlDataStr.ShrtURL, urlDataStr.LngURL, uuid)
+			if err != nil {
+				wS.logger.Error("getStoreBackup error, try to write itno map", zap.Error(err))
+				return err
+			}
+			//wS.urlStr[urlDataStr.ShrtURL] = urlDataStr.LngURL
+		}
+
+	}
+	if urlDataStr.UUID != "" {
+		wS.uuid, err = strconv.Atoi(urlDataStr.UUID)
+		if err != nil {
+			wS.logger.Error("gettitng last uuid error, file is damaged")
+			return err
+		}
+	}
+	return nil
+}
+
+func (wS *WorkStruct) FileFilling(shrtURL, lngURL string) error {
+	wS.logger.Debug("storefile addr from fillins method", zap.String("path", wS.Cf.FileStorePath))
+	file, err := os.OpenFile(wS.Cf.FileStorePath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0777)
+	if err != nil {
+		wS.logger.Error("open db file error")
+		return fmt.Errorf("open db file error: %w", err)
+	}
+	defer file.Close()
+	writer := bufio.NewWriter(file)
+	var raw []byte
+	urlDataStr := new(URLDataStruct)
+	//wS.uuid++
+	urlDataStr.UUID = strconv.Itoa(wS.uuid)
+	urlDataStr.ShrtURL = shrtURL
+	urlDataStr.LngURL = lngURL
+	raw, err = json.Marshal(urlDataStr)
+	if err != nil {
+		return fmt.Errorf("marshalling data to db file error: %w", err)
+	}
+	if _, err := writer.Write(raw); err != nil {
+		return fmt.Errorf("writing data to db file error: %w", err)
+	}
+	if err := writer.WriteByte('\n'); err != nil {
+		return fmt.Errorf("making indent in db file error: %w", err)
+	}
+	return writer.Flush()
 }

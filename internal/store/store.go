@@ -1,15 +1,9 @@
 package store
 
 import (
-	"bufio"
-	"encoding/json"
 	"errors"
-	"fmt"
-	"os"
-	"strconv"
 	"sync"
 
-	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/config"
 	"go.uber.org/zap"
 )
 
@@ -41,7 +35,7 @@ func NewURLStorage(logger *zap.Logger) *URLStorage {
 	}
 }
 
-func (uS *URLStorage) PostShortURL(shortURL, longURL string) error {
+func (uS *URLStorage) PostShortURL(shortURL, longURL string, uuid int) error {
 	uS.mutex.Lock()
 	defer uS.mutex.Unlock()
 	_, ok := uS.urlStr[shortURL]
@@ -51,10 +45,10 @@ func (uS *URLStorage) PostShortURL(shortURL, longURL string) error {
 	}
 	uS.urlStr[shortURL] = longURL
 	uS.logger.Debug("storefile addr from post req", zap.String("path", uS.dbFileName))
-	err := uS.FileFilling(shortURL, longURL)
+	/*err := uS.FileFilling(shortURL, longURL)
 	if err != nil {
 		uS.logger.Error("file filling error")
-	}
+	}*/
 	return nil
 }
 
@@ -74,6 +68,7 @@ type URLDataStruct struct {
 	LngURL  string `json:"original_url"`
 }
 
+/*
 func (uS *URLStorage) GetStoreBackup(cf *config.Config) error {
 	uS.dbFileName = cf.FileStorePath
 
@@ -135,3 +130,4 @@ func (uS *URLStorage) FileFilling(shrtURL, lngURL string) error {
 	}
 	return writer.Flush()
 }
+*/
