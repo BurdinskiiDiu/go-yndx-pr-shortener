@@ -54,7 +54,7 @@ func GetConfig() *Config {
 			fmt.Printf("%d, %s\n", i, string(v))
 			i++
 		}
-		dbDsn := "host=" + cf.DBdsn[12:16] + " user=" + cf.DBdsn[3:11] + " dbname=" + cf.DBdsn[17:26] + " sslmode=disable"
+		dbDsn := "host=" + cf.DBdsn[:8] + " port=" + cf.DBdsn[38:42] + " user=" + cf.DBdsn[0:8] + " dbname=" + cf.DBdsn[43:52] + " sslmode=disable"
 		fmt.Println("dbsn from config is: " + dbDsn)
 		cf.DBdsn = dbDsn
 		log.Println("new db connString from flag: " + cf.DBdsn)
