@@ -50,8 +50,7 @@ func GetConfig() *Config {
 		log.Println("db connString from flag: " + cf.DBdsn)
 		/*ps := fmt.Sprintf("host=%s user=%s password=%s dbname=%s sslmode=disable",
 		`localhost`, `video`, `XXXXXXXX`, `video`)*/
-		dbDsn := fmt.Sprintf("host=%s user=%s dbname=%s sslmode=disable",
-			cf.DBdsn[12:16], cf.DBdsn[3:11], cf.DBdsn[17:26])
+		dbDsn := "host=cf.DBdsn[12:16] user=cf.DBdsn[3:11] dbname=cf.DBdsn[17:26] sslmode=disable"
 		fmt.Println("dbsn from config is: " + dbDsn)
 		cf.DBdsn = dbDsn
 		log.Println("new db connString from flag: " + cf.DBdsn)
