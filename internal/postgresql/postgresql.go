@@ -49,16 +49,16 @@ func (cDBS *ClientDBStruct) Create() error {
 		return err
 	}
 	cDBS.logger.Info("db is successfuly created")
-	/*cDBS.db.SetMaxOpenConns(20)
+	cDBS.db.SetMaxOpenConns(20)
 	cDBS.db.SetMaxIdleConns(20)
-	cDBS.db.SetConnMaxLifetime(time.Minute * 5)*/
+	cDBS.db.SetConnMaxLifetime(time.Minute * 5)
 
 	//query := `CREATE TABLE IF NOT EXIST URLStorage(URL_id integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY, short_URL text, long_URL text)`
-	/*ctx, cansel := context.WithTimeout(cDBS.ctx, 5*time.Second)
-	defer cansel()*/
+	ctx, cansel := context.WithTimeout(cDBS.ctx, 5*time.Second)
+	defer cansel()
 
-	//res, err := cDBS.db.ExecContext(ctx /*query*/, `CREATE TABLE IF NOT EXISTS urlstorage("short_url" TEXT, "long_url" TEXT)`)
-	res, err := cDBS.db.Exec( /*query*/ `CREATE TABLE IF NOT EXISTS urlstorage("short_url" TEXT, "long_url" TEXT)`)
+	res, err := cDBS.db.ExecContext(ctx /*query*/, `CREATE TABLE IF NOT EXISTS urlstorage("short_url" TEXT, "long_url" TEXT)`)
+	//res, err := cDBS.db.Exec( /*query*/ `CREATE TABLE IF NOT EXISTS urlstorage("short_url" TEXT, "long_url" TEXT)`)
 
 	if err != nil {
 		cDBS.logger.Error("creating db method, error while creating new table", zap.Error(err))
@@ -92,12 +92,14 @@ func (cDBS *ClientDBStruct) Ping() error {
 }
 
 func (cDBS *ClientDBStruct) PostShortURL(shortURL, longURL string) error {
-	/*ctx1, canselFunc1 := context.WithTimeout(cDBS.ctx, 1*time.Minute)
-	defer canselFunc1()*/
-	//row := cDBS.db.QueryRowContext(ctx1, `SELECT long_url FROM urlstorage WHERE short_url=$N`, shortURL)
-	row := cDBS.db.QueryRow(`SELECT long_url FROM urlstorage WHERE short_url=$1`, shortURL)
+	ctx1, canselFunc1 := context.WithTimeout(cDBS.ctx, 1*time.Minute)
+	defer canselFunc1()
+	row := cDBS.db.QueryRowContext(ctx1, `SELECT long_url FROM urlstorage WHERE short_url=$N`, shortURL)
+	//row := cDBS.db.QueryRow(`SELECT long_url FROM urlstorage WHERE short_url=$1`, shortURL)
 	var checkURL string
 	err := row.Scan(&checkURL)
+	cDBS.logger.Info("this short url from request " + shortURL)
+	cDBS.logger.Info("checked url from db " + checkURL)
 	if err != nil {
 		if err != sql.ErrNoRows {
 			cDBS.logger.Error("insertUTL method, error while scaning", zap.Error(err))
