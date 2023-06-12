@@ -90,9 +90,9 @@ func (cDBS *ClientDBStruct) Ping() error {
 }
 
 func (cDBS *ClientDBStruct) PostShortURL(shortURL, longURL string) error {
-	ctx1, canselFunc1 := context.WithTimeout(cDBS.ctx, 3*time.Second)
+	ctx1, canselFunc1 := context.WithTimeout(cDBS.ctx, 1*time.Minute)
 	defer canselFunc1()
-	row := cDBS.db.QueryRowContext(ctx1, `SELECT "long_url" FROM urlstorage WHERE "short_url"=$N`, shortURL)
+	row := cDBS.db.QueryRowContext(ctx1, `SELECT long_url FROM urlstorage WHERE short_url=$N`, shortURL)
 
 	var checkURL string
 	err := row.Scan(&checkURL)
@@ -102,7 +102,7 @@ func (cDBS *ClientDBStruct) PostShortURL(shortURL, longURL string) error {
 			return err
 		}
 		cDBS.logger.Info("checking short url, it is not exist, shortURL: " + checkURL)
-		ctx2, canselFunc2 := context.WithTimeout(cDBS.ctx, 3*time.Second)
+		ctx2, canselFunc2 := context.WithTimeout(cDBS.ctx, 1*time.Minute)
 		defer canselFunc2()
 		_, err := cDBS.db.ExecContext(ctx2, `INSERT INTO urlstorage(short_url, long_url) VALUES ($N, $N)`, shortURL, longURL)
 		if err != nil {
@@ -115,7 +115,7 @@ func (cDBS *ClientDBStruct) PostShortURL(shortURL, longURL string) error {
 }
 
 func (cDBS *ClientDBStruct) GetLongURL(shortURL string) (string, error) {
-	ctx, canselFunc := context.WithTimeout(cDBS.ctx, 3*time.Second)
+	ctx, canselFunc := context.WithTimeout(cDBS.ctx, 1*time.Minute)
 	defer canselFunc()
 
 	row := cDBS.db.QueryRowContext(ctx, `SELECT long_url FROM urlstorage WHERE short_url=$N`, shortURL)
