@@ -22,7 +22,7 @@ func GetConfig() *Config {
 	flag.StringVar(&cf.BaseAddr, "b", "http://localhost:8080", "base host addr for short URL response")
 	flag.StringVar(&cf.LogLevel, "l", "Info", "log level")
 	flag.StringVar(&cf.FileStorePath, "f", "/tmp/short-url-db.json", "full file name for storing url info")
-	flag.StringVar(&cf.DBdsn, "d", "", "dsn dor db connection")
+	flag.StringVar(&cf.DBdsn, "d", "***postgres:5432/praktikum?sslmode=disable", "dsn for db connection")
 	flag.Parse()
 
 	if EnvServAddr := os.Getenv("SERVER_ADDRESS"); EnvServAddr != "" {
@@ -50,8 +50,8 @@ func GetConfig() *Config {
 		log.Println("db connString from flag: " + cf.DBdsn)
 		/*ps := fmt.Sprintf("host=%s user=%s password=%s dbname=%s sslmode=disable",
 		`localhost`, `video`, `XXXXXXXX`, `video`)*/
-		for i := 0; i < len(cf.DBdsn); {
-			fmt.Println(cf.DBdsn[i])
+		for i, v := range cf.DBdsn {
+			fmt.Printf("%d,  %s", i, string(v))
 			i++
 		}
 		dbDsn := "host=" + cf.DBdsn[12:16] + " user=" + cf.DBdsn[3:11] + " dbname=" + cf.DBdsn[17:26] + " sslmode=disable"
