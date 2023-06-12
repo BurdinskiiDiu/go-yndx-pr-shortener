@@ -44,7 +44,7 @@ func GetConfig() *Config {
 	}
 
 	if cf.DBdsn != "" {
-		/*cf.StoreType = 1
+		cf.StoreType = 1
 		/*log.Println("db connString from flag: " + cf.DBdsn)
 		/*ps := fmt.Sprintf("host=%s user=%s password=%s dbname=%s sslmode=disable",
 		`localhost`, `video`, `XXXXXXXX`, `video`)*/
