@@ -114,6 +114,7 @@ func (cDBS *ClientDBStruct) PostShortURL(shortURL, longURL string) error {
 			cDBS.logger.Error("insertURL method, inserting new row error", zap.Error(err))
 			return err
 		}
+		return nil
 	}
 	cDBS.logger.Info("this short url is already involved")
 	return errors.New("this short url is already involved")
