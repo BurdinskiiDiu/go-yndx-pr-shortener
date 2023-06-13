@@ -110,7 +110,7 @@ func (cDBS *ClientDBStruct) PostShortURL(shortURL, longURL string, uuid int32) e
 		cDBS.logger.Info("checking short url, it is not exist, shortURL: " + checkURL)
 		ctx2, canselFunc2 := context.WithTimeout(cDBS.ctx, 1*time.Minute)
 		defer canselFunc2()
-		_, err := cDBS.db.ExecContext(ctx2, `INSERT INTO urlstorage(id, short_url, long_url) VALUES ($1, $2, &3)`, uuid, shortURL, longURL)
+		_, err := cDBS.db.ExecContext(ctx2, `INSERT INTO urlstorage(id, short_url, long_url) VALUES ($1, $2, $3)`, uuid, shortURL, longURL)
 		if err != nil {
 			cDBS.logger.Error("insertURL method, inserting new row error", zap.Error(err))
 			return err
