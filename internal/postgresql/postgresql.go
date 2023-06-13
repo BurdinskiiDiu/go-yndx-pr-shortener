@@ -71,7 +71,7 @@ func (cDBS *ClientDBStruct) Create() error {
 	}
 
 	//_, err = cDBS.db.Exec(`CREATE UNIQUE INDEX longurl_idx ON urlstorage (long_url)`)
-	_, err = tx.Exec(`CREATE UNIQUE INDEX long_url ON urlstorage (long_url)`)
+	_, err = tx.Exec(`CREATE UNIQUE INDEX longurl_id ON urlstorage (long_url)`)
 	if err != nil {
 		cDBS.logger.Error("creating db method, error while creating UNIQUE INDEX", zap.Error(err))
 		//return err
