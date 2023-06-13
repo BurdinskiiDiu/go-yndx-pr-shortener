@@ -20,21 +20,30 @@ func main() {
 		log.Fatal(err)
 	}
 	ctx := context.Background()
-	uS := store.NewURLStorage(logger)
 
-	db := postgresql.NewClientDBStruct(ctx, logger, conf)
-	err = db.Create()
-	if err != nil {
-		logger.Error("creating db err", zap.Error(err))
-		conf.StoreType = 0
+	dbStore := postgresql.NewClientDBStruct(ctx, logger, conf)
+	mapStore := store.NewURLStorage(logger)
+	var store handler.URLStore
+	if conf.StoreType != 0 {
+		err = dbStore.Create()
+		if err != nil {
+			logger.Error("creating db err", zap.Error(err))
+			conf.StoreType = 0
+			store = mapStore
+		} else {
+			store = dbStore
+		}
+
+	} else {
+		store = mapStore
 	}
 
-	wS := handler.NewWorkStruct(uS, conf, logger, db, ctx)
+	wS := handler.NewWorkStruct(store, conf, logger, ctx)
 	err = wS.GetStoreBackup()
 	if err != nil {
 		logger.Fatal(err.Error())
 	}
 	rt := server.NewServer(wS, logger)
 	rt.Run()
-	defer db.Close()
+	defer dbStore.Close()
 }

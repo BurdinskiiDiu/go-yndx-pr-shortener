@@ -17,13 +17,13 @@ import (
 
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/config"
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/gzp"
-	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/postgresql"
 	"go.uber.org/zap"
 )
 
 type URLStore interface {
 	PostShortURL(string, string, int32) error
 	GetLongURL(string) (string, error)
+	Ping() error
 }
 
 const letterBytes = "abcdifghijklmnopqrstuvwxyzABCDIFGHIJKLMNOPQRSTUVWXYZ"
@@ -50,19 +50,19 @@ type WorkStruct struct {
 	US     URLStore
 	Cf     *config.Config
 	logger *zap.Logger
-	db     *postgresql.ClientDBStruct
-	ctx    context.Context
-	uuid   int32
+	//db     *postgresql.ClientDBStruct
+	ctx  context.Context
+	uuid int32
 }
 
-func NewWorkStruct(uS URLStore, cf *config.Config, logger *zap.Logger, db *postgresql.ClientDBStruct, ctx context.Context) *WorkStruct {
+func NewWorkStruct(uS URLStore, cf *config.Config, logger *zap.Logger /*db *postgresql.ClientDBStruct,*/, ctx context.Context) *WorkStruct {
 	return &WorkStruct{
 		US:     uS,
 		Cf:     cf,
 		logger: logger,
-		db:     db,
-		ctx:    ctx,
-		uuid:   1,
+		//db:     db,
+		ctx:  ctx,
+		uuid: 1,
 	}
 }
 
@@ -72,17 +72,17 @@ func (wS *WorkStruct) CreateShortURL(longURL string) (string, error) {
 	var errPSU error
 	//existing := errors.New("this short url is already involved")
 	//shrtURL = shorting()
-	var fn func(string, string, int32) error
-	switch wS.Cf.StoreType {
+	//var fn func(string, string, int32) error
+	/*switch wS.Cf.StoreType {
 	case 1:
 		fn = wS.db.PostShortURL
 	default:
 		fn = wS.US.PostShortURL
-	}
+	}*/
 	wS.uuid++
 	for cntr < 100 {
 		shrtURL = shorting()
-		if errPSU = fn(shrtURL, longURL, wS.uuid); errPSU != nil {
+		if errPSU = wS.US.PostShortURL(shrtURL, longURL, wS.uuid); errPSU != nil {
 			cntr++
 			continue
 			/*if errPSU == existing {
@@ -126,15 +126,15 @@ func (wS *WorkStruct) GetLongURL(srtURL string) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		wS.logger.Debug("shortURL is:", zap.String("shortURL", srtURL))
 
-		var fn func(string) (string, error)
-		switch wS.Cf.StoreType {
+		//var fn func(string) (string, error)
+		/*switch wS.Cf.StoreType {
 		case 1:
 			fn = wS.db.GetLongURL
 		default:
 			fn = wS.US.GetLongURL
-		}
+		}*/
 
-		lngURL, err := fn(srtURL)
+		lngURL, err := wS.US.GetLongURL(srtURL)
 		wS.logger.Debug("longURL is:", zap.String("longURL", lngURL))
 		if err != nil {
 			wS.logger.Error("getLongURL handler, error while getting long url from store", zap.Error(err))
@@ -277,7 +277,7 @@ func (wS *WorkStruct) GZipMiddleware(h http.Handler) http.Handler {
 
 func (wS *WorkStruct) GetDBPing() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if err := wS.db.Ping(); err != nil {
+		if err := wS.US.Ping(); err != nil {
 			wS.logger.Error("getDBping handler error", zap.Error(err))
 			w.WriteHeader(http.StatusInternalServerError)
 			return
@@ -318,12 +318,20 @@ func (wS *WorkStruct) GetStoreBackup() error {
 			return err
 		}
 		uuid, err := strconv.Atoi(urlDataStr.UUID)
-		switch wS.Cf.StoreType {
+		if err != nil {
+			return errors.New("error while filling db from backup file, uuid conv to int err:" + err.Error())
+		}
+		err = wS.US.PostShortURL(urlDataStr.ShrtURL, urlDataStr.LngURL, int32(uuid))
+		if err != nil {
+			wS.logger.Error("getStoreBackup error, try to write itno db", zap.Error(err))
+			//return err
+		}
+		/*switch wS.Cf.StoreType {
 		case 1:
-
 			if err != nil {
 				return errors.New("error while filling db from backup file, uuid conv to int err:" + err.Error())
 			}
+
 			err = wS.db.PostShortURL(urlDataStr.ShrtURL, urlDataStr.LngURL, int32(uuid))
 			if err != nil {
 				wS.logger.Error("getStoreBackup error, try to write itno db", zap.Error(err))
@@ -337,8 +345,9 @@ func (wS *WorkStruct) GetStoreBackup() error {
 				//return err
 			}
 			//wS.urlStr[urlDataStr.ShrtURL] = urlDataStr.LngURL
-		}
+		}*/
 	}
+
 	if urlDataStr.UUID != "" {
 		uuid, err := strconv.Atoi(urlDataStr.UUID)
 		if err != nil {
@@ -351,7 +360,7 @@ func (wS *WorkStruct) GetStoreBackup() error {
 }
 
 func (wS *WorkStruct) FileFilling(shrtURL, lngURL string) error {
-	wS.logger.Debug("storefile addr from fillins method", zap.String("path", wS.Cf.FileStorePath))
+	wS.logger.Debug("storefile addr from filling method", zap.String("path", wS.Cf.FileStorePath))
 	file, err := os.OpenFile(wS.Cf.FileStorePath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0777)
 	if err != nil {
 		wS.logger.Error("open db file error")

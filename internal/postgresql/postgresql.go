@@ -135,3 +135,15 @@ func (cDBS *ClientDBStruct) GetLongURL(shortURL string) (string, error) {
 	}
 	return longURL, nil
 }
+
+/*
+func (cDBS *ClientDBStruct) GetDBPing() http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if err := cDBS.db.Ping(); err != nil {
+			cDBS.logger.Error("getDBping handler error", zap.Error(err))
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+	})
+}*/

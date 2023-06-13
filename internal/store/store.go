@@ -62,13 +62,20 @@ func (uS *URLStorage) GetLongURL(shrtURL string) (string, error) {
 	return lngURL, nil
 }
 
+func (uS *URLStorage) Ping() error {
+	return nil
+}
+
+/*
 type URLDataStruct struct {
 	UUID    string `json:"uuid"`
 	ShrtURL string `json:"short_url"`
 	LngURL  string `json:"original_url"`
 }
 
-/*
+
+
+
 func (uS *URLStorage) GetStoreBackup(cf *config.Config) error {
 	uS.dbFileName = cf.FileStorePath
 
