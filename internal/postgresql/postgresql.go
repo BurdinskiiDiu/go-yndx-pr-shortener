@@ -53,13 +53,10 @@ func (cDBS *ClientDBStruct) Create() error {
 	cDBS.db.SetMaxIdleConns(20)
 	cDBS.db.SetConnMaxLifetime(time.Minute * 5)
 
-	//query := `CREATE TABLE IF NOT EXIST URLStorage(URL_id integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY, short_URL text, long_URL text)`
 	ctx, cansel := context.WithTimeout(cDBS.ctx, 5*time.Second)
 	defer cansel()
 
-	//res, err := cDBS.db.ExecContext(ctx /*query*/, `CREATE TABLE IF NOT EXISTS urlstorage("id" SERIAL PRIMARY KEY, "short_url" TEXT, "long_url" TEXT)`)
-	res, err := cDBS.db.ExecContext(ctx /*query*/, `CREATE TABLE IF NOT EXISTS urlstorage("id" INTEGER, "short_url" TEXT, "long_url" TEXT)`)
-	//res, err := cDBS.db.Exec( /*query*/ `CREATE TABLE IF NOT EXISTS urlstorage("short_url" TEXT, "long_url" TEXT)`)
+	res, err := cDBS.db.ExecContext(ctx, `CREATE TABLE IF NOT EXISTS urlstorage("id" INTEGER, "short_url" TEXT, "long_url" TEXT)`)
 
 	if err != nil {
 		cDBS.logger.Error("creating db method, error while creating new table", zap.Error(err))
@@ -96,7 +93,6 @@ func (cDBS *ClientDBStruct) PostShortURL(shortURL, longURL string, uuid int32) e
 	ctx1, canselFunc1 := context.WithTimeout(cDBS.ctx, 1*time.Minute)
 	defer canselFunc1()
 	row := cDBS.db.QueryRowContext(ctx1, `SELECT long_url FROM urlstorage WHERE short_url=$1`, shortURL)
-	//row := cDBS.db.QueryRow(`SELECT long_url FROM urlstorage WHERE short_url=$1`, shortURL)
 	var checkURL string
 	err := row.Scan(&checkURL)
 	cDBS.logger.Info("this short url from request " + shortURL)
@@ -135,15 +131,3 @@ func (cDBS *ClientDBStruct) GetLongURL(shortURL string) (string, error) {
 	}
 	return longURL, nil
 }
-
-/*
-func (cDBS *ClientDBStruct) GetDBPing() http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if err := cDBS.db.Ping(); err != nil {
-			cDBS.logger.Error("getDBping handler error", zap.Error(err))
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-		w.WriteHeader(http.StatusOK)
-	})
-}*/

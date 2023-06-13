@@ -51,17 +51,9 @@ func GetConfig() *Config {
 
 	if cf.DBdsn != "" {
 		cf.StoreType = 1
-		/*log.Println("db connString from flag: " + cf.DBdsn)*/
 		dbDsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s sslmode=disable",
 			`postgres`, `postgres`, `postgres`, `praktikum`)
-		/*for i, v := range cf.DBdsn {
-			fmt.Printf("%d, %s\n", i, string(v))
-			i++
-		}*/ /*
-			dbDsn := "host=postgres port=5432 user=postgres password=postgres dbname=praktikum sslmode=disable"
-			fmt.Println("dbsn from config is: " + dbDsn)*/
 		cf.DBdsn = dbDsn
-		/*log.Println("new db connString from flag: " + cf.DBdsn)*/
 	}
 
 	return cf

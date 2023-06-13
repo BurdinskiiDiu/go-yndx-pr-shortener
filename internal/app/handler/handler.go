@@ -50,19 +50,17 @@ type WorkStruct struct {
 	US     URLStore
 	Cf     *config.Config
 	logger *zap.Logger
-	//db     *postgresql.ClientDBStruct
-	ctx  context.Context
-	uuid int32
+	ctx    context.Context
+	uuid   int32
 }
 
-func NewWorkStruct(uS URLStore, cf *config.Config, logger *zap.Logger /*db *postgresql.ClientDBStruct,*/, ctx context.Context) *WorkStruct {
+func NewWorkStruct(uS URLStore, cf *config.Config, logger *zap.Logger, ctx context.Context) *WorkStruct {
 	return &WorkStruct{
 		US:     uS,
 		Cf:     cf,
 		logger: logger,
-		//db:     db,
-		ctx:  ctx,
-		uuid: 1,
+		ctx:    ctx,
+		uuid:   1,
 	}
 }
 
@@ -70,25 +68,12 @@ func (wS *WorkStruct) CreateShortURL(longURL string) (string, error) {
 	var shrtURL string
 	cntr := 0
 	var errPSU error
-	//existing := errors.New("this short url is already involved")
-	//shrtURL = shorting()
-	//var fn func(string, string, int32) error
-	/*switch wS.Cf.StoreType {
-	case 1:
-		fn = wS.db.PostShortURL
-	default:
-		fn = wS.US.PostShortURL
-	}*/
 	wS.uuid++
 	for cntr < 100 {
 		shrtURL = shorting()
 		if errPSU = wS.US.PostShortURL(shrtURL, longURL, wS.uuid); errPSU != nil {
 			cntr++
 			continue
-			/*if errPSU == existing {
-
-			}*/
-			//return "", errPSU
 		}
 		break
 	}
@@ -108,7 +93,7 @@ func (wS *WorkStruct) PostLongURL() http.HandlerFunc {
 			return
 		}
 		longURL := string(content)
-		wS.logger.Info("got post message" + longURL /*, zap.String("body", longURL)*/)
+		wS.logger.Info("got post message" + longURL)
 		var shrtURL string
 		shrtURL, err = wS.CreateShortURL(longURL)
 		if err != nil {
@@ -125,15 +110,6 @@ func (wS *WorkStruct) PostLongURL() http.HandlerFunc {
 func (wS *WorkStruct) GetLongURL(srtURL string) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		wS.logger.Debug("shortURL is:", zap.String("shortURL", srtURL))
-
-		//var fn func(string) (string, error)
-		/*switch wS.Cf.StoreType {
-		case 1:
-			fn = wS.db.GetLongURL
-		default:
-			fn = wS.US.GetLongURL
-		}*/
-
 		lngURL, err := wS.US.GetLongURL(srtURL)
 		wS.logger.Debug("longURL is:", zap.String("longURL", lngURL))
 		if err != nil {
@@ -295,7 +271,6 @@ type URLDataStruct struct {
 }
 
 func (wS *WorkStruct) GetStoreBackup() error {
-	//uS.dbFileName = cf.FileStorePath
 
 	wS.logger.Debug("storefile addr from createfile", zap.String("path", wS.Cf.FileStorePath))
 
@@ -324,28 +299,7 @@ func (wS *WorkStruct) GetStoreBackup() error {
 		err = wS.US.PostShortURL(urlDataStr.ShrtURL, urlDataStr.LngURL, int32(uuid))
 		if err != nil {
 			wS.logger.Error("getStoreBackup error, try to write itno db", zap.Error(err))
-			//return err
 		}
-		/*switch wS.Cf.StoreType {
-		case 1:
-			if err != nil {
-				return errors.New("error while filling db from backup file, uuid conv to int err:" + err.Error())
-			}
-
-			err = wS.db.PostShortURL(urlDataStr.ShrtURL, urlDataStr.LngURL, int32(uuid))
-			if err != nil {
-				wS.logger.Error("getStoreBackup error, try to write itno db", zap.Error(err))
-				//return err
-			}
-		default:
-			//fn = wS.US.PostShortURL
-			wS.US.PostShortURL(urlDataStr.ShrtURL, urlDataStr.LngURL, int32(uuid))
-			if err != nil {
-				wS.logger.Error("getStoreBackup error, try to write itno map", zap.Error(err))
-				//return err
-			}
-			//wS.urlStr[urlDataStr.ShrtURL] = urlDataStr.LngURL
-		}*/
 	}
 
 	if urlDataStr.UUID != "" {
@@ -370,7 +324,6 @@ func (wS *WorkStruct) FileFilling(shrtURL, lngURL string) error {
 	writer := bufio.NewWriter(file)
 	var raw []byte
 	urlDataStr := new(URLDataStruct)
-	//wS.uuid++
 	urlDataStr.UUID = strconv.Itoa(int(wS.uuid))
 	urlDataStr.ShrtURL = shrtURL
 	urlDataStr.LngURL = lngURL
