@@ -327,18 +327,18 @@ func (wS *WorkStruct) GetStoreBackup() error {
 			err = wS.db.PostShortURL(urlDataStr.ShrtURL, urlDataStr.LngURL, int32(uuid))
 			if err != nil {
 				wS.logger.Error("getStoreBackup error, try to write itno db", zap.Error(err))
-				return err
+				//return err
 			}
 		default:
 			//fn = wS.US.PostShortURL
 			wS.US.PostShortURL(urlDataStr.ShrtURL, urlDataStr.LngURL, int32(uuid))
 			if err != nil {
 				wS.logger.Error("getStoreBackup error, try to write itno map", zap.Error(err))
-				return err
+				//return err
 			}
 			//wS.urlStr[urlDataStr.ShrtURL] = urlDataStr.LngURL
 		}
-
+		return nil
 	}
 	if urlDataStr.UUID != "" {
 		uuid, err := strconv.Atoi(urlDataStr.UUID)
