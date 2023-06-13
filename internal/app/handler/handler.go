@@ -72,19 +72,20 @@ func (wS *WorkStruct) CreateShortURL(longURL string) (string, string, error) {
 	for cntr < 100 {
 		shrtURL = shorting()
 		url, errPSU = wS.US.PostShortURL(shrtURL, longURL, wS.uuid)
-		if errPSU != nil {
-			cntr++
-			continue
-		}
 		if url != "" {
 			existURL = longURL
 			break
 		}
+		if errPSU != nil {
+			cntr++
+			continue
+		}
 		break
 	}
-	if url == "" {
+	if url != "" {
 		shrtURL = url
 	}
+	wS.logger.Info("shrtURL is!!!!!!!!!!!" + shrtURL)
 	if err := wS.FileFilling(shrtURL, longURL); err != nil {
 		wS.logger.Error("createShortURL method, err while filling file", zap.Error(err))
 		return "", url, err
