@@ -362,7 +362,8 @@ func (wS *WorkStruct) PostBatch() http.HandlerFunc {
 			return
 		}
 
-		str := string(buf.Bytes())
+		//str := string(buf.Bytes())
+		str := buf.String()
 		cnt := strings.Count(str, "correlation_id")
 		wS.logger.Info("cnt of json rows", zap.Int("cnt", cnt))
 		//batchReqSlice := NewbatchReqSlice(cnt)
