@@ -35,7 +35,7 @@ func NewURLStorage(logger *zap.Logger) *URLStorage {
 	}
 }
 
-func (uS *URLStorage) PostShortURL(shortURL, longURL string, uuid int) error {
+func (uS *URLStorage) PostShortURL(shortURL, longURL string, uuid int32) error {
 	uS.mutex.Lock()
 	defer uS.mutex.Unlock()
 	_, ok := uS.urlStr[shortURL]

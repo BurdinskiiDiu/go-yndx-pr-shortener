@@ -58,7 +58,7 @@ func (cDBS *ClientDBStruct) Create() error {
 	defer cansel()
 
 	//res, err := cDBS.db.ExecContext(ctx /*query*/, `CREATE TABLE IF NOT EXISTS urlstorage("id" SERIAL PRIMARY KEY, "short_url" TEXT, "long_url" TEXT)`)
-	res, err := cDBS.db.ExecContext(ctx /*query*/, `CREATE TABLE IF NOT EXISTS urlstorage("id" INTEGER, "short_url" TEXT, "long_url" TEXT)`)
+	res, err := cDBS.db.ExecContext(ctx /*query*/, `CREATE TABLE IF NOT EXISTS urlstorage("id" INT, "short_url" TEXT, "long_url" TEXT)`)
 	//res, err := cDBS.db.Exec( /*query*/ `CREATE TABLE IF NOT EXISTS urlstorage("short_url" TEXT, "long_url" TEXT)`)
 
 	if err != nil {
@@ -92,7 +92,7 @@ func (cDBS *ClientDBStruct) Ping() error {
 	return nil
 }
 
-func (cDBS *ClientDBStruct) PostShortURL(shortURL, longURL string, uuid int) error {
+func (cDBS *ClientDBStruct) PostShortURL(shortURL, longURL string, uuid int32) error {
 	ctx1, canselFunc1 := context.WithTimeout(cDBS.ctx, 1*time.Minute)
 	defer canselFunc1()
 	row := cDBS.db.QueryRowContext(ctx1, `SELECT long_url FROM urlstorage WHERE short_url=$1`, shortURL)

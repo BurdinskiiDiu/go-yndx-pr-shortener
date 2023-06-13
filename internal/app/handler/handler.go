@@ -22,7 +22,7 @@ import (
 )
 
 type URLStore interface {
-	PostShortURL(string, string, int) error
+	PostShortURL(string, string, int32) error
 	GetLongURL(string) (string, error)
 }
 
@@ -52,7 +52,7 @@ type WorkStruct struct {
 	logger *zap.Logger
 	db     *postgresql.ClientDBStruct
 	ctx    context.Context
-	uuid   int
+	uuid   int32
 }
 
 func NewWorkStruct(uS URLStore, cf *config.Config, logger *zap.Logger, db *postgresql.ClientDBStruct, ctx context.Context) *WorkStruct {
@@ -72,7 +72,7 @@ func (wS *WorkStruct) CreateShortURL(longURL string) (string, error) {
 	var errPSU error
 	//existing := errors.New("this short url is already involved")
 	//shrtURL = shorting()
-	var fn func(string, string, int) error
+	var fn func(string, string, int32) error
 	switch wS.Cf.StoreType {
 	case 1:
 		fn = wS.db.PostShortURL
@@ -324,14 +324,14 @@ func (wS *WorkStruct) GetStoreBackup() error {
 			if err != nil {
 				return errors.New("error while filling db from backup file, uuid conv to int err:" + err.Error())
 			}
-			err = wS.db.PostShortURL(urlDataStr.ShrtURL, urlDataStr.LngURL, uuid)
+			err = wS.db.PostShortURL(urlDataStr.ShrtURL, urlDataStr.LngURL, int32(uuid))
 			if err != nil {
 				wS.logger.Error("getStoreBackup error, try to write itno db", zap.Error(err))
 				return err
 			}
 		default:
 			//fn = wS.US.PostShortURL
-			wS.US.PostShortURL(urlDataStr.ShrtURL, urlDataStr.LngURL, uuid)
+			wS.US.PostShortURL(urlDataStr.ShrtURL, urlDataStr.LngURL, int32(uuid))
 			if err != nil {
 				wS.logger.Error("getStoreBackup error, try to write itno map", zap.Error(err))
 				return err
@@ -341,11 +341,12 @@ func (wS *WorkStruct) GetStoreBackup() error {
 
 	}
 	if urlDataStr.UUID != "" {
-		wS.uuid, err = strconv.Atoi(urlDataStr.UUID)
+		uuid, err := strconv.Atoi(urlDataStr.UUID)
 		if err != nil {
 			wS.logger.Error("gettitng last uuid error, file is damaged")
 			return err
 		}
+		wS.uuid = int32(uuid)
 	}
 	return nil
 }
@@ -362,7 +363,7 @@ func (wS *WorkStruct) FileFilling(shrtURL, lngURL string) error {
 	var raw []byte
 	urlDataStr := new(URLDataStruct)
 	//wS.uuid++
-	urlDataStr.UUID = strconv.Itoa(wS.uuid)
+	urlDataStr.UUID = strconv.Itoa(int(wS.uuid))
 	urlDataStr.ShrtURL = shrtURL
 	urlDataStr.LngURL = lngURL
 	raw, err = json.Marshal(urlDataStr)
