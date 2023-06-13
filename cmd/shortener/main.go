@@ -21,11 +21,12 @@ func main() {
 	}
 	ctx := context.Background()
 
-	dbStore := postgresql.NewClientDBStruct(ctx, logger, conf)
 	mapStore := store.NewURLStorage(logger)
 	var store handler.URLStore
 	if conf.StoreType != 0 {
+		dbStore := postgresql.NewClientDBStruct(ctx, logger, conf)
 		err = dbStore.Create()
+		defer dbStore.Close()
 		if err != nil {
 			logger.Error("creating db err", zap.Error(err))
 			conf.StoreType = 0
@@ -45,5 +46,5 @@ func main() {
 	}
 	rt := server.NewServer(wS, logger)
 	rt.Run()
-	defer dbStore.Close()
+
 }

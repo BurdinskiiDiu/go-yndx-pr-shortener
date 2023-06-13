@@ -71,6 +71,7 @@ func NewRouter(wS *handler.WorkStruct, logger *zap.Logger) chi.Router {
 	})
 	rt.Post("/api/shorten", wS.PostURLApi())
 	rt.Get("/ping", wS.GetDBPing())
+	rt.Post("/api/shorten/batch", wS.PostBatch())
 	return rt
 }
 

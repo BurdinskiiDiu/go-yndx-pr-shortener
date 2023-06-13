@@ -21,7 +21,7 @@ func GetConfig() *Config {
 	flag.StringVar(&cf.BaseAddr, "b", "http://localhost:8080", "base host addr for short URL response")
 	flag.StringVar(&cf.LogLevel, "l", "Info", "log level")
 	flag.StringVar(&cf.FileStorePath, "f", "/tmp/short-url-db.json", "full file name for storing url info")
-	flag.StringVar(&cf.DBdsn, "d", "***postgres:5432/praktikum?sslmode=disable", "dsn for db connection")
+	flag.StringVar(&cf.DBdsn, "d" /*"***postgres:5432/praktikum?sslmode=disable",*/, "", "dsn for db connection")
 	flag.Parse()
 	log.Println("flag a: " + cf.ServAddr)
 	log.Println("flag b: " + cf.BaseAddr)

@@ -271,9 +271,7 @@ type URLDataStruct struct {
 }
 
 func (wS *WorkStruct) GetStoreBackup() error {
-
 	wS.logger.Debug("storefile addr from createfile", zap.String("path", wS.Cf.FileStorePath))
-
 	file, err := os.OpenFile(wS.Cf.FileStorePath, os.O_RDONLY|os.O_CREATE, 0777)
 	if err != nil {
 		wS.logger.Error("open storeFile error")
@@ -338,4 +336,68 @@ func (wS *WorkStruct) FileFilling(shrtURL, lngURL string) error {
 		return fmt.Errorf("making indent in db file error: %w", err)
 	}
 	return writer.Flush()
+}
+
+//PostBatch handler
+
+type batchReqStruct struct {
+	CorrID  string `json:"correlation_id"`
+	OrigURL string `json:"original_url"`
+}
+
+type batchRespStruct struct {
+	CorrID   string `json:"correlation_id"`
+	ShortURL string `json:"short_url"`
+}
+
+func (wS *WorkStruct) PostBatch() http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		//var batchReq batchReqStruct
+		var buf bytes.Buffer
+		_, err := buf.ReadFrom(r.Body)
+		if err != nil {
+			wS.logger.Error("PostBatch handler, read from request body err", zap.Error(err))
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		str := string(buf.Bytes())
+		cnt := strings.Count(str, "correlation_id")
+		wS.logger.Info("cnt of json rows", zap.Int("cnt", cnt))
+		//batchReqSlice := NewbatchReqSlice(cnt)
+
+		urlReq := make([]batchReqStruct, cnt)
+		if err := json.Unmarshal(buf.Bytes(), &urlReq); err != nil {
+			wS.logger.Error("PostBatch handler, unmarshal func err", zap.Error(err))
+			return
+		}
+
+		fmt.Println(urlReq)
+		urlResp := make([]batchRespStruct, cnt)
+
+		for i, v := range urlReq {
+			urlResp[i].CorrID = v.CorrID
+			shortURL, err := wS.CreateShortURL(v.OrigURL)
+			wS.logger.Info("shortURL is " + shortURL)
+			if err != nil {
+				wS.logger.Error("PostBatch handler, creating short url err", zap.Error(err))
+				return
+			}
+			urlResp[i].ShortURL = wS.Cf.BaseAddr + "/" + shortURL
+			wS.logger.Info("результирующий сокращённый URL " + urlResp[i].ShortURL)
+			wS.logger.Info("added is successful, add № is " + strconv.Itoa(i))
+		}
+
+		resp, err := json.Marshal(urlResp)
+		if err != nil {
+			wS.logger.Error("PostBatch handler, marshal func error", zap.Error(err))
+			return
+		}
+
+		wS.logger.Info("response for postApi request", zap.String("response", string(resp)))
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusCreated)
+		w.Write(resp)
+	})
 }
