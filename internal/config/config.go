@@ -50,9 +50,6 @@ func GetConfig() *Config {
 
 	if cf.DBdsn != "" {
 		cf.StoreType = 1
-		/*dbDsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s sslmode=disable",
-			`postgres`, `postgres`, `postgres`, `praktikum`)
-		cf.DBdsn = dbDsn*/
 	}
 
 	return cf
