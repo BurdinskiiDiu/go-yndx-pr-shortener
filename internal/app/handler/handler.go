@@ -71,7 +71,9 @@ func (wS *WorkStruct) CreateShortURL(longURL string) (string, string, error) {
 	wS.uuid++
 	for cntr < 100 {
 		shrtURL = shorting()
+		wS.logger.Info("shrtURL is?????????" + shrtURL)
 		url, errPSU = wS.US.PostShortURL(shrtURL, longURL, wS.uuid)
+		wS.logger.Info("url is??????????" + url)
 		if url != "" {
 			existURL = longURL
 			break
