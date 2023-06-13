@@ -338,7 +338,6 @@ func (wS *WorkStruct) GetStoreBackup() error {
 			}
 			//wS.urlStr[urlDataStr.ShrtURL] = urlDataStr.LngURL
 		}
-		return nil
 	}
 	if urlDataStr.UUID != "" {
 		uuid, err := strconv.Atoi(urlDataStr.UUID)
