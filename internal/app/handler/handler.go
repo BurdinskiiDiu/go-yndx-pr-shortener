@@ -316,9 +316,11 @@ func (wS *WorkStruct) GetStoreBackup() error {
 			return errors.New("error while filling db from backup file, uuid conv to int err:" + err.Error())
 		}
 		var existURL string
+		wS.logger.Info("getting backup")
 		existURL, err = wS.US.PostShortURL(urlDataStr.ShrtURL, urlDataStr.LngURL, int32(uuid))
 		if err != nil && existURL == "" {
 			wS.logger.Error("getStoreBackup error, try to write itno db", zap.Error(err))
+
 		}
 	}
 
