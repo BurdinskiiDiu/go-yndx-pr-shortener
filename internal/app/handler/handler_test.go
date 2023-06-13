@@ -19,6 +19,8 @@ import (
 
 func TestURLShortenerRequest(t *testing.T) {
 	conf := new(config.Config)
+	conf.DBdsn = ""
+	conf.FileStorePath = "/tmp/short-url-db.json"
 	logger, err := logg.InitLog(conf)
 	urlStr := make(map[string]string)
 	urlStr["abcdefj"] = "http://yandex.practicum.com"
@@ -78,6 +80,8 @@ func TestURLShortenerRequest(t *testing.T) {
 
 func TestGetlongURLRequest(t *testing.T) {
 	conf := new(config.Config)
+	conf.DBdsn = ""
+	conf.FileStorePath = "/tmp/short-url-db.json"
 	logger, err := logg.InitLog(conf)
 	urlStr := make(map[string]string)
 	urlStr["abcdefj"] = "http://yandex.practicum.com"
@@ -137,6 +141,8 @@ func TestGetlongURLRequest(t *testing.T) {
 
 func TestPostlongURLRequestApi(t *testing.T) {
 	conf := new(config.Config)
+	conf.DBdsn = ""
+	conf.FileStorePath = "/tmp/short-url-db.json"
 	logger, err := logg.InitLog(conf)
 	urlStr := make(map[string]string)
 	urlStr["abcdefj"] = "http://yandex.practicum.com"
