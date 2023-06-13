@@ -353,7 +353,6 @@ type batchRespStruct struct {
 func (wS *WorkStruct) PostBatch() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-		//var batchReq batchReqStruct
 		var buf bytes.Buffer
 		_, err := buf.ReadFrom(r.Body)
 		if err != nil {
@@ -362,11 +361,9 @@ func (wS *WorkStruct) PostBatch() http.HandlerFunc {
 			return
 		}
 
-		//str := string(buf.Bytes())
 		str := buf.String()
 		cnt := strings.Count(str, "correlation_id")
 		wS.logger.Info("cnt of json rows", zap.Int("cnt", cnt))
-		//batchReqSlice := NewbatchReqSlice(cnt)
 
 		urlReq := make([]batchReqStruct, cnt)
 		if err := json.Unmarshal(buf.Bytes(), &urlReq); err != nil {
