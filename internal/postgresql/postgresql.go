@@ -9,6 +9,7 @@ import (
 
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/config"
 	"github.com/jackc/pgerrcode"
+	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/lib/pq"
 	"go.uber.org/zap"
 )
