@@ -57,14 +57,21 @@ func (cDBS *ClientDBStruct) Create() error {
 
 	ctx, cansel := context.WithTimeout(cDBS.ctx, 5*time.Second)
 	defer cansel()
+	tx, err := cDBS.db.BeginTx(ctx, nil)
+	if err != nil {
+		cDBS.logger.Error("creating db method, error while creating new transaction", zap.Error(err))
+	}
+	defer tx.Rollback()
 
-	res, err := cDBS.db.ExecContext(ctx, `CREATE TABLE IF NOT EXISTS urlstorage("id" INTEGER, "short_url" TEXT, "long_url" TEXT)`)
+	//res, err := cDBS.db.ExecContext(ctx, `CREATE TABLE IF NOT EXISTS urlstorage("id" INTEGER, "short_url" TEXT, "long_url" TEXT)`)
+	res, err := tx.ExecContext(ctx, `CREATE TABLE IF NOT EXISTS urlstorage("id" INTEGER, "short_url" TEXT, "long_url" TEXT)`)
 	if err != nil {
 		cDBS.logger.Error("creating db method, error while creating new table", zap.Error(err))
 		return err
 	}
 
-	_, err = cDBS.db.Exec(`CREATE UNIQUE INDEX longurl_idx ON urlstorage (long_url)`)
+	//_, err = cDBS.db.Exec(`CREATE UNIQUE INDEX longurl_idx ON urlstorage (long_url)`)
+	_, err = tx.Exec(`CREATE UNIQUE INDEX longurl_idx ON urlstorage (long_url)`)
 	if err != nil {
 		cDBS.logger.Error("creating db method, error while creating UNIQUE INDEX", zap.Error(err))
 		//return err
@@ -77,7 +84,9 @@ func (cDBS *ClientDBStruct) Create() error {
 		return err
 	}
 	cDBS.logger.Info("Rows affected when creating table: ", zap.Int64("raws num", rows))
+	tx.Commit()
 	return nil
+
 }
 
 func (cDBS *ClientDBStruct) Close() {
