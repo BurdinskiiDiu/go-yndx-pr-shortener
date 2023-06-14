@@ -128,7 +128,7 @@ func (cDBS *ClientDBStruct) PostShortURL(shortURL, longURL string, uuid int32) (
 	row := cDBS.db.QueryRowContext(ctx1, `SELECT long_url FROM urlstorage WHERE short_url=$1`, shortURL)
 	var checkURL string
 	err := row.Scan(&checkURL)
-	var srErr *pq.Error
+	srErr := new(pq.Error)
 	cDBS.logger.Info("this short url from request " + shortURL)
 	cDBS.logger.Info("checked url from db " + checkURL)
 	if errors.Is(err, srErr) {
