@@ -306,6 +306,8 @@ func (wS *WorkStruct) GetStoreBackup() error {
 	scanner := bufio.NewScanner(file)
 	urlDataStr := new(URLDataStruct)
 	var raw string
+	scanner.Scan()
+	raw = scanner.Text()
 	for scanner.Scan() {
 		wS.logger.Info("getting backup")
 		raw = scanner.Text()
@@ -391,6 +393,7 @@ func (wS *WorkStruct) PostBatch() http.HandlerFunc {
 		str := buf.String()
 		cnt := strings.Count(str, "correlation_id")
 		wS.logger.Info("cnt of json rows", zap.Int("cnt", cnt))
+		wS.logger.Info("cpost batch body", zap.String("cnt", str))
 
 		urlReq := make([]batchReqStruct, cnt)
 		if err := json.Unmarshal(buf.Bytes(), &urlReq); err != nil {
