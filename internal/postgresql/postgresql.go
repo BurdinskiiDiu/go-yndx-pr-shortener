@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/config"
@@ -53,7 +54,7 @@ func (cDBS *ClientDBStruct) Create() error {
 	cDBS.db.SetMaxIdleConns(20)
 	cDBS.db.SetConnMaxLifetime(time.Minute * 5)
 
-	ctx, cansel := context.WithTimeout(cDBS.ctx, 5*time.Second)
+	ctx, cansel := context.WithTimeout(cDBS.ctx, 100*time.Second)
 	defer cansel()
 
 	res, err := cDBS.db.ExecContext(ctx, `CREATE TABLE IF NOT EXISTS urlstorage("id" INTEGER, "short_url" TEXT, "long_url" TEXT)`)
@@ -61,6 +62,12 @@ func (cDBS *ClientDBStruct) Create() error {
 	if err != nil {
 		cDBS.logger.Error("creating db method, error while creating new table", zap.Error(err))
 		return err
+	}
+	ctx2, cansel2 := context.WithTimeout(cDBS.ctx, 100*time.Second)
+	defer cansel2()
+	res, err = cDBS.db.ExecContext(ctx2, `ALTER TABLE urlstorage ADD CONSTRAINT longurl_id UNIQUE (long_url)`)
+	if err != nil {
+		cDBS.logger.Error("creating db method, error while creating unique addition", zap.Error(err))
 	}
 	cDBS.logger.Info("table is successfuly created")
 	rows, err := res.RowsAffected()
@@ -109,6 +116,9 @@ func (cDBS *ClientDBStruct) PostShortURL(shortURL, longURL string, uuid int32) e
 		_, err := cDBS.db.ExecContext(ctx2, `INSERT INTO urlstorage(id, short_url, long_url) VALUES ($1, $2, $3)`, uuid, shortURL, longURL)
 		if err != nil {
 			cDBS.logger.Error("insertURL method, inserting new row error", zap.Error(err))
+			if strings.Contains(err.Error(), "повторяющееся значение ключа нарушает ограничение уникальности") {
+				cDBS.logger.Info("catch this error!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+			}
 			return err
 		}
 		return nil
@@ -130,4 +140,19 @@ func (cDBS *ClientDBStruct) GetLongURL(shortURL string) (string, error) {
 		return "", errors.New("getLongURL metod, getting longURL error:" + err.Error())
 	}
 	return longURL, nil
+}
+
+func (cDBS *ClientDBStruct) GetShortURL(longURL string) (string, error) {
+	ctx, canselFunc := context.WithTimeout(cDBS.ctx, 1*time.Minute)
+	defer canselFunc()
+
+	row := cDBS.db.QueryRowContext(ctx, `SELECT short_url FROM urlstorage WHERE long_url=$1`, longURL)
+	var shortURL string
+	err := row.Scan(&shortURL)
+	if err != nil {
+		cDBS.logger.Error("getLongURL metod, getting longURL error", zap.Error(err))
+		cDBS.logger.Info("getLongURL metod, getting longURL error" + shortURL)
+		return "", errors.New("getLongURL metod, getting longURL error:" + err.Error())
+	}
+	return shortURL, nil
 }

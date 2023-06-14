@@ -23,6 +23,7 @@ import (
 type URLStore interface {
 	PostShortURL(string, string, int32) error
 	GetLongURL(string) (string, error)
+	GetShortURL(string) (string, error)
 	Ping() error
 }
 
@@ -97,7 +98,19 @@ func (wS *WorkStruct) PostLongURL() http.HandlerFunc {
 		var shrtURL string
 		shrtURL, err = wS.CreateShortURL(longURL)
 		if err != nil {
-			wS.logger.Error("error while crearing shortURL", zap.Error(err))
+			if strings.Contains(err.Error(), "повторяющееся значение ключа нарушает ограничение уникальности") {
+				wS.logger.Info(" created shrtURL", zap.String("shrtURL", shrtURL))
+				shrtURL, err = wS.US.GetShortURL(longURL)
+				if err != nil {
+					wS.logger.Error("getting already existed short url error", zap.Error(err))
+					return
+				}
+				wS.logger.Info("existed shrtURL", zap.String("shrtURL", shrtURL))
+			} else {
+				wS.logger.Error("error while crearing shortURL", zap.Error(err))
+				return
+			}
+
 		}
 		bodyResp := wS.Cf.BaseAddr + "/" + shrtURL
 		wS.logger.Info("response body message", zap.String("body", bodyResp))
@@ -143,8 +156,19 @@ func (wS *WorkStruct) PostURLApi() http.HandlerFunc {
 
 		shrtURL, err := wS.CreateShortURL(urlReq.URL)
 		if err != nil {
-			wS.logger.Error("postURLApi handler, creating short url err", zap.Error(err))
-			return
+			if strings.Contains(err.Error(), "повторяющееся значение ключа нарушает ограничение уникальности") {
+				wS.logger.Info(" created shrtURL", zap.String("shrtURL", shrtURL))
+				shrtURL, err = wS.US.GetShortURL(urlReq.URL)
+				if err != nil {
+					wS.logger.Error("getting already existed short url error", zap.Error(err))
+					return
+				}
+				wS.logger.Info("existed shrtURL", zap.String("shrtURL", shrtURL))
+			} else {
+				wS.logger.Error("postURLApi handler, creating short url err", zap.Error(err))
+				return
+			}
+
 		}
 		wS.logger.Debug("short url", zap.String("shortURL", shrtURL))
 		var urlResp URLResp
@@ -379,8 +403,20 @@ func (wS *WorkStruct) PostBatch() http.HandlerFunc {
 			shortURL, err := wS.CreateShortURL(v.OrigURL)
 			wS.logger.Info("shortURL is " + shortURL)
 			if err != nil {
-				wS.logger.Error("PostBatch handler, creating short url err", zap.Error(err))
-				return
+				if strings.Contains(err.Error(), "повторяющееся значение ключа нарушает ограничение уникальности") {
+					wS.logger.Info(" created shrtURL", zap.String("shrtURL", shortURL))
+					shortURL, err = wS.US.GetShortURL(v.OrigURL)
+					if err != nil {
+						wS.logger.Error("getting already existed short url error", zap.Error(err))
+						return
+					}
+					wS.logger.Info("existed shrtURL", zap.String("shrtURL", shortURL))
+				} else {
+					wS.logger.Error("PostBatch handler, creating short url err", zap.Error(err))
+					return
+				}
+				/*wS.logger.Error("PostBatch handler, creating short url err", zap.Error(err))
+				return*/
 			}
 			urlResp[i].ShortURL = wS.Cf.BaseAddr + "/" + shortURL
 			wS.logger.Info("результирующий сокращённый URL " + urlResp[i].ShortURL)
