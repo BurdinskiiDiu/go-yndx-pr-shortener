@@ -170,9 +170,13 @@ func (cDBS *ClientDBStruct) PostShortURL(shortURL, longURL string, uuid int32) (
 		var checkURL string
 		err := row.Scan(&checkURL)
 		if err != nil {
+			cDBS.logger.Info("checking long url in db", zap.String("checkURL", checkURL))
+			cDBS.logger.Info("checking long url in db err", zap.Error(err))
 			if !strings.Contains(err.Error(), "sql: no rows in result set") {
+				cDBS.logger.Info("return already exist short_urlin db", zap.String("checkURL", checkURL))
 				return checkURL, nil
 			}
+			cDBS.logger.Info("insrrting new data: " + shortURL + " " + longURL)
 			_, err = cDBS.db.ExecContext(ctx2, `INSERT INTO urlstorage(id, short_url, long_url) VALUES ($1, $2, $3)`, uuid, shortURL, longURL)
 			if err != nil {
 				cDBS.logger.Error("postShortURL to db method, error while insert new row", zap.Error(err))
