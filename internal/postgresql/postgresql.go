@@ -130,7 +130,8 @@ func (cDBS *ClientDBStruct) PostShortURL(shortURL, longURL string, uuid int32) (
 	err := row.Scan(&checkURL)
 	//srErr := new(pq.Error)
 	cDBS.logger.Info("this short url from request " + shortURL)
-	cDBS.logger.Info("checked url from db " + checkURL)
+	cDBS.logger.Info("this long url from request " + longURL)
+	cDBS.logger.Info("checked long url from db " + checkURL)
 	if err != nil {
 		cDBS.logger.Error("postShortURL to db method, error while scaning", zap.Error(err))
 		//return "", err
