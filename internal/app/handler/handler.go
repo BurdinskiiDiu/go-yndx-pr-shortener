@@ -307,7 +307,8 @@ func (wS *WorkStruct) GetStoreBackup() error {
 	urlDataStr := new(URLDataStruct)
 	var raw string
 	scanner.Scan()
-	raw = scanner.Text()
+	_ = scanner.Text()
+
 	for scanner.Scan() {
 		wS.logger.Info("getting backup")
 		raw = scanner.Text()
