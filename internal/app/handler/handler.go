@@ -98,7 +98,7 @@ func (wS *WorkStruct) PostLongURL() http.HandlerFunc {
 		var shrtURL string
 		shrtURL, err = wS.CreateShortURL(longURL)
 		if err != nil {
-			if strings.Contains(err.Error(), "повторяющееся значение ключа нарушает ограничение уникальности") {
+			if strings.Contains(err.Error(), "duplicate key value violates") {
 				wS.logger.Info(" created shrtURL", zap.String("shrtURL", shrtURL))
 				shrtURL, err = wS.US.GetShortURL(longURL)
 				if err != nil {
@@ -156,7 +156,7 @@ func (wS *WorkStruct) PostURLApi() http.HandlerFunc {
 
 		shrtURL, err := wS.CreateShortURL(urlReq.URL)
 		if err != nil {
-			if strings.Contains(err.Error(), "повторяющееся значение ключа нарушает ограничение уникальности") {
+			if strings.Contains(err.Error(), "duplicate key value violates") {
 				wS.logger.Info(" created shrtURL", zap.String("shrtURL", shrtURL))
 				shrtURL, err = wS.US.GetShortURL(urlReq.URL)
 				if err != nil {
@@ -403,7 +403,7 @@ func (wS *WorkStruct) PostBatch() http.HandlerFunc {
 			shortURL, err := wS.CreateShortURL(v.OrigURL)
 			wS.logger.Info("shortURL is " + shortURL)
 			if err != nil {
-				if strings.Contains(err.Error(), "повторяющееся значение ключа нарушает ограничение уникальности") {
+				if strings.Contains(err.Error(), "duplicate key value violates") {
 					wS.logger.Info(" created shrtURL", zap.String("shrtURL", shortURL))
 					shortURL, err = wS.US.GetShortURL(v.OrigURL)
 					if err != nil {
@@ -419,7 +419,7 @@ func (wS *WorkStruct) PostBatch() http.HandlerFunc {
 				return*/
 			}
 			urlResp[i].ShortURL = wS.Cf.BaseAddr + "/" + shortURL
-			wS.logger.Info("результирующий сокращённый URL " + urlResp[i].ShortURL)
+			wS.logger.Info("result short URL " + urlResp[i].ShortURL)
 			wS.logger.Info("added is successful, add № is " + strconv.Itoa(i))
 		}
 

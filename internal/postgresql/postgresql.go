@@ -117,7 +117,7 @@ func (cDBS *ClientDBStruct) PostShortURL(shortURL, longURL string, uuid int32) e
 		_, err := cDBS.db.ExecContext(ctx2, `INSERT INTO urlstorage(id, short_url, long_url) VALUES ($1, $2, $3)`, uuid, shortURL, longURL)
 		if err != nil {
 			cDBS.logger.Error("insertURL method, inserting new row error", zap.Error(err))
-			if strings.Contains(err.Error(), "повторяющееся значение ключа нарушает ограничение уникальности") {
+			if strings.Contains(err.Error(), "duplicate key value violates") {
 				cDBS.logger.Info("catch this error!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
 			}
 			return err
