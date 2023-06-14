@@ -167,7 +167,7 @@ func (cDBS *ClientDBStruct) PostShortURL(shortURL, longURL string, uuid int32) (
 			cDBS.logger.Error("postShortURL to db method, error while scaning", zap.Error(err))
 			return "", err
 		}
-		return url, err
+		return url, nil
 	}
 
 	return "", err
