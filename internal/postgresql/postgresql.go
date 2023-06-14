@@ -8,9 +8,7 @@ import (
 	"time"
 
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/config"
-	"github.com/jackc/pgerrcode"
 	_ "github.com/jackc/pgx/v5/stdlib"
-	"github.com/lib/pq"
 	"go.uber.org/zap"
 )
 
@@ -147,30 +145,44 @@ func (cDBS *ClientDBStruct) PostShortURL(shortURL, longURL string, uuid int32) (
 
 	ctx2, canselFunc2 := context.WithTimeout(cDBS.ctx, 1*time.Minute)
 	defer canselFunc2()
-	var srErr *pq.Error
+	//var srErr *pq.Error
 	_, err = cDBS.db.ExecContext(ctx2, `INSERT INTO urlstorage(id, short_url, long_url) VALUES ($1, $2, $3) ON CONFLICT (long_url) DO NOTHING`, uuid, shortURL, longURL)
 	if err != nil {
 		cDBS.logger.Error("postShortURL to db method, error while insert", zap.Error(err))
-		if !errors.Is(err, srErr) {
+		return "", err
+		/*if !errors.Is(err, srErr) {
 			cDBS.logger.Info("convert err fail")
 			return "", err
-		}
+		}*/
 	}
-
-	if srErr.Code == pgerrcode.UniqueViolation {
-		ctx3, canselFunc3 := context.WithTimeout(cDBS.ctx, 1*time.Minute)
-		defer canselFunc3()
-		row := cDBS.db.QueryRowContext(ctx3, `SELECT short_url FROM urlstorage WHERE long_url=$1`, longURL)
-		var url string
-		err := row.Scan(&url)
-		if err != nil {
-			cDBS.logger.Error("postShortURL to db method, error while scaning", zap.Error(err))
-			return "", err
+	/*
+		if e := pgerror.UniqueViolation(srErr); e != nil {
+			ctx3, canselFunc3 := context.WithTimeout(cDBS.ctx, 1*time.Minute)
+				defer canselFunc3()
+				row := cDBS.db.QueryRowContext(ctx3, `SELECT short_url FROM urlstorage WHERE long_url=$1`, longURL)
+				var url string
+				err := row.Scan(&url)
+				if err != nil {
+					cDBS.logger.Error("postShortURL to db method, error while scaning", zap.Error(err))
+					return "", err
+				}
+				return url, nil
+		}*/
+	/*
+		if srErr.Code == pgerrcode.UniqueViolation {
+			ctx3, canselFunc3 := context.WithTimeout(cDBS.ctx, 1*time.Minute)
+			defer canselFunc3()
+			row := cDBS.db.QueryRowContext(ctx3, `SELECT short_url FROM urlstorage WHERE long_url=$1`, longURL)
+			var url string
+			err := row.Scan(&url)
+			if err != nil {
+				cDBS.logger.Error("postShortURL to db method, error while scaning", zap.Error(err))
+				return "", err
+			}
+			return url, nil
 		}
-		return url, nil
-	}
 
-	return "", err
+		return "", err*/
 	/*if err != nil {
 		if  !errors.Is(err, sql.ErrNoRows) {
 			cDBS.logger.Error("postShortURL to db method, error while scaning", zap.Error(err))
@@ -213,6 +225,7 @@ func (cDBS *ClientDBStruct) PostShortURL(shortURL, longURL string, uuid int32) (
 	}
 	cDBS.logger.Info("this short url is already involved")
 	return "", errors.New("this short url is already involved")*/
+	return "", nil
 }
 
 func (cDBS *ClientDBStruct) GetLongURL(shortURL string) (string, error) {
