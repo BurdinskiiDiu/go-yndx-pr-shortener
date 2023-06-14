@@ -21,7 +21,7 @@ import (
 )
 
 type URLStore interface {
-	PostShortURL(string, string, int32) (string, error)
+	PostShortURL(string, string, int32) (string, string, error)
 	GetLongURL(string) (string, error)
 	Ping() error
 }
@@ -65,34 +65,27 @@ func NewWorkStruct(uS URLStore, cf *config.Config, logger *zap.Logger, ctx conte
 }
 
 func (wS *WorkStruct) CreateShortURL(longURL string) (string, string, error) {
-	var shrtURL, url, existURL string
+	var shrtURL, shURL, lnURL string
 	cntr := 0
 	var errPSU error
 	wS.uuid++
 	for cntr < 100 {
 		shrtURL = shorting()
-		wS.logger.Info("shrtURL is?????????" + shrtURL)
-		url, errPSU = wS.US.PostShortURL(shrtURL, longURL, wS.uuid)
-		wS.logger.Info("url is??????????" + url)
-		if url != "" {
-			existURL = longURL
-			break
-		}
+		wS.logger.Info("generated shrtURL is" + shrtURL)
+		shURL, lnURL, errPSU = wS.US.PostShortURL(shrtURL, longURL, wS.uuid)
+
 		if errPSU != nil {
 			cntr++
 			continue
 		}
 		break
 	}
-	if url != "" {
-		shrtURL = url
-	}
-	wS.logger.Info("shrtURL is!!!!!!!!!!!" + shrtURL)
-	if err := wS.FileFilling(shrtURL, longURL); err != nil {
+
+	if err := wS.FileFilling(shURL, lnURL); err != nil {
 		wS.logger.Error("createShortURL method, err while filling file", zap.Error(err))
-		return "", url, err
+		//return "", url, err
 	}
-	return shrtURL, existURL, errPSU
+	return shURL, lnURL, errPSU
 }
 
 func (wS *WorkStruct) PostLongURL() http.HandlerFunc {
@@ -159,15 +152,16 @@ func (wS *WorkStruct) PostURLApi() http.HandlerFunc {
 			return
 		}
 		wS.logger.Debug("unmarshaled url from postApi message", zap.String("longURL", urlReq.URL))
-		var existURL string
-		shrtURL, existURL, err := wS.CreateShortURL(urlReq.URL)
+
+		var shURL, lnURL string
+		shURL, lnURL, err = wS.CreateShortURL(urlReq.URL)
 		if err != nil {
 			wS.logger.Error("postURLApi handler, creating short url err", zap.Error(err))
 			return
 		}
-		wS.logger.Debug("short url", zap.String("shortURL", shrtURL))
+		wS.logger.Debug("short url", zap.String("shortURL", shURL))
 		var urlResp URLResp
-		urlResp.Result = wS.Cf.BaseAddr + "/" + shrtURL
+		urlResp.Result = wS.Cf.BaseAddr + "/" + shURL
 		resp, err := json.Marshal(urlResp)
 		if err != nil {
 			wS.logger.Error("postURLApi handler, marshal func error", zap.Error(err))
@@ -176,7 +170,7 @@ func (wS *WorkStruct) PostURLApi() http.HandlerFunc {
 
 		wS.logger.Debug("response for postApi request", zap.String("response", string(resp)))
 		w.Header().Set("Content-Type", "application/json")
-		if existURL != "" {
+		if lnURL != "" {
 			w.WriteHeader(http.StatusConflict)
 		} else {
 			w.WriteHeader(http.StatusCreated)
@@ -321,12 +315,11 @@ func (wS *WorkStruct) GetStoreBackup() error {
 		if err != nil {
 			return errors.New("error while filling db from backup file, uuid conv to int err:" + err.Error())
 		}
-		var existURL string
+		var lnURL string
 
-		existURL, err = wS.US.PostShortURL(urlDataStr.ShrtURL, urlDataStr.LngURL, int32(uuid))
-		if err != nil && existURL == "" {
+		_, lnURL, err = wS.US.PostShortURL(urlDataStr.ShrtURL, urlDataStr.LngURL, int32(uuid))
+		if err != nil && lnURL == "" {
 			wS.logger.Error("getStoreBackup error, try to write itno db", zap.Error(err))
-
 		}
 	}
 

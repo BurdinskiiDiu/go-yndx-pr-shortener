@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"errors"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/config"
@@ -122,6 +121,55 @@ func (mE *modifErr) Error() string {
 	return mE.Err.Error()
 }*/
 
+func (cDBS *ClientDBStruct) PostShortURL(shortURL, longURL string, uuid int32) (string, string, error) {
+	cDBS.logger.Info("start post request")
+	ctx1, canselFunc1 := context.WithTimeout(cDBS.ctx, 1*time.Minute)
+	defer canselFunc1()
+	row := cDBS.db.QueryRowContext(ctx1, `SELECT long_url FROM urlstorage WHERE short_url=$1`, shortURL)
+	var checkURL string
+	err := row.Scan(&checkURL)
+	if err != nil {
+		cDBS.logger.Error("postShortURL to db method, error while scaning long url", zap.Error(err))
+	}
+	cDBS.logger.Info("gotted longurl from db, if exist " + checkURL)
+
+	if checkURL != "" {
+		if checkURL == longURL {
+			cDBS.logger.Error("this data is already exist")
+			return shortURL, checkURL, nil
+		}
+
+		cDBS.logger.Error("need to generate new short_url")
+		return "", "", errors.New("need to generate new short_url")
+	}
+
+	ctx2, canselFunc2 := context.WithTimeout(cDBS.ctx, 1*time.Minute)
+	defer canselFunc2()
+	cDBS.logger.Info("checking short url")
+	row = cDBS.db.QueryRowContext(ctx2, `SELECT short_url FROM urlstorage WHERE long_url=$1`, longURL)
+	err = row.Scan(&checkURL)
+	if err != nil {
+		cDBS.logger.Error("postShortURL to db method, error while scaning short url", zap.Error(err))
+	}
+	cDBS.logger.Info("checking short url from db, if exist " + checkURL)
+
+	if checkURL != "" {
+		cDBS.logger.Error("this long url is already exist wurh such sort_url " + checkURL)
+		return checkURL, longURL, nil
+	}
+	ctx3, canselFunc3 := context.WithTimeout(cDBS.ctx, 1*time.Minute)
+	defer canselFunc3()
+
+	cDBS.logger.Info("adding new data")
+	_, err = cDBS.db.ExecContext(ctx3, `INSERT INTO urlstorage(id, short_url, long_url) VALUES ($1, $2, $3)`, uuid, shortURL, longURL)
+	if err != nil {
+		cDBS.logger.Error("postShortURL to db method, error while insert new data row", zap.Error(err))
+		return "", "", err
+	}
+	return shortURL, longURL, nil
+}
+
+/*
 func (cDBS *ClientDBStruct) PostShortURL(shortURL, longURL string, uuid int32) (string, error) {
 	ctx1, canselFunc1 := context.WithTimeout(cDBS.ctx, 1*time.Minute)
 	defer canselFunc1()
@@ -145,13 +193,13 @@ func (cDBS *ClientDBStruct) PostShortURL(shortURL, longURL string, uuid int32) (
 		return "", err
 	}*/
 
-	/*
-		if srErr != nil {
+/*
+	if srErr != nil {
 
 
-			return "", err
-		}*/
-
+		return "", err
+	}*/
+/*
 	if checkURL != "" {
 		if checkURL == longURL {
 			return checkURL, nil
@@ -170,7 +218,7 @@ func (cDBS *ClientDBStruct) PostShortURL(shortURL, longURL string, uuid int32) (
 		var checkURL string
 		err := row.Scan(&checkURL)
 		if err != nil {
-			cDBS.logger.Info("checking long url in db", zap.String("checkURL", checkURL))
+
 			cDBS.logger.Info("checking long url in db err", zap.Error(err))
 			if !strings.Contains(err.Error(), "sql: no rows in result set") {
 				cDBS.logger.Info("return already exist short_urlin db", zap.String("checkURL", checkURL))
@@ -182,10 +230,11 @@ func (cDBS *ClientDBStruct) PostShortURL(shortURL, longURL string, uuid int32) (
 				cDBS.logger.Error("postShortURL to db method, error while insert new row", zap.Error(err))
 			}
 		}
+		cDBS.logger.Info("checking long url in db", zap.String("checkURL", checkURL))
 	}
 	return "", err
 }
-
+*/
 /*	return "", nil
 }
 	_, err = cDBS.db.ExecContext(ctx2, `INSERT INTO urlstorage(id, short_url, long_url) VALUES ($1, $2, $3) ON CONFLICT (long_url) DO NOTHING`, uuid, shortURL, longURL)
