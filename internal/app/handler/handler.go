@@ -96,9 +96,11 @@ func (wS *WorkStruct) PostLongURL() http.HandlerFunc {
 		longURL := string(content)
 		wS.logger.Info("got post message" + longURL)
 		var shrtURL string
+		var chndStatus bool
 		shrtURL, err = wS.CreateShortURL(longURL)
 		if err != nil {
 			if strings.Contains(err.Error(), "duplicate key value violates") {
+				chndStatus = true
 				wS.logger.Info(" created shrtURL", zap.String("shrtURL", shrtURL))
 				shrtURL, err = wS.US.GetShortURL(longURL)
 				if err != nil {
@@ -115,7 +117,12 @@ func (wS *WorkStruct) PostLongURL() http.HandlerFunc {
 		bodyResp := wS.Cf.BaseAddr + "/" + shrtURL
 		wS.logger.Info("response body message", zap.String("body", bodyResp))
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-		w.WriteHeader(http.StatusCreated)
+		if chndStatus {
+			w.WriteHeader(http.StatusConflict)
+		} else {
+			w.WriteHeader(http.StatusCreated)
+		}
+
 		w.Write([]byte(bodyResp))
 	})
 }
@@ -153,10 +160,11 @@ func (wS *WorkStruct) PostURLApi() http.HandlerFunc {
 			return
 		}
 		wS.logger.Debug("unmarshaled url from postApi message", zap.String("longURL", urlReq.URL))
-
+		var chndStatus bool
 		shrtURL, err := wS.CreateShortURL(urlReq.URL)
 		if err != nil {
 			if strings.Contains(err.Error(), "duplicate key value violates") {
+				chndStatus = true
 				wS.logger.Info(" created shrtURL", zap.String("shrtURL", shrtURL))
 				shrtURL, err = wS.US.GetShortURL(urlReq.URL)
 				if err != nil {
@@ -181,7 +189,11 @@ func (wS *WorkStruct) PostURLApi() http.HandlerFunc {
 
 		wS.logger.Debug("response for postApi request", zap.String("response", string(resp)))
 		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusCreated)
+		if chndStatus {
+			w.WriteHeader(http.StatusConflict)
+		} else {
+			w.WriteHeader(http.StatusCreated)
+		}
 		w.Write(resp)
 	})
 }
@@ -397,7 +409,6 @@ func (wS *WorkStruct) PostBatch() http.HandlerFunc {
 
 		fmt.Println(urlReq)
 		urlResp := make([]batchRespStruct, cnt)
-
 		for i, v := range urlReq {
 			urlResp[i].CorrID = v.CorrID
 			shortURL, err := wS.CreateShortURL(v.OrigURL)
