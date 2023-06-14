@@ -141,10 +141,15 @@ func (cDBS *ClientDBStruct) PostShortURL(shortURL, longURL string, uuid int32) (
 		ctx2, canselFunc2 := context.WithTimeout(cDBS.ctx, 1*time.Minute)
 		defer canselFunc2()
 		/*_, err := cDBS.db.ExecContext(ctx2, `INSERT INTO urlstorage(id, short_url, long_url) VALUES ($1, $2, $3) ON CONFLICT (long_url) DO NOTHING`, uuid, shortURL, longURL)*/
-		_, err := cDBS.db.ExecContext(ctx2, `INSERT INTO urlstorage(id, short_url, long_url) VALUES ($1, $2, $3) ON CONFLICT (long_url)`, uuid, shortURL, longURL)
+		_, err := cDBS.db.ExecContext(ctx2, `INSERT INTO urlstorage(id, short_url, long_url) VALUES ($1, $2, $3) ON CONFLICT`, uuid, shortURL, longURL)
 		if err != nil {
+			cDBS.logger.Error("postShortURL to db method, error while insert", zap.Error(err))
 			var srErr *pq.Error
 			if errors.As(err, &srErr) {
+				//if e := pgerror.UniqueViolation(err); e != nil {
+				// you can use e here to check the fields et al
+				// return SomeThingAlreadyExists
+
 				if srErr.Code == pgerrcode.UniqueViolation {
 					ctx3, canselFunc3 := context.WithTimeout(cDBS.ctx, 1*time.Minute)
 					defer canselFunc3()
