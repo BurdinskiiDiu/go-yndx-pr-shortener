@@ -63,12 +63,6 @@ func (cDBS *ClientDBStruct) Create() error {
 		cDBS.logger.Error("creating db method, error while creating new table", zap.Error(err))
 		return err
 	}
-	ctx2, cansel2 := context.WithTimeout(cDBS.ctx, 100*time.Second)
-	defer cansel2()
-	res, err = cDBS.db.ExecContext(ctx2, `ALTER TABLE urlstorage ADD CONSTRAINT longurl_id UNIQUE (long_url)`)
-	if err != nil {
-		cDBS.logger.Error("creating db method, error while creating unique addition", zap.Error(err))
-	}
 	cDBS.logger.Info("table is successfuly created")
 	rows, err := res.RowsAffected()
 	if err != nil {
@@ -76,6 +70,13 @@ func (cDBS *ClientDBStruct) Create() error {
 		return err
 	}
 	cDBS.logger.Info("Rows affected when creating table: ", zap.Int64("raws num", rows))
+	ctx2, cansel2 := context.WithTimeout(cDBS.ctx, 100*time.Second)
+	defer cansel2()
+	_, err = cDBS.db.ExecContext(ctx2, `ALTER TABLE urlstorage ADD CONSTRAINT longurl_id UNIQUE (long_url)`)
+	if err != nil {
+		cDBS.logger.Error("creating db method, error while creating unique addition", zap.Error(err))
+	}
+
 	return nil
 }
 
