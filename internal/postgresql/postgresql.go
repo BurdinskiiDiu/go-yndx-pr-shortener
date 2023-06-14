@@ -9,6 +9,7 @@ import (
 
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/config"
 	_ "github.com/jackc/pgx/v5/stdlib"
+	"github.com/lib/pq"
 	"go.uber.org/zap"
 )
 
@@ -127,11 +128,16 @@ func (cDBS *ClientDBStruct) PostShortURL(shortURL, longURL string, uuid int32) (
 	row := cDBS.db.QueryRowContext(ctx1, `SELECT long_url FROM urlstorage WHERE short_url=$1`, shortURL)
 	var checkURL string
 	err := row.Scan(&checkURL)
-
+	var srErr *pq.Error
+	if !errors.Is(err, srErr) {
+		cDBS.logger.Info("convert err fail")
+		return "", err
+	}
 	cDBS.logger.Info("this short url from request " + shortURL)
 	cDBS.logger.Info("checked url from db " + checkURL)
-	if err != nil {
+	if srErr != nil {
 		cDBS.logger.Error("postShortURL to db method, error while scaning", zap.Error(err))
+		cDBS.logger.Info("err code is", zap.String("code", string(srErr.Code)))
 		return "", err
 	}
 
