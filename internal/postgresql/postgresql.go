@@ -168,6 +168,9 @@ func (cDBS *ClientDBStruct) PostShortURL(shortURL, longURL string, uuid int32) (
 		}
 		return "", nil
 	}
+	if checkURL == longURL {
+		return checkURL, errors.New("this short url is already involved")
+	}
 	cDBS.logger.Info("this short url is already involved")
 	return "", errors.New("this short url is already involved")
 }
