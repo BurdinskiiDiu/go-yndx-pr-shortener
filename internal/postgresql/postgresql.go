@@ -151,7 +151,7 @@ func (cDBS *ClientDBStruct) PostShortURL(shortURL, longURL string, uuid int32) (
 	_, err = cDBS.db.ExecContext(ctx2, `INSERT INTO urlstorage(id, short_url, long_url) VALUES ($1, $2, $3) ON CONFLICT (long_url) DO NOTHING`, uuid, shortURL, longURL)
 	if err != nil {
 		cDBS.logger.Error("postShortURL to db method, error while insert", zap.Error(err))
-		if !errors.Is(err, sql.ErrNoRows) {
+		if !errors.Is(err, srErr) {
 			cDBS.logger.Info("convert err fail")
 			return "", err
 		}
