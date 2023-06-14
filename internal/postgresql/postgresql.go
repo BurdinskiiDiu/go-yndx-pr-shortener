@@ -165,6 +165,7 @@ func (cDBS *ClientDBStruct) PostShortURL(shortURL, longURL string, uuid int32) (
 	defer canselFunc2()
 	//var srErr *pq.Error
 	if checkURL == "" {
+		cDBS.logger.Info("want to insert data")
 		row := cDBS.db.QueryRowContext(ctx1, `SELECT short_url FROM urlstorage WHERE long_url=$1`, longURL)
 		var checkURL string
 		err := row.Scan(&checkURL)
