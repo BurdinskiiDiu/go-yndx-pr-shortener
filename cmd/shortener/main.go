@@ -43,10 +43,14 @@ func main() {
 	}
 
 	wS := handler.NewWorkStruct(ctx, str, conf, logger)
-	err = wS.GetStoreBackup()
-	if err != nil {
-		logger.Fatal(err.Error())
+	if conf.StoreType == 0 {
+		err = wS.GetStoreBackup()
+		if err != nil {
+			//logger.Fatal(err.Error())
+			logger.Error(err.Error())
+		}
 	}
+
 	rt := server.NewServer(wS, logger)
 	rt.Run()
 
