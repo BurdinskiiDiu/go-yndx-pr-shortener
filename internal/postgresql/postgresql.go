@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"strconv"
 	"strings"
 	"time"
 
@@ -13,11 +12,12 @@ import (
 	"go.uber.org/zap"
 )
 
+/*
 type ClientDB interface {
 	Create() (*sql.DB, error)
 	Ping(context.Context) error
 	Close()
-}
+}*/
 
 type ClientDBStruct struct {
 	db     *sql.DB
@@ -35,14 +35,13 @@ func NewClientDBStruct( /*ctx context.Context,*/ logger *zap.Logger, cf *config.
 	}
 }
 
-// ///!!!!!!!!!!!!!!!!!!убрать create, усли это не нужно из конфига
 func (cDBS *ClientDBStruct) Create() error {
 	var err error
-	cDBS.logger.Info("cDBS.cf.StoreType: " + strconv.Itoa(cDBS.cf.StoreType))
+	/*cDBS.logger.Info("cDBS.cf.StoreType: " + strconv.Itoa(cDBS.cf.StoreType))
 
 	if cDBS.cf.StoreType == 0 {
 		return errors.New("db is not necessary")
-	}
+	}*/
 	cDBS.logger.Info("cDBS.dsn: " + cDBS.cf.DBdsn)
 	cDBS.db, err = sql.Open("pgx", cDBS.cf.DBdsn)
 	if err != nil {

@@ -86,7 +86,7 @@ func (hn *Handlers) CreateShortURL(longURL string) (string, error) {
 
 func (hn *Handlers) PostLongURL() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		hn.logger.Info("start post request")
+		//hn.logger.Info("start post request")
 		content, err := io.ReadAll(r.Body)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -106,7 +106,7 @@ func (hn *Handlers) PostLongURL() http.HandlerFunc {
 					hn.logger.Error("getting already existed short url error", zap.Error(err))
 					return
 				}
-				hn.logger.Info("existed shrtURL", zap.String("shrtURL", shrtURL))
+				hn.logger.Debug("existed shrtURL", zap.String("shrtURL", shrtURL))
 			} else {
 				hn.logger.Error("error while crearing shortURL", zap.Error(err))
 				return
@@ -121,7 +121,6 @@ func (hn *Handlers) PostLongURL() http.HandlerFunc {
 		} else {
 			w.WriteHeader(http.StatusCreated)
 		}
-
 		w.Write([]byte(bodyResp))
 	})
 }
@@ -197,8 +196,7 @@ func (hn *Handlers) PostURLApi() http.HandlerFunc {
 	})
 }
 
-//log middleware
-
+// log middleware
 type (
 	responseData struct {
 		status int
@@ -250,8 +248,7 @@ func (hn *Handlers) LoggingHandler(h http.Handler) http.Handler {
 	})
 }
 
-//log gzip
-
+// gzip middleware
 func (hn *Handlers) GZipMiddleware(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ow := w
@@ -284,8 +281,7 @@ func (hn *Handlers) GZipMiddleware(h http.Handler) http.Handler {
 	})
 }
 
-//db handler
-
+// db handler
 func (hn *Handlers) GetDBPing() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if err := hn.US.Ping(); err != nil {
@@ -297,8 +293,7 @@ func (hn *Handlers) GetDBPing() http.HandlerFunc {
 	})
 }
 
-//workStruct init
-
+// workStruct init
 type URLDataStruct struct {
 	UUID    string `json:"uuid"`
 	ShrtURL string `json:"short_url"`
@@ -311,7 +306,6 @@ func (hn *Handlers) GetStoreBackup() error {
 	if err != nil {
 		hn.logger.Error("open storeFile error")
 		return fmt.Errorf("open store_file error: %w", err)
-
 	}
 	defer file.Close()
 
@@ -373,8 +367,7 @@ func (hn *Handlers) FileFilling(shrtURL, lngURL string) error {
 	return writer.Flush()
 }
 
-//PostBatch handler
-
+// PostBatch handler
 type batchReqStruct struct {
 	CorrID  string `json:"correlation_id"`
 	OrigURL string `json:"original_url"`
