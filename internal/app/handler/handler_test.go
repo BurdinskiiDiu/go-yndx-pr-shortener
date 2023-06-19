@@ -29,7 +29,7 @@ func TestURLShortenerRequest(t *testing.T) {
 	conf.BaseAddr = "http://localhost:8080/"
 
 	ctx := context.TODO()
-	wS := NewWorkStruct(uS, conf, logger, ctx)
+	wS := NewWorkStruct(ctx, uS, conf, logger)
 
 	if err != nil {
 		log.Fatal(err)
@@ -89,7 +89,7 @@ func TestGetlongURLRequest(t *testing.T) {
 	conf.BaseAddr = "http://localhost:8080/"
 
 	ctx := context.TODO()
-	wS := NewWorkStruct(uS, conf, logger, ctx)
+	wS := NewWorkStruct(ctx, uS, conf, logger)
 
 	if err != nil {
 		log.Fatal(err)
@@ -149,7 +149,7 @@ func TestPostlongURLRequestApi(t *testing.T) {
 	conf.BaseAddr = "http://localhost:8080/"
 
 	ctx := context.TODO()
-	wS := NewWorkStruct(uS, conf, logger, ctx)
+	wS := NewWorkStruct(ctx, uS, conf, logger)
 
 	if err != nil {
 		log.Fatal(err)

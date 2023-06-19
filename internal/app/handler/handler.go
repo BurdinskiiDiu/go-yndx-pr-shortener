@@ -48,14 +48,14 @@ type URLResp struct {
 //handler implementation with methods
 
 type WorkStruct struct {
+	ctx    context.Context
 	US     URLStore
 	Cf     *config.Config
 	logger *zap.Logger
-	ctx    context.Context
 	uuid   int32
 }
 
-func NewWorkStruct(uS URLStore, cf *config.Config, logger *zap.Logger, ctx context.Context) *WorkStruct {
+func NewWorkStruct(ctx context.Context, uS URLStore, cf *config.Config, logger *zap.Logger) *WorkStruct {
 	return &WorkStruct{
 		US:     uS,
 		Cf:     cf,
