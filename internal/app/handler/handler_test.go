@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"context"
 	"io"
 	"log"
 	"net/http"
@@ -28,8 +27,8 @@ func TestURLShortenerRequest(t *testing.T) {
 	conf.ServAddr = ":8080"
 	conf.BaseAddr = "http://localhost:8080/"
 
-	ctx := context.TODO()
-	wS := NewWorkStruct(ctx, uS, conf, logger)
+	//ctx := context.TODO()
+	wS := NewWorkStruct( /*ctx,*/ uS, conf, logger)
 
 	if err != nil {
 		log.Fatal(err)
@@ -88,8 +87,8 @@ func TestGetlongURLRequest(t *testing.T) {
 	conf.ServAddr = ":8080"
 	conf.BaseAddr = "http://localhost:8080/"
 
-	ctx := context.TODO()
-	wS := NewWorkStruct(ctx, uS, conf, logger)
+	//ctx := context.TODO()
+	wS := NewWorkStruct( /*ctx,*/ uS, conf, logger)
 
 	if err != nil {
 		log.Fatal(err)
@@ -148,8 +147,8 @@ func TestPostlongURLRequestApi(t *testing.T) {
 	conf.ServAddr = ":8080"
 	conf.BaseAddr = "http://localhost:8080/"
 
-	ctx := context.TODO()
-	wS := NewWorkStruct(ctx, uS, conf, logger)
+	//ctx := context.TODO()
+	wS := NewWorkStruct( /*ctx,*/ uS, conf, logger)
 
 	if err != nil {
 		log.Fatal(err)

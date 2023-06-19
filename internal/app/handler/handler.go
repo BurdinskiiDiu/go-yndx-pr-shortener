@@ -3,7 +3,6 @@ package handler
 import (
 	"bufio"
 	"bytes"
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -21,9 +20,9 @@ import (
 )
 
 type URLStore interface {
-	PostShortURL(string, string, int32) error
-	GetLongURL(string) (string, error)
-	GetShortURL(string) (string, error)
+	PostShortURL(shURL string, lnURL string, uuid int32) error
+	GetLongURL(shURL string) (string, error)
+	GetShortURL(lnURL string) (string, error)
 	Ping() error
 }
 
@@ -48,20 +47,20 @@ type URLResp struct {
 //handler implementation with methods
 
 type WorkStruct struct {
-	ctx    context.Context
+	//ctx    context.Context
 	US     URLStore
 	Cf     *config.Config
 	logger *zap.Logger
 	uuid   int32
 }
 
-func NewWorkStruct(ctx context.Context, uS URLStore, cf *config.Config, logger *zap.Logger) *WorkStruct {
+func NewWorkStruct( /*ctx context.Context,*/ uS URLStore, cf *config.Config, logger *zap.Logger) *WorkStruct {
 	return &WorkStruct{
 		US:     uS,
 		Cf:     cf,
 		logger: logger,
-		ctx:    ctx,
-		uuid:   1,
+		//ctx:    ctx,
+		uuid: 1,
 	}
 }
 

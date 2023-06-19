@@ -22,16 +22,16 @@ type ClientDB interface {
 type ClientDBStruct struct {
 	db     *sql.DB
 	logger *zap.Logger
-	ctx    context.Context
-	cf     *config.Config
+	//ctx    context.Context
+	cf *config.Config
 }
 
-func NewClientDBStruct(ctx context.Context, logger *zap.Logger, cf *config.Config) *ClientDBStruct {
+func NewClientDBStruct( /*ctx context.Context,*/ logger *zap.Logger, cf *config.Config) *ClientDBStruct {
 	return &ClientDBStruct{
 		db:     new(sql.DB),
 		logger: logger,
-		ctx:    ctx,
-		cf:     cf,
+		//ctx:    ctx,
+		cf: cf,
 	}
 }
 
@@ -53,8 +53,8 @@ func (cDBS *ClientDBStruct) Create() error {
 	cDBS.db.SetMaxOpenConns(20)
 	cDBS.db.SetMaxIdleConns(20)
 	cDBS.db.SetConnMaxLifetime(time.Minute * 5)
-
-	ctx, cansel := context.WithTimeout(cDBS.ctx, 100*time.Second)
+	ctxPar := context.TODO()
+	ctx, cansel := context.WithTimeout( /*cDBS.ctx*/ ctxPar, 100*time.Second)
 	defer cansel()
 
 	res, err := cDBS.db.ExecContext(ctx, `CREATE TABLE IF NOT EXISTS urlstorage("id" INTEGER, "short_url" TEXT, "long_url" TEXT, UNIQUE(long_url))`)
@@ -85,7 +85,8 @@ func (cDBS *ClientDBStruct) Close() {
 }
 
 func (cDBS *ClientDBStruct) Ping() error {
-	ctx, canselFunc := context.WithTimeout(cDBS.ctx, 30*time.Second)
+	ctxPar := context.TODO()
+	ctx, canselFunc := context.WithTimeout( /*cDBS.ctx*/ ctxPar, 30*time.Second)
 	defer canselFunc()
 
 	err := cDBS.db.PingContext(ctx)
@@ -98,7 +99,8 @@ func (cDBS *ClientDBStruct) Ping() error {
 }
 
 func (cDBS *ClientDBStruct) PostShortURL(shortURL, longURL string, uuid int32) error {
-	ctx1, canselFunc1 := context.WithTimeout(cDBS.ctx, 1*time.Minute)
+	ctxPar := context.TODO()
+	ctx1, canselFunc1 := context.WithTimeout( /*cDBS.ctx*/ ctxPar, 1*time.Minute)
 	defer canselFunc1()
 	row := cDBS.db.QueryRowContext(ctx1, `SELECT long_url FROM urlstorage WHERE short_url=$1`, shortURL)
 	var checkURL string
@@ -112,7 +114,7 @@ func (cDBS *ClientDBStruct) PostShortURL(shortURL, longURL string, uuid int32) e
 			return err
 		}
 		cDBS.logger.Info("checking short url, it is not exist, shortURL: " + checkURL)
-		ctx2, canselFunc2 := context.WithTimeout(cDBS.ctx, 1*time.Minute)
+		ctx2, canselFunc2 := context.WithTimeout(ctxPar, 1*time.Minute)
 		defer canselFunc2()
 		_, err := cDBS.db.ExecContext(ctx2, `INSERT INTO urlstorage(id, short_url, long_url) VALUES ($1, $2, $3)`, uuid, shortURL, longURL)
 		if err != nil {
@@ -129,7 +131,8 @@ func (cDBS *ClientDBStruct) PostShortURL(shortURL, longURL string, uuid int32) e
 }
 
 func (cDBS *ClientDBStruct) GetLongURL(shortURL string) (string, error) {
-	ctx, canselFunc := context.WithTimeout(cDBS.ctx, 1*time.Minute)
+	ctxPar := context.TODO()
+	ctx, canselFunc := context.WithTimeout( /*cDBS.ctx*/ ctxPar, 1*time.Minute)
 	defer canselFunc()
 
 	row := cDBS.db.QueryRowContext(ctx, `SELECT long_url FROM urlstorage WHERE short_url=$1`, shortURL)
@@ -144,7 +147,8 @@ func (cDBS *ClientDBStruct) GetLongURL(shortURL string) (string, error) {
 }
 
 func (cDBS *ClientDBStruct) GetShortURL(longURL string) (string, error) {
-	ctx, canselFunc := context.WithTimeout(cDBS.ctx, 1*time.Minute)
+	ctxPar := context.TODO()
+	ctx, canselFunc := context.WithTimeout( /*cDBS.ctx*/ ctxPar, 1*time.Minute)
 	defer canselFunc()
 
 	row := cDBS.db.QueryRowContext(ctx, `SELECT short_url FROM urlstorage WHERE long_url=$1`, longURL)
