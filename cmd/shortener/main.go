@@ -42,16 +42,16 @@ func main() {
 		str = mapStore
 	}
 
-	wS := handler.NewWorkStruct( /*ctx,*/ str, conf, logger)
+	hn := handler.NewHandlers( /*ctx,*/ str, conf, logger)
 	if conf.StoreType == 0 {
-		err = wS.GetStoreBackup()
+		err = hn.GetStoreBackup()
 		if err != nil {
 			//logger.Fatal(err.Error())
 			logger.Error(err.Error())
 		}
 	}
 
-	rt := server.NewServer(wS, logger)
+	rt := server.NewServer(hn, logger)
 	rt.Run()
 
 }
