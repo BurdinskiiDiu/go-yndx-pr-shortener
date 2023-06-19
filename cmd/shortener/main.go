@@ -34,8 +34,9 @@ func main() {
 			//str = mapStore
 			logger.Fatal("creating db err", zap.Error(err))
 			//} else {
-			str = dbStore
+
 		}
+		str = dbStore
 
 	} else {
 		mapStore := store.NewURLStorage(logger)
