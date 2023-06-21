@@ -35,17 +35,17 @@ func NewURLStorage(logger *zap.Logger) *URLStorage {
 	}
 }
 
-func (uS *URLStorage) PostShortURL(shortURL, longURL string, uuid int32) error {
+func (uS *URLStorage) PostShortURL(shortURL, longURL string, uuid int32) (string, error) {
 	uS.mutex.Lock()
 	defer uS.mutex.Unlock()
 	_, ok := uS.urlStr[shortURL]
 	if ok {
 		uS.logger.Info("shortURL: " + shortURL + " and longURL: " + uS.urlStr[shortURL])
-		return errors.New("this short url is already involved")
+		return "", errors.New("this short url is already involved")
 	}
 	uS.urlStr[shortURL] = longURL
 	uS.logger.Debug("storefile addr from post req", zap.String("path", uS.dbFileName))
-	return nil
+	return shortURL, nil
 }
 
 func (uS *URLStorage) GetLongURL(shrtURL string) (string, error) {
@@ -62,6 +62,7 @@ func (uS *URLStorage) Ping() error {
 	return nil
 }
 
+/*
 func (uS *URLStorage) GetShortURL(longURL string) (string, error) {
 	uS.mutex.Lock()
 	defer uS.mutex.Unlock()
@@ -74,3 +75,4 @@ func (uS *URLStorage) GetShortURL(longURL string) (string, error) {
 	}
 	return "", errors.New("no shortURL in store")
 }
+*/

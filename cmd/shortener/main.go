@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/app/handler"
@@ -18,14 +19,14 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	//ctx := context.Background()
+	ctx := context.Background()
 
 	//mapStore := store.NewURLStorage(logger)
 	var str handler.URLStore
 	if conf.StoreType != 0 {
 		dbStore := postgresql.NewClientDBStruct( /*ctx,*/ logger, conf)
-		defer dbStore.Close()
-		err = dbStore.Create()
+		defer dbStore.Close(ctx)
+		err = dbStore.Create(ctx)
 
 		if err != nil {
 			//logger.Error("creating db err", zap.Error(err))

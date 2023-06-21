@@ -20,9 +20,9 @@ import (
 )
 
 type URLStore interface {
-	PostShortURL(shURL string, lnURL string, uuid int32) error
+	PostShortURL(shURL string, lnURL string, uuid int32) (string, error)
 	GetLongURL(shURL string) (string, error)
-	GetShortURL(lnURL string) (string, error)
+	//GetShortURL(lnURL string) (string, error)
 	Ping() error
 }
 
@@ -30,9 +30,11 @@ const letterBytes = "abcdifghijklmnopqrstuvwxyzABCDIFGHIJKLMNOPQRSTUVWXYZ"
 
 func shorting() string {
 	b := make([]byte, 8)
+
 	for i := range b {
 		b[i] = letterBytes[rand.Intn(len(letterBytes))]
 	}
+
 	return string(b)
 }
 
@@ -48,10 +50,11 @@ type URLResp struct {
 
 type Handlers struct {
 	//ctx    context.Context
-	US     URLStore
-	Cf     *config.Config
-	logger *zap.Logger
-	uuid   int32
+	US        URLStore
+	Cf        *config.Config
+	logger    *zap.Logger
+	uuid      int32
+	shortings map[string]int
 }
 
 func NewHandlers( /*ctx context.Context,*/ uS URLStore, cf *config.Config, logger *zap.Logger) *Handlers {
@@ -60,28 +63,35 @@ func NewHandlers( /*ctx context.Context,*/ uS URLStore, cf *config.Config, logge
 		Cf:     cf,
 		logger: logger,
 		//ctx:    ctx,
-		uuid: 1,
+		uuid:      0,
+		shortings: make(map[string]int),
 	}
 }
 
-func (hn *Handlers) CreateShortURL(longURL string) (string, error) {
-	var shrtURL string
+func (hn *Handlers) CreateShortURL(longURL string) (shrtURL string, err error) {
+	//var shrtURL string
 	cntr := 0
-	var errPSU error
+	//var errPSU error
 	hn.uuid++
 	for cntr < 100 {
 		shrtURL = shorting()
-		if errPSU = hn.US.PostShortURL(shrtURL, longURL, hn.uuid); errPSU != nil {
-			cntr++
-			continue
+		if shrtURL, err = hn.US.PostShortURL(shrtURL, longURL, hn.uuid); err != nil {
+			if strings.Contains(err.Error(), "shortURL is already exist") {
+				cntr++
+				continue
+			} else if strings.Contains(err.Error(), "longURL is already exist") {
+				break
+			} else {
+				break
+			}
+		}
+		if errFF := hn.FileFilling(shrtURL, longURL); errFF != nil {
+			hn.logger.Error("createShortURL method, err while filling file", zap.Error(errFF))
+			//return "", err
 		}
 		break
 	}
-	if err := hn.FileFilling(shrtURL, longURL); err != nil {
-		hn.logger.Error("createShortURL method, err while filling file", zap.Error(err))
-		return "", err
-	}
-	return shrtURL, errPSU
+	return //shrtURL, errPSU
 }
 
 func (hn *Handlers) PostLongURL() http.HandlerFunc {
@@ -98,6 +108,15 @@ func (hn *Handlers) PostLongURL() http.HandlerFunc {
 		var chndStatus bool
 		shrtURL, err = hn.CreateShortURL(longURL)
 		if err != nil {
+			if strings.Contains(err.Error(), "longURL is already exist") {
+				chndStatus = true
+			} else {
+				hn.logger.Error("postLongURL handler error", zap.Error(err))
+				return
+			}
+		}
+
+		/*if err != nil {
 			if strings.Contains(err.Error(), "duplicate key value violates") {
 				chndStatus = true
 				hn.logger.Info(" created shrtURL", zap.String("shrtURL", shrtURL))
@@ -112,7 +131,8 @@ func (hn *Handlers) PostLongURL() http.HandlerFunc {
 				return
 			}
 
-		}
+		}*/
+
 		bodyResp := hn.Cf.BaseAddr + "/" + shrtURL
 		hn.logger.Info("response body message", zap.String("body", bodyResp))
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
@@ -161,6 +181,15 @@ func (hn *Handlers) PostURLApi() http.HandlerFunc {
 		var chndStatus bool
 		shrtURL, err := hn.CreateShortURL(urlReq.URL)
 		if err != nil {
+			if strings.Contains(err.Error(), "longURL is already exist") {
+				chndStatus = true
+			} else {
+				hn.logger.Error("postLongURL handler error", zap.Error(err))
+				return
+			}
+		}
+
+		/*if err != nil {
 			if strings.Contains(err.Error(), "duplicate key value violates") {
 				chndStatus = true
 				hn.logger.Info(" created shrtURL", zap.String("shrtURL", shrtURL))
@@ -175,7 +204,7 @@ func (hn *Handlers) PostURLApi() http.HandlerFunc {
 				return
 			}
 
-		}
+		}*/
 		hn.logger.Debug("short url", zap.String("shortURL", shrtURL))
 		var urlResp URLResp
 		urlResp.Result = hn.Cf.BaseAddr + "/" + shrtURL
@@ -323,7 +352,7 @@ func (hn *Handlers) GetStoreBackup() error {
 		if err != nil {
 			return errors.New("error while filling db from backup file, uuid conv to int err:" + err.Error())
 		}
-		err = hn.US.PostShortURL(urlDataStr.ShrtURL, urlDataStr.LngURL, int32(uuid))
+		_, err = hn.US.PostShortURL(urlDataStr.ShrtURL, urlDataStr.LngURL, int32(uuid))
 		if err != nil {
 			hn.logger.Error("getStoreBackup error, try to write itno db", zap.Error(err))
 		}
@@ -406,21 +435,26 @@ func (hn *Handlers) PostBatch() http.HandlerFunc {
 			shortURL, err := hn.CreateShortURL(v.OrigURL)
 			hn.logger.Info("shortURL is " + shortURL)
 			if err != nil {
-				if strings.Contains(err.Error(), "duplicate key value violates") {
-					hn.logger.Info(" created shrtURL", zap.String("shrtURL", shortURL))
-					shortURL, err = hn.US.GetShortURL(v.OrigURL)
-					if err != nil {
-						hn.logger.Error("getting already existed short url error", zap.Error(err))
-						return
-					}
-					hn.logger.Info("existed shrtURL", zap.String("shrtURL", shortURL))
-				} else {
-					hn.logger.Error("PostBatch handler, creating short url err", zap.Error(err))
+				hn.logger.Error("PostBatch handler, creating short url err", zap.Error(err))
+				return
+			}
+
+			/*if err != nil {
+			if strings.Contains(err.Error(), "duplicate key value violates") {
+				hn.logger.Info(" created shrtURL", zap.String("shrtURL", shortURL))
+				shortURL, err = hn.US.GetShortURL(v.OrigURL)
+				if err != nil {
+					hn.logger.Error("getting already existed short url error", zap.Error(err))
 					return
 				}
-				/*hn.logger.Error("PostBatch handler, creating short url err", zap.Error(err))
-				return*/
+				hn.logger.Info("existed shrtURL", zap.String("shrtURL", shortURL))
+			} else {
+				hn.logger.Error("PostBatch handler, creating short url err", zap.Error(err))
+				return
 			}
+			/*hn.logger.Error("PostBatch handler, creating short url err", zap.Error(err))
+			return*/
+			/*}*/
 			urlResp[i].ShortURL = hn.Cf.BaseAddr + "/" + shortURL
 			hn.logger.Info("result short URL " + urlResp[i].ShortURL)
 			hn.logger.Info("added is successful, add № is " + strconv.Itoa(i))

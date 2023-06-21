@@ -4,11 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"strings"
 	"time"
 
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/config"
-	_ "github.com/jackc/pgx/v5/stdlib"
+	"github.com/jackc/pgx/v5"
 	"go.uber.org/zap"
 )
 
@@ -18,15 +17,15 @@ type ClientDB interface {
 	Ping(context.Context) error
 	Close()
 }*/
-
-type ClientDBStruct struct {
+//////////////////////old part
+/*type ClientDBStruct struct {
 	db     *sql.DB
 	logger *zap.Logger
 	//ctx    context.Context
 	cf *config.Config
-}
-
-func NewClientDBStruct( /*ctx context.Context,*/ logger *zap.Logger, cf *config.Config) *ClientDBStruct {
+}*/
+/*
+//func NewClientDBStruct( /*ctx context.Context, logger *zap.Logger, cf *config.Config) *ClientDBStruct {
 	return &ClientDBStruct{
 		db:     new(sql.DB),
 		logger: logger,
@@ -34,14 +33,14 @@ func NewClientDBStruct( /*ctx context.Context,*/ logger *zap.Logger, cf *config.
 		cf: cf,
 	}
 }
-
+*/ /*
 func (cDBS *ClientDBStruct) Create() error {
 	var err error
-	/*cDBS.logger.Info("cDBS.cf.StoreType: " + strconv.Itoa(cDBS.cf.StoreType))
+	///*cDBS.logger.Info("cDBS.cf.StoreType: " + strconv.Itoa(cDBS.cf.StoreType))
 
-	if cDBS.cf.StoreType == 0 {
-		return errors.New("db is not necessary")
-	}*/
+	//if cDBS.cf.StoreType == 0 {
+	//	return errors.New("db is not necessary")
+	//}*/ /*
 	cDBS.logger.Info("cDBS.dsn: " + cDBS.cf.DBdsn)
 	cDBS.db, err = sql.Open("pgx", cDBS.cf.DBdsn)
 	if err != nil {
@@ -53,34 +52,99 @@ func (cDBS *ClientDBStruct) Create() error {
 	cDBS.db.SetMaxIdleConns(20)
 	cDBS.db.SetConnMaxLifetime(time.Minute * 5)
 	ctxPar := context.TODO()
-	ctx, cansel := context.WithTimeout( /*cDBS.ctx*/ ctxPar, 100*time.Second)
+	ctx, cansel := context.WithTimeout( /*cDBS.ctx*/ /* ctxPar, 100*time.Second)
+defer cansel()
+
+res, err := cDBS.db.ExecContext(ctx, `CREATE TABLE IF NOT EXISTS urlstorage("id" INTEGER, "short_url" TEXT, "long_url" TEXT, UNIQUE(long_url))`)
+
+if err != nil {
+	cDBS.logger.Error("creating db method, error while creating new table", zap.Error(err))
+	return err
+}
+cDBS.logger.Info("table is successfuly created")
+rows, err := res.RowsAffected()
+if err != nil {
+	cDBS.logger.Error("Error %s when getting rows affected", zap.Error(err))
+	return err
+}
+cDBS.logger.Info("Rows affected when creating table: ", zap.Int64("raws num", rows))
+///*ctx2, cansel2 := context.WithTimeout(cDBS.ctx, 100*time.Second)
+//defer cansel2()
+//_, err = cDBS.db.ExecContext(ctx2, `ALTER TABLE urlstorage ADD CONSTRAINT longurl_id UNIQUE (long_url)`)
+//if err != nil {
+//	cDBS.logger.Error("creating db method, error while creating unique addition", zap.Error(err))
+//}*/
+/*
+	return nil
+}*/
+
+// /////////////////new part
+type ClientDB interface {
+	Create() (*sql.DB, error)
+	Ping(context.Context) error
+	Close()
+}
+
+// ////////////////////old part
+type ClientDBStruct struct {
+	db     *pgx.Conn
+	logger *zap.Logger
+	//ctx    context.Context
+	cf *config.Config
+}
+
+func NewClientDBStruct( /*ctx context.Context,*/ logger *zap.Logger, cf *config.Config) *ClientDBStruct {
+	return &ClientDBStruct{
+		db:     new(pgx.Conn),
+		logger: logger,
+		//ctx:    ctx,
+		cf: cf,
+	}
+}
+
+func (cDBS *ClientDBStruct) Create(parentCtx context.Context) error {
+	var err error
+	///*cDBS.logger.Info("cDBS.cf.StoreType: " + strconv.Itoa(cDBS.cf.StoreType))
+
+	//if cDBS.cf.StoreType == 0 {
+	//	return errors.New("db is not necessary")
+	//}*/
+	cDBS.logger.Info("cDBS.dsn: " + cDBS.cf.DBdsn)
+	//ctxPar := context.TODO()
+	cDBS.db, err = pgx.Connect(parentCtx, cDBS.cf.DBdsn)
+	if err != nil {
+		cDBS.logger.Error("creating db method, error while creating new db", zap.Error(err))
+		return err
+	}
+	cDBS.logger.Info("db is successfuly created")
+	/*cDBS.db.SetMaxOpenConns(20)
+	cDBS.db.SetMaxIdleConns(20)
+	cDBS.db.SetConnMaxLifetime(time.Minute * 5)*/
+	//ctxPar := context.TODO()
+	ctx, cansel := context.WithTimeout( /*cDBS.ctx*/ parentCtx, 100*time.Second)
 	defer cansel()
 
-	res, err := cDBS.db.ExecContext(ctx, `CREATE TABLE IF NOT EXISTS urlstorage("id" INTEGER, "short_url" TEXT, "long_url" TEXT, UNIQUE(long_url))`)
-
+	res, err := cDBS.db.Exec(ctx, `CREATE TABLE IF NOT EXISTS urlstorage("id" INTEGER, "short_url" TEXT, "long_url" TEXT, UNIQUE(short_url, long_url))`)
 	if err != nil {
 		cDBS.logger.Error("creating db method, error while creating new table", zap.Error(err))
 		return err
 	}
 	cDBS.logger.Info("table is successfuly created")
-	rows, err := res.RowsAffected()
-	if err != nil {
-		cDBS.logger.Error("Error %s when getting rows affected", zap.Error(err))
-		return err
-	}
+	rows := res.RowsAffected()
 	cDBS.logger.Info("Rows affected when creating table: ", zap.Int64("raws num", rows))
-	/*ctx2, cansel2 := context.WithTimeout(cDBS.ctx, 100*time.Second)
-	defer cansel2()
-	_, err = cDBS.db.ExecContext(ctx2, `ALTER TABLE urlstorage ADD CONSTRAINT longurl_id UNIQUE (long_url)`)
-	if err != nil {
-		cDBS.logger.Error("creating db method, error while creating unique addition", zap.Error(err))
-	}*/
-
+	///*ctx2, cansel2 := context.WithTimeout(cDBS.ctx, 100*time.Second)
+	//defer cansel2()
+	//_, err = cDBS.db.ExecContext(ctx2, `ALTER TABLE urlstorage ADD CONSTRAINT longurl_id UNIQUE (long_url)`)
+	//if err != nil {
+	//	cDBS.logger.Error("creating db method, error while creating unique addition", zap.Error(err))
+	//}*/
 	return nil
 }
 
-func (cDBS *ClientDBStruct) Close() {
-	cDBS.db.Close()
+// ////////////////////////////
+// //////////////////////////
+func (cDBS *ClientDBStruct) Close(parentCtx context.Context) {
+	cDBS.db.Close(parentCtx)
 }
 
 func (cDBS *ClientDBStruct) Ping() error {
@@ -88,7 +152,7 @@ func (cDBS *ClientDBStruct) Ping() error {
 	ctx, canselFunc := context.WithTimeout( /*cDBS.ctx*/ ctxPar, 30*time.Second)
 	defer canselFunc()
 
-	err := cDBS.db.PingContext(ctx)
+	err := cDBS.db.Ping(ctx)
 	if err != nil {
 		cDBS.logger.Error("db ping error")
 		return err
@@ -97,11 +161,45 @@ func (cDBS *ClientDBStruct) Ping() error {
 	return nil
 }
 
-func (cDBS *ClientDBStruct) PostShortURL(shortURL, longURL string, uuid int32) error {
+func (cDBS *ClientDBStruct) PostShortURL(shortURL, longURL string, uuid int32) (string, error) {
 	ctxPar := context.TODO()
-	ctx1, canselFunc1 := context.WithTimeout( /*cDBS.ctx*/ ctxPar, 1*time.Minute)
-	defer canselFunc1()
-	row := cDBS.db.QueryRowContext(ctx1, `SELECT long_url FROM urlstorage WHERE short_url=$1`, shortURL)
+	ctx, canselCtx := context.WithTimeout( /*cDBS.ctx*/ ctxPar, 1*time.Minute)
+	defer canselCtx()
+	var shURL, lnURL string
+	err := cDBS.db.QueryRow(ctx, `SELECT long_url FROM urlstorage WHERE short_url=&1`, shortURL).Scan(&lnURL)
+	if err != nil {
+		return "", errors.New("postShortURL db method, err while selecting short url: " + err.Error())
+	}
+
+	if lnURL != "" {
+		return "", errors.New("shortURL is already exist")
+	}
+
+	row := cDBS.db.QueryRow(ctx,
+		`INSERT INTO urlstorage(id, short_url, long_url)
+		 VALUES ($1, $2, $3) 
+		 ON CONFLICT(long_url) 
+		 DO UPDATE SET 
+		 long_url=EXCLUDED.long_url
+		 RETURNING (short_url)`, uuid, shortURL, longURL)
+	err = row.Scan(&shURL)
+	if err != nil {
+		cDBS.logger.Error("insert data error", zap.Error(err))
+		//if shURL == shortURL {
+		//err := errors.New("shortURL is already exist")
+		//	return "", err
+		if shURL != shortURL {
+			err := errors.New("longURL is already exist")
+			return shURL, err
+		}
+		return "", err
+	}
+	return shURL, nil
+}
+
+/*
+	if
+	//row := cDBS.db.QueryRowContext(ctx1, `SELECT long_url FROM urlstorage WHERE short_url=$1`, shortURL)
 	var checkURL string
 	err := row.Scan(&checkURL)
 	cDBS.logger.Info("this short url from request " + shortURL)
@@ -126,15 +224,14 @@ func (cDBS *ClientDBStruct) PostShortURL(shortURL, longURL string, uuid int32) e
 		return nil
 	}
 	cDBS.logger.Info("this short url is already involved")
-	return errors.New("this short url is already involved")
-}
+	return errors.New("this short url is already involved")*/
 
 func (cDBS *ClientDBStruct) GetLongURL(shortURL string) (string, error) {
 	ctxPar := context.TODO()
 	ctx, canselFunc := context.WithTimeout( /*cDBS.ctx*/ ctxPar, 1*time.Minute)
 	defer canselFunc()
 
-	row := cDBS.db.QueryRowContext(ctx, `SELECT long_url FROM urlstorage WHERE short_url=$1`, shortURL)
+	row := cDBS.db.QueryRow(ctx, `SELECT long_url FROM urlstorage WHERE short_url=$1`, shortURL)
 	var longURL string
 	err := row.Scan(&longURL)
 	if err != nil {
@@ -145,9 +242,10 @@ func (cDBS *ClientDBStruct) GetLongURL(shortURL string) (string, error) {
 	return longURL, nil
 }
 
+/*
 func (cDBS *ClientDBStruct) GetShortURL(longURL string) (string, error) {
 	ctxPar := context.TODO()
-	ctx, canselFunc := context.WithTimeout( /*cDBS.ctx*/ ctxPar, 1*time.Minute)
+	ctx, canselFunc := context.WithTimeout( /*cDBS.ctx*/ /*ctxPar, 1*time.Minute)
 	defer canselFunc()
 
 	row := cDBS.db.QueryRowContext(ctx, `SELECT short_url FROM urlstorage WHERE long_url=$1`, longURL)
@@ -160,3 +258,4 @@ func (cDBS *ClientDBStruct) GetShortURL(longURL string) (string, error) {
 	}
 	return shortURL, nil
 }
+*/
