@@ -164,6 +164,8 @@ func (cDBS *ClientDBStruct) Ping() error {
 }
 
 func (cDBS *ClientDBStruct) PostShortURL(shortURL, longURL string, uuid int32) (string, error) {
+	fmt.Println("now we are here place1")
+	cDBS.logger.Info("new shrtURL is: " + shortURL)
 	ctxPar := context.TODO()
 	ctx, canselCtx := context.WithTimeout( /*cDBS.ctx*/ ctxPar, 1*time.Minute)
 	defer canselCtx()
@@ -179,7 +181,6 @@ func (cDBS *ClientDBStruct) PostShortURL(shortURL, longURL string, uuid int32) (
 		return "", errors.New("shortURL is already exist")
 	}
 
-	cDBS.logger.Info("new shrtURL is: " + shortURL)
 	row := cDBS.db.QueryRow(ctx,
 		`INSERT INTO urlstorage(id, short_url, long_url)
 		 VALUES ($1, $2, $3) 
