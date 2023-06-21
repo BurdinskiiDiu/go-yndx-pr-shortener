@@ -76,6 +76,7 @@ func (hn *Handlers) CreateShortURL(longURL string) (shrtURL string, err error) {
 	for cntr < 100 {
 		shrtURL = shorting()
 		if shrtURL, err = hn.US.PostShortURL(shrtURL, longURL, hn.uuid); err != nil {
+			hn.logger.Info(err.Error())
 			if strings.Contains(err.Error(), "shortURL is already exist") {
 				cntr++
 				continue
