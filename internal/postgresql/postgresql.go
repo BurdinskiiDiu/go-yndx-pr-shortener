@@ -125,7 +125,7 @@ func (cDBS *ClientDBStruct) Create(parentCtx context.Context) error {
 	ctx, cansel := context.WithTimeout( /*cDBS.ctx*/ parentCtx, 100*time.Second)
 	defer cansel()
 
-	res, err := cDBS.db.Exec(ctx, `CREATE TABLE IF NOT EXISTS urlstorage("id" INTEGER, "short_url" TEXT, "long_url" TEXT, UNIQUE(short_url, long_url))`)
+	res, err := cDBS.db.Exec(ctx, `CREATE TABLE IF NOT EXISTS urlstorage("id" INTEGER, "short_url" TEXT, "long_url" TEXT, UNIQUE(long_url))`)
 	if err != nil {
 		cDBS.logger.Error("creating db method, error while creating new table", zap.Error(err))
 		return err
