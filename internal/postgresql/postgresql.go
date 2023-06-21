@@ -178,7 +178,7 @@ func (cDBS *ClientDBStruct) PostShortURL(shortURL, longURL string, uuid int32) (
 	if lnURL != "" {
 		return "", errors.New("shortURL is already exist")
 	}
-	fmt.Println("now we are here place1")
+
 	cDBS.logger.Info("new shrtURL is: " + shortURL)
 	row := cDBS.db.QueryRow(ctx,
 		`INSERT INTO urlstorage(id, short_url, long_url)
@@ -188,6 +188,7 @@ func (cDBS *ClientDBStruct) PostShortURL(shortURL, longURL string, uuid int32) (
 		 long_url=EXCLUDED.long_url
 		 RETURNING (short_url)`, uuid, shortURL, longURL)
 	err = row.Scan(&shURL)
+	fmt.Println("now we are here place2")
 	cDBS.logger.Info("returned shrtURL is: " + shURL)
 	if err != nil {
 		cDBS.logger.Error("insert data error", zap.Error(err))
