@@ -41,7 +41,7 @@ func (uS *URLStorage) PostShortURL(shortURL, longURL string, uuid int32) (string
 	_, ok := uS.urlStr[shortURL]
 	if ok {
 		uS.logger.Info("shortURL: " + shortURL + " and longURL: " + uS.urlStr[shortURL])
-		return "", errors.New("this short url is already involved")
+		return "", errors.New("shortURL is already exist")
 	}
 	uS.urlStr[shortURL] = longURL
 	uS.logger.Debug("storefile addr from post req", zap.String("path", uS.dbFileName))
