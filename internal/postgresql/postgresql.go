@@ -179,6 +179,7 @@ func (cDBS *ClientDBStruct) PostShortURL(shortURL, longURL string, uuid int32) (
 		return "", errors.New("shortURL is already exist")
 	}
 	fmt.Println("now we are here place1")
+	cDBS.logger.Info("new shrtURL is: " + shortURL)
 	row := cDBS.db.QueryRow(ctx,
 		`INSERT INTO urlstorage(id, short_url, long_url)
 		 VALUES ($1, $2, $3) 
