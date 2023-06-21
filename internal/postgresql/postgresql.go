@@ -196,11 +196,12 @@ func (cDBS *ClientDBStruct) PostShortURL(shortURL, longURL string, uuid int32) (
 		//if shURL == shortURL {
 		//err := errors.New("shortURL is already exist")
 		//	return "", err
-		if shURL != shortURL {
-			err := errors.New("longURL is already exist")
-			return shURL, err
-		}
+
 		return "", err
+	}
+	if shURL != shortURL && shURL != "" {
+		err := errors.New("longURL is already exist")
+		return shURL, err
 	}
 	return shURL, nil
 }
