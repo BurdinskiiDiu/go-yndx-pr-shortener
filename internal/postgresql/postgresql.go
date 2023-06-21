@@ -186,6 +186,7 @@ func (cDBS *ClientDBStruct) PostShortURL(shortURL, longURL string, uuid int32) (
 		 long_url=EXCLUDED.long_url
 		 RETURNING (short_url)`, uuid, shortURL, longURL)
 	err = row.Scan(&shURL)
+	cDBS.logger.Info("returned shrtURL is: " + shURL)
 	if err != nil {
 		cDBS.logger.Error("insert data error", zap.Error(err))
 		//if shURL == shortURL {
