@@ -96,7 +96,7 @@ func (hn *Handlers) CreateShortURL(longURL string) (shrtURL string, err error) {
 
 func (hn *Handlers) PostLongURL() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		//hn.logger.Info("start post request")
+		hn.logger.Info("start post request")
 		content, err := io.ReadAll(r.Body)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -147,6 +147,7 @@ func (hn *Handlers) PostLongURL() http.HandlerFunc {
 
 func (hn *Handlers) GetLongURL(srtURL string) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		hn.logger.Info("start get request")
 		hn.logger.Debug("shortURL is:", zap.String("shortURL", srtURL))
 		lngURL, err := hn.US.GetLongURL(srtURL)
 		hn.logger.Debug("longURL is:", zap.String("longURL", lngURL))
@@ -163,6 +164,7 @@ func (hn *Handlers) GetLongURL(srtURL string) http.HandlerFunc {
 
 func (hn *Handlers) PostURLApi() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		hn.logger.Info("start post url api request")
 		var buf bytes.Buffer
 		_, err := buf.ReadFrom(r.Body)
 		if err != nil {
