@@ -108,6 +108,7 @@ func (hn *Handlers) PostLongURL() http.HandlerFunc {
 		var shrtURL string
 		var chndStatus bool
 		shrtURL, err = hn.CreateShortURL(longURL)
+		hn.logger.Error("createShortURL error", zap.Error(err))
 		if err != nil {
 			if strings.Contains(err.Error(), "longURL is already exist") {
 				chndStatus = true
