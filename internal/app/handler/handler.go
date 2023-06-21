@@ -136,7 +136,9 @@ func (hn *Handlers) PostLongURL() http.HandlerFunc {
 		bodyResp := hn.Cf.BaseAddr + "/" + shrtURL
 		hn.logger.Info("response body message", zap.String("body", bodyResp))
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+
 		if chndStatus {
+			hn.logger.Info("chndStatus is true ")
 			w.WriteHeader(http.StatusConflict)
 		} else {
 			w.WriteHeader(http.StatusCreated)
