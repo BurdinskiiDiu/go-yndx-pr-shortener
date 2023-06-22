@@ -513,7 +513,7 @@ func (hn *Handlers) PostBatch() http.HandlerFunc {
 			btchRow.LongURL = v.OrigURL
 			shortURL := shorting()
 			btchRow.ShortURL = shortURL
-			urlResp[i].ShortURL = shortURL
+			//urlResp[i].ShortURL = shortURL
 			btchStr = append(btchStr, *btchRow)
 			//shortURL, err := hn.CreateShortURL(v.OrigURL)
 			//hn.logger.Info("shortURL is " + shortURL)
@@ -538,7 +538,7 @@ func (hn *Handlers) PostBatch() http.HandlerFunc {
 			/*hn.logger.Error("PostBatch handler, creating short url err", zap.Error(err))
 			return*/
 			/*}*/
-			//urlResp[i].ShortURL = hn.Cf.BaseAddr + "/" + shortURL
+			urlResp[i].ShortURL = hn.Cf.BaseAddr + "/" + shortURL
 			//hn.logger.Info("result short URL " + urlResp[i].ShortURL)
 			//hn.logger.Info("added is successful, add № is " + strconv.Itoa(i))
 		}
