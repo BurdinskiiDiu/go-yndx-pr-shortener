@@ -3,11 +3,9 @@ package server
 import (
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/app/handler"
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/config"
-	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/chi/v5"
 	"go.uber.org/zap"
 )
@@ -60,7 +58,7 @@ func NewRouter(hn *handler.Handlers, logger *zap.Logger) chi.Router {
 	hn.Cf = ValidConfig(hn.Cf, logger)
 	logger.Info("server starting", zap.String("addr", hn.Cf.ServAddr))
 	rt := chi.NewRouter()
-	rt.Use(middleware.Timeout(20 * time.Second))
+	//rt.Use(middleware.Timeout(20 * time.Second))
 	rt.Use(hn.LoggingHandler)
 	rt.Use(hn.GZipMiddleware)
 	rt.Post("/", hn.PostLongURL())
