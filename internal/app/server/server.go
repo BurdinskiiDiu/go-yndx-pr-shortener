@@ -67,7 +67,7 @@ func NewRouter(hn *handler.Handlers, logger *zap.Logger) chi.Router {
 	rt.Get("/{id}", func(w http.ResponseWriter, r *http.Request) {
 		id := chi.URLParam(r, "id")
 		logger.Info("chi id is:", zap.String("id", id))
-		hn.GetLongURL(id).ServeHTTP(w, r)
+		hn.GetLongURL(id) /*.ServeHTTP(w, r)*/
 	})
 	rt.Post("/api/shorten", hn.PostURLApi())
 	rt.Get("/ping", hn.GetDBPing())
