@@ -78,6 +78,6 @@ func (uS *URLStorage) GetShortURL(longURL string) (string, error) {
 }
 */
 
-func (uS *URLStorage) PostURLBatch(btch []postgresql.DBRowStrct) error {
-	return nil
+func (uS *URLStorage) PostURLBatch(btch []postgresql.DBRowStrct) ([]string, error) {
+	return nil, nil
 }

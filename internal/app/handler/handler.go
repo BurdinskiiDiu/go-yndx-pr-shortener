@@ -25,7 +25,7 @@ type URLStore interface {
 	PostShortURL(shURL string, lnURL string, uuid int32) (string, error)
 	GetLongURL(shURL string) (string, error)
 	//GetShortURL(lnURL string) (string, error)
-	PostURLBatch([]postgresql.DBRowStrct) error
+	PostURLBatch([]postgresql.DBRowStrct) ([]string, error)
 	Ping() error
 }
 
@@ -164,7 +164,7 @@ func (hn *Handlers) PostLongURL() http.HandlerFunc {
 func (hn *Handlers) GetLongURL(srtURL string) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		hn.logger.Info("start get request")
-		hn.logger.Debug("shortURL is:", zap.String("shortURL", srtURL))
+		hn.logger.Info("shortURL is:", zap.String("shortURL", srtURL))
 		lngURL, err := hn.US.GetLongURL(srtURL)
 		hn.logger.Debug("longURL is:", zap.String("longURL", lngURL))
 		if err != nil {
@@ -548,13 +548,18 @@ func (hn *Handlers) PostBatch() http.HandlerFunc {
 			/*hn.logger.Error("PostBatch handler, creating short url err", zap.Error(err))
 			return*/
 			/*}*/
-			urlResp[i].ShortURL = hn.Cf.BaseAddr + "/" + shortURL
+			//urlResp[i].ShortURL = hn.Cf.BaseAddr + "/" + shortURL
 			//hn.logger.Info("result short URL " + urlResp[i].ShortURL)
 			//hn.logger.Info("added is successful, add № is " + strconv.Itoa(i))
 		}
-		if err := hn.US.PostURLBatch(btchStr); err != nil {
+		retShrtUrl, err := hn.US.PostURLBatch(btchStr)
+		if err != nil {
 			hn.logger.Error("post batch error", zap.Error(err))
 			return
+		}
+
+		for i, v := range retShrtUrl {
+			urlResp[i].ShortURL = hn.Cf.BaseAddr + "/" + v
 		}
 
 		resp, err := json.Marshal(urlResp)

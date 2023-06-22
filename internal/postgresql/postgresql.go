@@ -9,9 +9,7 @@ import (
 	"time"
 
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/config"
-	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgconn"
 	"go.uber.org/zap"
 )
 
@@ -127,7 +125,7 @@ func (cDBS *ClientDBStruct) Create(parentCtx context.Context) error {
 	//ctxPar := context.TODO()
 	ctx, cansel := context.WithTimeout( /*cDBS.ctx*/ parentCtx, 100*time.Second)
 	defer cansel()
-	time.Sleep(10 * time.Second)
+	//time.Sleep(10 * time.Second)
 	res, err := cDBS.db.Exec(ctx, `CREATE TABLE IF NOT EXISTS urlstorage("id" INTEGER, "short_url" TEXT, "long_url" TEXT, UNIQUE(long_url))`)
 	if err != nil {
 		cDBS.logger.Error("creating db method, error while creating new table", zap.Error(err))
@@ -277,26 +275,54 @@ type DBRowStrct struct {
 	LongURL  string
 }
 
-func (cDBS *ClientDBStruct) PostURLBatch(URLarr []DBRowStrct) error {
-	ctx := context.TODO()
+func (cDBS *ClientDBStruct) PostURLBatch(URLarr []DBRowStrct) ([]string, error) {
+	ctxPar := context.TODO()
+	ctx, canselCtx := context.WithTimeout( /*cDBS.ctx*/ ctxPar, 1*time.Minute)
+	defer canselCtx()
 	btch := new(pgx.Batch)
+	/*query := `INSERT INTO urlstorage(id, short_url, long_url) VALUES(@ID, @shortURL, @longURL)`
 	for _, v := range URLarr {
-		btch.Queue( /*`INSERT INTO urlstorage(id, short_url, long_url) VALUES($1, $2, $3)`*/ `INSERT INTO urlstorage(id, short_url, long_url)
-		VALUES ($1, $2, $3)`, v.ID, v.ShortURL, v.LongURL)
+		args := pgx.NamedArgs{
+			"ID":       v.ID,
+			"shortURL": v.ShortURL,
+			"longURL":  v.LongURL,
+		}
+		btch.Queue(query, args)
+	}*/
+
+	for _, v := range URLarr {
+		btch.Queue( /*`INSERT INTO urlstorage(id, short_url, long_url)
+			VALUES ($1, $2, $3)`*/`INSERT INTO urlstorage(id, short_url, long_url)
+		 VALUES ($1, $2, $3) 
+		 ON CONFLICT(long_url) 
+		 DO UPDATE SET 
+		 long_url=EXCLUDED.long_url
+		 RETURNING (short_url)`, v.ID, v.ShortURL, v.LongURL)
 	}
+	retShrtURL := make([]string, 0)
 	br := cDBS.db.SendBatch(ctx, btch)
 	defer br.Close()
-
-	for _, row := range URLarr {
-		_, err := br.Exec()
-		if err != nil {
+	shortid := ""
+	for i, v := range URLarr {
+		//cT, err := br.Exec()
+		br.QueryRow().Scan(&shortid)
+		if shortid != "" {
+			retShrtURL = append(retShrtURL, shortid)
+		} else {
+			retShrtURL = append(retShrtURL, URLarr[i].ShortURL)
+		}
+		fmt.Println("new short url: " + v.ShortURL)
+		fmt.Println("returned short url: " + shortid)
+		/*if err != nil {
 			var pgErr *pgconn.PgError
 			if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
 				cDBS.logger.Info("short url is already exist", zap.String("short_url:", row.ShortURL))
 				continue
 			}
 			return errors.New("unable to insert row:" + err.Error())
-		}
+		}*/
 	}
-	return nil
+	br.Close()
+	return retShrtURL, nil
+	//return nil
 }
