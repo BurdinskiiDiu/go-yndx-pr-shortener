@@ -552,13 +552,13 @@ func (hn *Handlers) PostBatch() http.HandlerFunc {
 			//hn.logger.Info("result short URL " + urlResp[i].ShortURL)
 			//hn.logger.Info("added is successful, add № is " + strconv.Itoa(i))
 		}
-		retShrtUrl, err := hn.US.PostURLBatch(btchStr)
+		retShrtURL, err := hn.US.PostURLBatch(btchStr)
 		if err != nil {
 			hn.logger.Error("post batch error", zap.Error(err))
 			return
 		}
 
-		for i, v := range retShrtUrl {
+		for i, v := range retShrtURL {
 			urlResp[i].ShortURL = hn.Cf.BaseAddr + "/" + v
 		}
 
