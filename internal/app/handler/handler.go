@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"math/rand"
 	"net/http"
 	"os"
@@ -31,13 +32,22 @@ type URLStore interface {
 const letterBytes = "abcdifghijklmnopqrstuvwxyzABCDIFGHIJKLMNOPQRSTUVWXYZ"
 
 func shorting() string {
-	b := make([]byte, 8)
+	/*b := make([]byte, 8)
 
 	for i := range b {
 		b[i] = letterBytes[rand.Intn(len(letterBytes))]
 	}
 
-	return string(b)
+	return string(b)*/
+	b := make([]byte, 16)
+	_, err := rand.Read(b)
+	if err != nil {
+		log.Fatal(err)
+	}
+	uuid := fmt.Sprintf("%x-%x-%x-%x-%x",
+		b[0:4], b[4:6], b[6:8], b[8:10], b[10:])
+	fmt.Println(uuid)
+	return uuid
 }
 
 type URLReq struct {
