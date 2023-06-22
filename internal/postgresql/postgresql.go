@@ -282,11 +282,7 @@ func (cDBS *ClientDBStruct) PostURLBatch(URLarr []DBRowStrct) error {
 	btch := new(pgx.Batch)
 	for _, v := range URLarr {
 		btch.Queue( /*`INSERT INTO urlstorage(id, short_url, long_url) VALUES($1, $2, $3)`*/ `INSERT INTO urlstorage(id, short_url, long_url)
-		VALUES ($1, $2, $3) 
-		ON CONFLICT(long_url) 
-		DO UPDATE SET 
-		long_url=EXCLUDED.long_url
-		RETURNING (short_url)`, v.ID, v.ShortURL, v.LongURL)
+		VALUES ($1, $2, $3)`, v.ID, v.ShortURL, v.LongURL)
 	}
 	br := cDBS.db.SendBatch(ctx, btch)
 	defer br.Close()
