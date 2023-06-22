@@ -60,14 +60,14 @@ func NewRouter(hn *handler.Handlers, logger *zap.Logger) chi.Router {
 	hn.Cf = ValidConfig(hn.Cf, logger)
 	logger.Info("server starting", zap.String("addr", hn.Cf.ServAddr))
 	rt := chi.NewRouter()
-	rt.Use(middleware.Timeout(10 * time.Second))
+	rt.Use(middleware.Timeout(20 * time.Second))
 	rt.Use(hn.LoggingHandler)
 	rt.Use(hn.GZipMiddleware)
 	rt.Post("/", hn.PostLongURL())
 	rt.Get("/{id}", func(w http.ResponseWriter, r *http.Request) {
 		id := chi.URLParam(r, "id")
 		logger.Info("chi id is:", zap.String("id", id))
-		hn.GetLongURL(id) /*.ServeHTTP(w, r)*/
+		hn.GetLongURL(id).ServeHTTP(w, r)
 	})
 	rt.Post("/api/shorten", hn.PostURLApi())
 	rt.Get("/ping", hn.GetDBPing())

@@ -119,6 +119,7 @@ func (cDBS *ClientDBStruct) Create(parentCtx context.Context) error {
 		return err
 	}
 	cDBS.logger.Info("db is successfuly created")
+
 	/*cDBS.db.SetMaxOpenConns(20)
 	cDBS.db.SetMaxIdleConns(20)
 	cDBS.db.SetConnMaxLifetime(time.Minute * 5)*/
@@ -237,14 +238,14 @@ func (cDBS *ClientDBStruct) PostShortURL(shortURL, longURL string, uuid int32) (
 
 func (cDBS *ClientDBStruct) GetLongURL(shortURL string) (string, error) {
 	ctxPar := context.TODO()
-	ctx, canselFunc := context.WithTimeout( /*cDBS.ctx*/ ctxPar, 1*time.Minute)
-	defer canselFunc()
+	ctx, canselCtx := context.WithTimeout( /*cDBS.ctx*/ ctxPar, 1*time.Minute)
+	defer canselCtx()
 
 	row := cDBS.db.QueryRow(ctx, `SELECT long_url FROM urlstorage WHERE short_url=$1`, shortURL)
 	var longURL string
 	err := row.Scan(&longURL)
 	if err != nil {
-		cDBS.logger.Error("getLongURL metod, getting longURL error", zap.Error(err))
+		//cDBS.logger.Error("getLongURL metod, getting longURL error", zap.Error(err))
 		cDBS.logger.Info("getLongURL metod, getting longURL error" + longURL)
 		return "", errors.New("getLongURL metod, getting longURL error:" + err.Error())
 	}
