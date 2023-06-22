@@ -4,6 +4,7 @@ import (
 	"errors"
 	"sync"
 
+	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/postgresql"
 	"go.uber.org/zap"
 )
 
@@ -76,3 +77,7 @@ func (uS *URLStorage) GetShortURL(longURL string) (string, error) {
 	return "", errors.New("no shortURL in store")
 }
 */
+
+func (uS *URLStorage) PostURLBatch(btch []postgresql.DBRowStrct) error {
+	return nil
+}

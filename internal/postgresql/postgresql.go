@@ -9,7 +9,9 @@ import (
 	"time"
 
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/config"
+	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"go.uber.org/zap"
 )
 
@@ -125,7 +127,7 @@ func (cDBS *ClientDBStruct) Create(parentCtx context.Context) error {
 	//ctxPar := context.TODO()
 	ctx, cansel := context.WithTimeout( /*cDBS.ctx*/ parentCtx, 100*time.Second)
 	defer cansel()
-
+	time.Sleep(10 * time.Second)
 	res, err := cDBS.db.Exec(ctx, `CREATE TABLE IF NOT EXISTS urlstorage("id" INTEGER, "short_url" TEXT, "long_url" TEXT, UNIQUE(long_url))`)
 	if err != nil {
 		cDBS.logger.Error("creating db method, error while creating new table", zap.Error(err))
@@ -268,3 +270,37 @@ func (cDBS *ClientDBStruct) GetShortURL(longURL string) (string, error) {
 	return shortURL, nil
 }
 */
+
+type DBRowStrct struct {
+	ID       int
+	ShortURL string
+	LongURL  string
+}
+
+func (cDBS *ClientDBStruct) PostURLBatch(URLarr []DBRowStrct) error {
+	ctx := context.TODO()
+	btch := new(pgx.Batch)
+	for _, v := range URLarr {
+		btch.Queue( /*`INSERT INTO urlstorage(id, short_url, long_url) VALUES($1, $2, $3)`*/ `INSERT INTO urlstorage(id, short_url, long_url)
+		VALUES ($1, $2, $3) 
+		ON CONFLICT(long_url) 
+		DO UPDATE SET 
+		long_url=EXCLUDED.long_url
+		RETURNING (short_url)`, v.ID, v.ShortURL, v.LongURL)
+	}
+	br := cDBS.db.SendBatch(ctx, btch)
+	defer br.Close()
+
+	for _, row := range URLarr {
+		_, err := br.Exec()
+		if err != nil {
+			var pgErr *pgconn.PgError
+			if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
+				cDBS.logger.Info("short url is already exist", zap.String("short_url:", row.ShortURL))
+				continue
+			}
+			return errors.New("unable to insert row:" + err.Error())
+		}
+	}
+	return nil
+}

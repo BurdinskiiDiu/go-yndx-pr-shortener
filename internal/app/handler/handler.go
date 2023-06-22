@@ -16,6 +16,7 @@ import (
 
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/config"
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/gzp"
+	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/postgresql"
 	"go.uber.org/zap"
 )
 
@@ -23,6 +24,7 @@ type URLStore interface {
 	PostShortURL(shURL string, lnURL string, uuid int32) (string, error)
 	GetLongURL(shURL string) (string, error)
 	//GetShortURL(lnURL string) (string, error)
+	PostURLBatch([]postgresql.DBRowStrct) error
 	Ping() error
 }
 
@@ -413,7 +415,7 @@ type batchRespStruct struct {
 	ShortURL string `json:"short_url"`
 }
 
-func (hn *Handlers) PostBatch() http.HandlerFunc {
+func (hn *Handlers) PostBatch1() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		var buf bytes.Buffer
@@ -464,6 +466,85 @@ func (hn *Handlers) PostBatch() http.HandlerFunc {
 			urlResp[i].ShortURL = hn.Cf.BaseAddr + "/" + shortURL
 			hn.logger.Info("result short URL " + urlResp[i].ShortURL)
 			hn.logger.Info("added is successful, add № is " + strconv.Itoa(i))
+		}
+
+		resp, err := json.Marshal(urlResp)
+		if err != nil {
+			hn.logger.Error("PostBatch handler, marshal func error", zap.Error(err))
+			return
+		}
+
+		hn.logger.Info("response for postApi request", zap.String("response", string(resp)))
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusCreated)
+		w.Write(resp)
+	})
+}
+
+func (hn *Handlers) PostBatch() http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		var buf bytes.Buffer
+		_, err := buf.ReadFrom(r.Body)
+		if err != nil {
+			hn.logger.Error("PostBatch handler, read from request body err", zap.Error(err))
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		str := buf.String()
+		cnt := strings.Count(str, "correlation_id")
+		hn.logger.Info("cnt of json rows", zap.Int("cnt", cnt))
+
+		urlReq := make([]batchReqStruct, cnt)
+		if err := json.Unmarshal(buf.Bytes(), &urlReq); err != nil {
+			hn.logger.Error("PostBatch handler, unmarshal func err", zap.Error(err))
+			return
+		}
+		fmt.Println(urlReq)
+		btchStr := make([]postgresql.DBRowStrct, 0)
+		btchRow := new(postgresql.DBRowStrct)
+
+		urlResp := make([]batchRespStruct, cnt)
+		for i, v := range urlReq {
+			urlResp[i].CorrID = v.CorrID
+			hn.uuid++
+			btchRow.ID = int(hn.uuid)
+			btchRow.LongURL = v.OrigURL
+			shortURL := shorting()
+			btchRow.ShortURL = shortURL
+			urlResp[i].ShortURL = shortURL
+			btchStr = append(btchStr, *btchRow)
+			//shortURL, err := hn.CreateShortURL(v.OrigURL)
+			//hn.logger.Info("shortURL is " + shortURL)
+			//if err != nil {
+			//hn.logger.Error("PostBatch handler, creating short url err", zap.Error(err))
+			//return
+			//}
+
+			/*if err != nil {
+			if strings.Contains(err.Error(), "duplicate key value violates") {
+				hn.logger.Info(" created shrtURL", zap.String("shrtURL", shortURL))
+				shortURL, err = hn.US.GetShortURL(v.OrigURL)
+				if err != nil {
+					hn.logger.Error("getting already existed short url error", zap.Error(err))
+					return
+				}
+				hn.logger.Info("existed shrtURL", zap.String("shrtURL", shortURL))
+			} else {
+				hn.logger.Error("PostBatch handler, creating short url err", zap.Error(err))
+				return
+			}
+			/*hn.logger.Error("PostBatch handler, creating short url err", zap.Error(err))
+			return*/
+			/*}*/
+			//urlResp[i].ShortURL = hn.Cf.BaseAddr + "/" + shortURL
+			//hn.logger.Info("result short URL " + urlResp[i].ShortURL)
+			//hn.logger.Info("added is successful, add № is " + strconv.Itoa(i))
+		}
+		if err := hn.US.PostURLBatch(btchStr); err != nil {
+			hn.logger.Error("post batch error", zap.Error(err))
+			return
 		}
 
 		resp, err := json.Marshal(urlResp)
