@@ -279,7 +279,7 @@ type DBRowStrct struct {
 func (cDBS *ClientDBStruct) PostURLBatch(URLarr []DBRowStrct) ([]string, error) {
 	ctxPar := context.TODO()
 	ctx, canselCtx := context.WithTimeout( /*cDBS.ctx*/ ctxPar, 1*time.Minute)
-	defer canselCtx()
+	//defer canselCtx()
 	btch := new(pgx.Batch)
 	/*query := `INSERT INTO urlstorage(id, short_url, long_url) VALUES(@ID, @shortURL, @longURL)`
 	for _, v := range URLarr {
@@ -324,6 +324,7 @@ func (cDBS *ClientDBStruct) PostURLBatch(URLarr []DBRowStrct) ([]string, error) 
 		}*/
 	}
 	br.Close()
+	canselCtx()
 	return retShrtURL, nil
 	//return nil
 }
