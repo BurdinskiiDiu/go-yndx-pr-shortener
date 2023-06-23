@@ -322,8 +322,9 @@ func (cDBS *ClientDBStruct) PostURLBatch(URLarr []DBRowStrct) ([]string, error) 
 			}
 			return errors.New("unable to insert row:" + err.Error())
 		}*/
+		br.Close()
 	}
-	br.Close()
+
 	canselCtx()
 	return retShrtURL, nil
 	//return nil
