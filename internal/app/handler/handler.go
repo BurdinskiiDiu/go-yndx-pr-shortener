@@ -432,7 +432,7 @@ func (hn *Handlers) PostBatch2() http.HandlerFunc {
 
 func (hn *Handlers) PostBatch() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
+		hn.US.PrintlAllDB()
 		var buf bytes.Buffer
 		_, err := buf.ReadFrom(r.Body)
 		if err != nil {
