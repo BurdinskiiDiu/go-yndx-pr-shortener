@@ -171,6 +171,7 @@ func (hn *Handlers) GetLongURL(srtURL string) http.HandlerFunc {
 			hn.logger.Error("getLongURL handler, error while getting long url from store", zap.Error(err))
 			return
 		}
+		hn.logger.Info("response:", zap.String("lngURL", lngURL))
 		w.Header().Set("Location", lngURL)
 		w.WriteHeader(http.StatusTemporaryRedirect)
 		hn.logger.Debug("longURL is:", zap.String("longURL", lngURL))
