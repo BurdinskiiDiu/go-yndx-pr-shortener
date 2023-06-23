@@ -12,8 +12,15 @@ type Config struct {
 	LogLevel      string
 	FileStorePath string
 	DBdsn         string
-	StoreType     int
+	StoreType     storeType
 }
+
+type storeType int
+
+const (
+	file storeType = iota
+	db
+)
 
 func GetConfig() *Config {
 	cf := new(Config)
@@ -54,7 +61,9 @@ func GetConfig() *Config {
 	}
 
 	if cf.DBdsn != "" {
-		cf.StoreType = 1
+		cf.StoreType = db
+	} else {
+		cf.StoreType = file
 	}
 
 	return cf

@@ -16,17 +16,6 @@ type URLStorage struct {
 	logger     *zap.Logger
 }
 
-/*
-func NewURLStorageTest(us *map[string]string, logger *zap.Logger) *URLStorage {
-	return &URLStorage{
-		urlStr:     *us,
-		mutex:      new(sync.Mutex),
-		uuid:       0,
-		dbFileName: "",
-		logger:     logger,
-	}
-}*/
-
 func NewURLStorage(logger *zap.Logger) *URLStorage {
 	return &URLStorage{
 		urlStr:     make(map[string]string),
