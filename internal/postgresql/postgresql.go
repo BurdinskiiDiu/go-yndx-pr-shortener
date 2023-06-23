@@ -5,12 +5,11 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"strconv"
 	"strings"
 	"time"
 
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/config"
-	//"github.com/jackc/pgx/v4/pgxpool"
+
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/zap"
@@ -22,28 +21,12 @@ type ClientDB interface {
 	Close()
 }
 
-/*
-	type ClientDBStruct struct {
-		db     *pgx.Conn
-		logger *zap.Logger
-		cf     *config.Config
-	}
-*/
 type ClientDBStruct struct {
 	db     *pgxpool.Pool
 	logger *zap.Logger
 	cf     *config.Config
 }
 
-/*
-	func NewClientDBStruct(logger *zap.Logger, cf *config.Config) *ClientDBStruct {
-		return &ClientDBStruct{
-			db:     new(pgx.Conn),
-			logger: logger,
-			cf:     cf,
-		}
-	}
-*/
 func NewClientDBStruct(logger *zap.Logger, cf *config.Config) *ClientDBStruct {
 	return &ClientDBStruct{
 		db:     new(pgxpool.Pool),
@@ -52,7 +35,6 @@ func NewClientDBStruct(logger *zap.Logger, cf *config.Config) *ClientDBStruct {
 	}
 }
 
-// /////////////new impl
 func (cDBS *ClientDBStruct) Create(parentCtx context.Context) error {
 	cDBS.logger.Info("cDBS.dsn: " + cDBS.cf.DBdsn)
 	cf, err := pgxpool.ParseConfig(cDBS.cf.DBdsn)
@@ -81,34 +63,6 @@ func (cDBS *ClientDBStruct) Create(parentCtx context.Context) error {
 	cDBS.logger.Info("Rows affected when creating table: ", zap.Int64("raws num", rows))
 	return nil
 }
-
-/////////////// old imp
-/*func (cDBS *ClientDBStruct) Create(parentCtx context.Context) error {
-	var err error
-	cDBS.logger.Info("cDBS.dsn: " + cDBS.cf.DBdsn)
-	cDBS.db, err = pgx.Connect(parentCtx, cDBS.cf.DBdsn)
-	if err != nil {
-		cDBS.logger.Error("creating db method, error while creating new db", zap.Error(err))
-		return err
-	}
-	cDBS.logger.Info("db is successfuly created")
-
-	ctx, cansel := context.WithTimeout(parentCtx, 100*time.Second)
-	defer cansel()
-	res, err := cDBS.db.Exec(ctx, `CREATE TABLE IF NOT EXISTS urlstorage("id" INTEGER, "short_url" TEXT, "long_url" TEXT, UNIQUE(long_url))`)
-	if err != nil {
-		cDBS.logger.Error("creating db method, error while creating new table", zap.Error(err))
-		return err
-	}
-	cDBS.logger.Info("table is successfuly created")
-	rows := res.RowsAffected()
-	cDBS.logger.Info("Rows affected when creating table: ", zap.Int64("raws num", rows))
-	return nil
-}
-*/ /*
-func (cDBS *ClientDBStruct) Close(parentCtx context.Context) {
-	cDBS.db.Close(parentCtx)
-}*/
 
 func (cDBS *ClientDBStruct) Close() {
 	cDBS.db.Close()
@@ -219,19 +173,17 @@ func (cDBS *ClientDBStruct) PostURLBatch(URLarr []DBRowStrct) ([]string, error) 
 	return retShrtURL, nil
 }
 
+/*
 func (cDBS *ClientDBStruct) PrintlAllDB() {
 	ctxPar := context.TODO()
 	ctx, canselCtx := context.WithTimeout(ctxPar, 1*time.Minute)
 	defer canselCtx()
-
 	rows, err := cDBS.db.Query(ctx, `SELECT * FROM urlstorage`)
 	if err != nil {
 		cDBS.logger.Error("error while printing all db", zap.Error(err))
 	}
 	defer rows.Close()
-
 	var dataRow DBRowStrct
-
 	for rows.Next() {
 		err := rows.Scan(&dataRow.ID, &dataRow.ShortURL, &dataRow.LongURL)
 		if err != nil {
@@ -240,4 +192,4 @@ func (cDBS *ClientDBStruct) PrintlAllDB() {
 		}
 		fmt.Println("Id: " + strconv.Itoa(dataRow.ID) + ", shkrtURL is: " + dataRow.ShortURL + " , longURL is: " + dataRow.LongURL)
 	}
-}
+}*/

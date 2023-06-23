@@ -67,5 +67,6 @@ func (uS *URLStorage) PostURLBatch(btch []postgresql.DBRowStrct) ([]string, erro
 	return nil, nil
 }
 
+/*
 func (uS *URLStorage) PrintlAllDB() {
-}
+}*/

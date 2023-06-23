@@ -25,7 +25,7 @@ type URLStore interface {
 	PostShortURL(shURL string, lnURL string, uuid int32) (string, error)
 	GetLongURL(shURL string) (string, error)
 	PostURLBatch([]postgresql.DBRowStrct) ([]string, error)
-	PrintlAllDB()
+	//PrintlAllDB()
 	Ping() error
 }
 
@@ -72,7 +72,6 @@ func NewHandlers(uS URLStore, cf *config.Config, logger *zap.Logger) *Handlers {
 func (hn *Handlers) CreateShortURL(longURL string) (shrtURL string, err error) {
 
 	cntr := 0
-
 	hn.uuid++
 	for cntr < 100 {
 		shrtURL = shorting()
@@ -97,14 +96,13 @@ func (hn *Handlers) CreateShortURL(longURL string) (shrtURL string, err error) {
 
 func (hn *Handlers) PostLongURL() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		hn.logger.Info("start post request")
 		content, err := io.ReadAll(r.Body)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		longURL := string(content)
-		hn.logger.Info("got post message" + longURL)
+		hn.logger.Debug("got post message" + longURL)
 		var shrtURL string
 		var chndStatus bool
 		shrtURL, err = hn.CreateShortURL(longURL)
@@ -118,7 +116,7 @@ func (hn *Handlers) PostLongURL() http.HandlerFunc {
 		}
 
 		bodyResp := hn.Cf.BaseAddr + "/" + shrtURL
-		hn.logger.Info("response body message", zap.String("body", bodyResp))
+		hn.logger.Debug("response body message", zap.String("body", bodyResp))
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 
 		if chndStatus {
@@ -133,28 +131,21 @@ func (hn *Handlers) PostLongURL() http.HandlerFunc {
 
 func (hn *Handlers) GetLongURL(srtURL string) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		hn.logger.Info("start get request")
-		hn.US.PrintlAllDB()
-		hn.logger.Info("shortURL is:", zap.String("shortURL", srtURL))
+		hn.logger.Debug("shortURL is:", zap.String("shortURL", srtURL))
 		lngURL, err := hn.US.GetLongURL(srtURL)
-		hn.logger. /*Debug*/ Info("longURL is:", zap.String("longURL", lngURL))
+		hn.logger.Debug("longURL is:", zap.String("longURL", lngURL))
 		if err != nil {
 			hn.logger.Error("getLongURL handler, error while getting long url from store", zap.Error(err))
 			return
 		}
-		hn.logger.Info("response:", zap.String("lngURL", lngURL))
 		w.Header().Set("Location", lngURL)
 		w.WriteHeader(http.StatusTemporaryRedirect)
-		hn.logger.Debug("longURL is:", zap.String("longURL", lngURL))
 		w.Write([]byte(lngURL))
-		hn.US.PrintlAllDB()
 	})
 }
 
 func (hn *Handlers) PostURLApi() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		hn.logger.Info("start post url api request")
-		hn.US.PrintlAllDB()
 		var buf bytes.Buffer
 		_, err := buf.ReadFrom(r.Body)
 		if err != nil {
@@ -198,7 +189,6 @@ func (hn *Handlers) PostURLApi() http.HandlerFunc {
 			w.WriteHeader(http.StatusCreated)
 		}
 		w.Write(resp)
-		hn.US.PrintlAllDB()
 	})
 }
 
@@ -384,58 +374,8 @@ type batchRespStruct struct {
 	ShortURL string `json:"short_url"`
 }
 
-func (hn *Handlers) PostBatch2() http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
-		var buf bytes.Buffer
-		_, err := buf.ReadFrom(r.Body)
-		if err != nil {
-			hn.logger.Error("PostBatch handler, read from request body err", zap.Error(err))
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		str := buf.String()
-		cnt := strings.Count(str, "correlation_id")
-		hn.logger.Info("cnt of json rows", zap.Int("cnt", cnt))
-
-		urlReq := make([]batchReqStruct, cnt)
-		if err := json.Unmarshal(buf.Bytes(), &urlReq); err != nil {
-			hn.logger.Error("PostBatch handler, unmarshal func err", zap.Error(err))
-			return
-		}
-
-		fmt.Println(urlReq)
-		urlResp := make([]batchRespStruct, cnt)
-		for i, v := range urlReq {
-			urlResp[i].CorrID = v.CorrID
-			shortURL, err := hn.CreateShortURL(v.OrigURL)
-			hn.logger.Info("shortURL is " + shortURL)
-			if err != nil {
-				hn.logger.Error("PostBatch handler, creating short url err", zap.Error(err))
-				return
-			}
-			urlResp[i].ShortURL = hn.Cf.BaseAddr + "/" + shortURL
-			hn.logger.Info("result short URL " + urlResp[i].ShortURL)
-			hn.logger.Info("added is successful, add № is " + strconv.Itoa(i))
-		}
-
-		resp, err := json.Marshal(urlResp)
-		if err != nil {
-			hn.logger.Error("PostBatch handler, marshal func error", zap.Error(err))
-			return
-		}
-
-		hn.logger.Info("response for postApi request", zap.String("response", string(resp)))
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusCreated)
-		w.Write(resp)
-	})
-}
-
 func (hn *Handlers) PostBatch() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		hn.US.PrintlAllDB()
 		var buf bytes.Buffer
 		_, err := buf.ReadFrom(r.Body)
 		if err != nil {
@@ -465,34 +405,7 @@ func (hn *Handlers) PostBatch() http.HandlerFunc {
 			btchRow.LongURL = v.OrigURL
 			shortURL := shorting()
 			btchRow.ShortURL = shortURL
-			//urlResp[i].ShortURL = shortURL
 			btchStr = append(btchStr, btchRow)
-			//shortURL, err := hn.CreateShortURL(v.OrigURL)
-			//hn.logger.Info("shortURL is " + shortURL)
-			//if err != nil {
-			//hn.logger.Error("PostBatch handler, creating short url err", zap.Error(err))
-			//return
-			//}
-
-			/*if err != nil {
-			if strings.Contains(err.Error(), "duplicate key value violates") {
-				hn.logger.Info(" created shrtURL", zap.String("shrtURL", shortURL))
-				shortURL, err = hn.US.GetShortURL(v.OrigURL)
-				if err != nil {
-					hn.logger.Error("getting already existed short url error", zap.Error(err))
-					return
-				}
-				hn.logger.Info("existed shrtURL", zap.String("shrtURL", shortURL))
-			} else {
-				hn.logger.Error("PostBatch handler, creating short url err", zap.Error(err))
-				return
-			}
-			/*hn.logger.Error("PostBatch handler, creating short url err", zap.Error(err))
-			return*/
-			/*}*/
-			//urlResp[i].ShortURL = hn.Cf.BaseAddr + "/" + shortURL
-			//hn.logger.Info("result short URL " + urlResp[i].ShortURL)
-			//hn.logger.Info("added is successful, add № is " + strconv.Itoa(i))
 		}
 		retShrtURL, err := hn.US.PostURLBatch(btchStr)
 		if err != nil {
@@ -509,10 +422,9 @@ func (hn *Handlers) PostBatch() http.HandlerFunc {
 			hn.logger.Error("PostBatch handler, marshal func error", zap.Error(err))
 			return
 		}
-		hn.logger.Info("response for postApi request", zap.String("response", string(resp)))
+		hn.logger.Debug("response for postApi request", zap.String("response", string(resp)))
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
 		w.Write(resp)
-		hn.US.PrintlAllDB()
 	})
 }
