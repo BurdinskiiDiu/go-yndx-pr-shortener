@@ -24,7 +24,6 @@ import (
 type URLStore interface {
 	PostShortURL(shURL string, lnURL string, uuid int32) (string, error)
 	GetLongURL(shURL string) (string, error)
-	//GetShortURL(lnURL string) (string, error)
 	PostURLBatch([]postgresql.DBRowStrct) ([]string, error)
 	Ping() error
 }
@@ -32,13 +31,6 @@ type URLStore interface {
 const letterBytes = "abcdifghijklmnopqrstuvwxyzABCDIFGHIJKLMNOPQRSTUVWXYZ"
 
 func shorting() string {
-	/*b := make([]byte, 8)
-
-	for i := range b {
-		b[i] = letterBytes[rand.Intn(len(letterBytes))]
-	}
-
-	return string(b)*/
 	b := make([]byte, 16)
 	_, err := rand.Read(b)
 	if err != nil {
@@ -58,10 +50,7 @@ type URLResp struct {
 	Result string `json:"result"`
 }
 
-//handler implementation with methods
-
 type Handlers struct {
-	//ctx    context.Context
 	US        URLStore
 	Cf        *config.Config
 	logger    *zap.Logger
@@ -69,21 +58,20 @@ type Handlers struct {
 	shortings map[string]int
 }
 
-func NewHandlers( /*ctx context.Context,*/ uS URLStore, cf *config.Config, logger *zap.Logger) *Handlers {
+func NewHandlers(uS URLStore, cf *config.Config, logger *zap.Logger) *Handlers {
 	return &Handlers{
-		US:     uS,
-		Cf:     cf,
-		logger: logger,
-		//ctx:    ctx,
+		US:        uS,
+		Cf:        cf,
+		logger:    logger,
 		uuid:      0,
 		shortings: make(map[string]int),
 	}
 }
 
 func (hn *Handlers) CreateShortURL(longURL string) (shrtURL string, err error) {
-	//var shrtURL string
+
 	cntr := 0
-	//var errPSU error
+
 	hn.uuid++
 	for cntr < 100 {
 		shrtURL = shorting()
@@ -100,11 +88,10 @@ func (hn *Handlers) CreateShortURL(longURL string) (shrtURL string, err error) {
 		}
 		if errFF := hn.FileFilling(shrtURL, longURL); errFF != nil {
 			hn.logger.Error("createShortURL method, err while filling file", zap.Error(errFF))
-			//return "", err
 		}
 		break
 	}
-	return //shrtURL, errPSU
+	return
 }
 
 func (hn *Handlers) PostLongURL() http.HandlerFunc {
@@ -120,7 +107,6 @@ func (hn *Handlers) PostLongURL() http.HandlerFunc {
 		var shrtURL string
 		var chndStatus bool
 		shrtURL, err = hn.CreateShortURL(longURL)
-		//hn.logger.Error("createShortURL error", zap.Error(err))
 		if err != nil {
 			if strings.Contains(err.Error(), "longURL is already exist") {
 				chndStatus = true
@@ -129,23 +115,6 @@ func (hn *Handlers) PostLongURL() http.HandlerFunc {
 				return
 			}
 		}
-
-		/*if err != nil {
-			if strings.Contains(err.Error(), "duplicate key value violates") {
-				chndStatus = true
-				hn.logger.Info(" created shrtURL", zap.String("shrtURL", shrtURL))
-				shrtURL, err = hn.US.GetShortURL(longURL)
-				if err != nil {
-					hn.logger.Error("getting already existed short url error", zap.Error(err))
-					return
-				}
-				hn.logger.Debug("existed shrtURL", zap.String("shrtURL", shrtURL))
-			} else {
-				hn.logger.Error("error while crearing shortURL", zap.Error(err))
-				return
-			}
-
-		}*/
 
 		bodyResp := hn.Cf.BaseAddr + "/" + shrtURL
 		hn.logger.Info("response body message", zap.String("body", bodyResp))
@@ -208,22 +177,6 @@ func (hn *Handlers) PostURLApi() http.HandlerFunc {
 			}
 		}
 
-		/*if err != nil {
-			if strings.Contains(err.Error(), "duplicate key value violates") {
-				chndStatus = true
-				hn.logger.Info(" created shrtURL", zap.String("shrtURL", shrtURL))
-				shrtURL, err = hn.US.GetShortURL(urlReq.URL)
-				if err != nil {
-					hn.logger.Error("getting already existed short url error", zap.Error(err))
-					return
-				}
-				hn.logger.Info("existed shrtURL", zap.String("shrtURL", shrtURL))
-			} else {
-				hn.logger.Error("postURLApi handler, creating short url err", zap.Error(err))
-				return
-			}
-
-		}*/
 		hn.logger.Debug("short url", zap.String("shortURL", shrtURL))
 		var urlResp URLResp
 		urlResp.Result = hn.Cf.BaseAddr + "/" + shrtURL
@@ -426,7 +379,7 @@ type batchRespStruct struct {
 	ShortURL string `json:"short_url"`
 }
 
-func (hn *Handlers) PostBatch2() http.HandlerFunc {
+func (hn *Handlers) PostBatch() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		var buf bytes.Buffer
@@ -457,23 +410,6 @@ func (hn *Handlers) PostBatch2() http.HandlerFunc {
 				hn.logger.Error("PostBatch handler, creating short url err", zap.Error(err))
 				return
 			}
-
-			/*if err != nil {
-			if strings.Contains(err.Error(), "duplicate key value violates") {
-				hn.logger.Info(" created shrtURL", zap.String("shrtURL", shortURL))
-				shortURL, err = hn.US.GetShortURL(v.OrigURL)
-				if err != nil {
-					hn.logger.Error("getting already existed short url error", zap.Error(err))
-					return
-				}
-				hn.logger.Info("existed shrtURL", zap.String("shrtURL", shortURL))
-			} else {
-				hn.logger.Error("PostBatch handler, creating short url err", zap.Error(err))
-				return
-			}
-			/*hn.logger.Error("PostBatch handler, creating short url err", zap.Error(err))
-			return*/
-			/*}*/
 			urlResp[i].ShortURL = hn.Cf.BaseAddr + "/" + shortURL
 			hn.logger.Info("result short URL " + urlResp[i].ShortURL)
 			hn.logger.Info("added is successful, add № is " + strconv.Itoa(i))
@@ -492,7 +428,7 @@ func (hn *Handlers) PostBatch2() http.HandlerFunc {
 	})
 }
 
-func (hn *Handlers) PostBatch() http.HandlerFunc {
+func (hn *Handlers) PostBatch2() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		var buf bytes.Buffer
