@@ -63,21 +63,6 @@ func (uS *URLStorage) Ping() error {
 	return nil
 }
 
-/*
-func (uS *URLStorage) GetShortURL(longURL string) (string, error) {
-	uS.mutex.Lock()
-	defer uS.mutex.Unlock()
-	var shortURL string
-	for i, v := range uS.urlStr {
-		if v == longURL {
-			shortURL = i
-			return shortURL, nil
-		}
-	}
-	return "", errors.New("no shortURL in store")
-}
-*/
-
 func (uS *URLStorage) PostURLBatch(btch []postgresql.DBRowStrct) ([]string, error) {
 	return nil, nil
 }

@@ -3,6 +3,7 @@ module github.com/BurdinskiiDiu/go-yndx-pr-shortener.git
 go 1.20
 
 require (
+	github.com/go-chi/chi v1.5.4
 	github.com/go-chi/chi/v5 v5.0.8
 	github.com/jackc/pgerrcode v0.0.0-20220416144525-469b46aa5efa
 	github.com/jackc/pgx/v5 v5.3.1
