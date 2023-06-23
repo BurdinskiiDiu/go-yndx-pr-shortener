@@ -5,11 +5,11 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/config"
 
+	"github.com/jackc/pgconn"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/zap"
@@ -87,28 +87,30 @@ func (cDBS *ClientDBStruct) PostShortURL(shortURL, longURL string, uuid int32) (
 	ctx, canselCtx := context.WithTimeout(ctxPar, 1*time.Minute)
 	defer canselCtx()
 	var shURL, lnURL string
-	//var pgErr *pgconn.PgError
+	var pgErr *pgconn.PgError
 	tx, err := cDBS.db.Begin(ctx)
 	if err != nil {
 		return "", errors.New("postShortURL db method, err while creating transaction: " + err.Error())
 	}
 
 	err = tx.QueryRow(ctx, `SELECT long_url FROM urlstorage WHERE short_url=$1`, shortURL).Scan(&lnURL)
-	//err := cDBS.db.QueryRow(ctx, `SELECT long_url FROM urlstorage WHERE short_url=$1`, shortURL).Scan(&lnURL)
 	if err != nil {
-		//if !(errors.As(err, &pgErr) && pgErr.Code == pgerrcode.NoDataFound) {
-		//	return "", errors.New("postShortURL db method, err while selecting short url: " + err.Error())
-		//}
-		if !strings.Contains(err.Error(), "no rows in result set") {
+		if !errors.As(err, &pgErr) {
 			return "", errors.New("postShortURL db method, err while selecting short url: " + err.Error())
 		}
+		if !errors.Is(err, sql.ErrNoRows) {
+			return "", errors.New("postShortURL db method, err while selecting short url: " + err.Error())
+		}
+		cDBS.logger.Info("shortURL is already exist")
+		/*if !strings.Contains(err.Error(), "no rows in result set") {
+			return "", errors.New("postShortURL db method, err while selecting short url: " + err.Error())
+		}*/
 	}
 
 	if lnURL != "" {
 		return "", errors.New("shortURL is already exist")
 	}
 
-	//row := cDBS.db.QueryRow(ctx,
 	row := tx.QueryRow(ctx,
 		`INSERT INTO urlstorage(id, short_url, long_url)
 		 VALUES ($1, $2, $3) 
@@ -117,7 +119,7 @@ func (cDBS *ClientDBStruct) PostShortURL(shortURL, longURL string, uuid int32) (
 		 long_url=EXCLUDED.long_url
 		 RETURNING (short_url)`, uuid, shortURL, longURL)
 	err = row.Scan(&shURL)
-	cDBS.logger.Info("returned shrtURL is: " + shURL)
+	cDBS.logger.Debug("returned shrtURL is: " + shURL)
 	if err != nil {
 		cDBS.logger.Error("insert data error", zap.Error(err))
 		tx.Rollback(ctx)
