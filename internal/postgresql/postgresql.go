@@ -307,11 +307,11 @@ func (cDBS *ClientDBStruct) PostURLBatch(URLarr []DBRowStrct) ([]string, error) 
 	for i, v := range URLarr {
 		//cT, err := br.Exec()
 		br.QueryRow().Scan(&shortid)
-		if shortid != "" {
-			retShrtURL = append(retShrtURL, shortid)
-		} else {
-			retShrtURL = append(retShrtURL, URLarr[i].ShortURL)
-		}
+		//if shortid != "" {
+		retShrtURL = append(retShrtURL /*shortid*/, URLarr[i].ShortURL)
+		//} //else {
+		//retShrtURL = append(retShrtURL, URLarr[i].ShortURL)
+		//}
 		fmt.Println("new short url: " + v.ShortURL)
 		fmt.Println("returned short url: " + shortid)
 		/*if err != nil {
