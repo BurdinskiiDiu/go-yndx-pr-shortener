@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -214,7 +215,29 @@ func (cDBS *ClientDBStruct) PostURLBatch(URLarr []DBRowStrct) ([]string, error) 
 		}
 		fmt.Println("new short url: " + v.ShortURL)
 		fmt.Println("returned short url: " + shortid)
-
 	}
 	return retShrtURL, nil
+}
+
+func (cDBS *ClientDBStruct) PrintlAllDB() {
+	ctxPar := context.TODO()
+	ctx, canselCtx := context.WithTimeout(ctxPar, 1*time.Minute)
+	defer canselCtx()
+
+	rows, err := cDBS.db.Query(ctx, `SELECT * FROM urlstorage`)
+	if err != nil {
+		cDBS.logger.Error("error while printing all db", zap.Error(err))
+	}
+	defer rows.Close()
+
+	var dataRow DBRowStrct
+
+	for rows.Next() {
+		err := rows.Scan(&dataRow.ID, &dataRow.ShortURL, &dataRow.LongURL)
+		if err != nil {
+			fmt.Println(err.Error())
+			continue
+		}
+		fmt.Println("Id: " + strconv.Itoa(dataRow.ID) + ", shkrtURL is: " + dataRow.ShortURL + " , longURL is: " + dataRow.LongURL)
+	}
 }

@@ -66,3 +66,6 @@ func (uS *URLStorage) Ping() error {
 func (uS *URLStorage) PostURLBatch(btch []postgresql.DBRowStrct) ([]string, error) {
 	return nil, nil
 }
+
+func (uS *URLStorage) PrintlAllDB() {
+}

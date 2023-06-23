@@ -25,6 +25,7 @@ type URLStore interface {
 	PostShortURL(shURL string, lnURL string, uuid int32) (string, error)
 	GetLongURL(shURL string) (string, error)
 	PostURLBatch([]postgresql.DBRowStrct) ([]string, error)
+	PrintlAllDB()
 	Ping() error
 }
 
@@ -504,7 +505,7 @@ func (hn *Handlers) PostBatch() http.HandlerFunc {
 			hn.logger.Error("PostBatch handler, marshal func error", zap.Error(err))
 			return
 		}
-
+		hn.US.PrintlAllDB()
 		hn.logger.Info("response for postApi request", zap.String("response", string(resp)))
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
