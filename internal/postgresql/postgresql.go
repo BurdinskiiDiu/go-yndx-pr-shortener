@@ -88,7 +88,13 @@ func (cDBS *ClientDBStruct) PostShortURL(shortURL, longURL string, uuid int32) (
 	defer canselCtx()
 	var shURL, lnURL string
 	//var pgErr *pgconn.PgError
-	err := cDBS.db.QueryRow(ctx, `SELECT long_url FROM urlstorage WHERE short_url=$1`, shortURL).Scan(&lnURL)
+	tx, err := cDBS.db.Begin(ctx)
+	if err != nil {
+		return "", errors.New("postShortURL db method, err while creating transaction: " + err.Error())
+	}
+
+	err = tx.QueryRow(ctx, `SELECT long_url FROM urlstorage WHERE short_url=$1`, shortURL).Scan(&lnURL)
+	//err := cDBS.db.QueryRow(ctx, `SELECT long_url FROM urlstorage WHERE short_url=$1`, shortURL).Scan(&lnURL)
 	if err != nil {
 		//if !(errors.As(err, &pgErr) && pgErr.Code == pgerrcode.NoDataFound) {
 		//	return "", errors.New("postShortURL db method, err while selecting short url: " + err.Error())
@@ -102,7 +108,8 @@ func (cDBS *ClientDBStruct) PostShortURL(shortURL, longURL string, uuid int32) (
 		return "", errors.New("shortURL is already exist")
 	}
 
-	row := cDBS.db.QueryRow(ctx,
+	//row := cDBS.db.QueryRow(ctx,
+	row := tx.QueryRow(ctx,
 		`INSERT INTO urlstorage(id, short_url, long_url)
 		 VALUES ($1, $2, $3) 
 		 ON CONFLICT(long_url) 
@@ -113,12 +120,15 @@ func (cDBS *ClientDBStruct) PostShortURL(shortURL, longURL string, uuid int32) (
 	cDBS.logger.Info("returned shrtURL is: " + shURL)
 	if err != nil {
 		cDBS.logger.Error("insert data error", zap.Error(err))
+		tx.Rollback(ctx)
 		return "", err
 	}
 	if shURL != shortURL && shURL != "" {
 		err := errors.New("longURL is already exist")
+		tx.Commit(ctx)
 		return shURL, err
 	}
+	tx.Commit(ctx)
 	return shURL, nil
 }
 
