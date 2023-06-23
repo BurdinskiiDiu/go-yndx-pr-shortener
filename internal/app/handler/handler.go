@@ -3,6 +3,7 @@ package handler
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"crypto/rand"
 	"encoding/json"
 	"errors"
@@ -26,7 +27,7 @@ type URLStore interface {
 	GetLongURL(shURL string) (string, error)
 	PostURLBatch([]postgresql.DBRowStrct) ([]string, error)
 	//PrintlAllDB()
-	Ping() error
+	Ping(ctx context.Context) error
 }
 
 const letterBytes = "abcdifghijklmnopqrstuvwxyzABCDIFGHIJKLMNOPQRSTUVWXYZ"
@@ -280,7 +281,8 @@ func (hn *Handlers) GZipMiddleware(h http.Handler) http.Handler {
 // db handler
 func (hn *Handlers) GetDBPing() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if err := hn.US.Ping(); err != nil {
+		ctx := context.TODO()
+		if err := hn.US.Ping(ctx); err != nil {
 			hn.logger.Error("getDBping handler error", zap.Error(err))
 			w.WriteHeader(http.StatusInternalServerError)
 			return

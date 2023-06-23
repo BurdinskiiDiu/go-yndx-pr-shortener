@@ -1,6 +1,7 @@
 package store
 
 import (
+	"context"
 	"errors"
 	"sync"
 
@@ -49,7 +50,7 @@ func (uS *URLStorage) GetLongURL(shrtURL string) (string, error) {
 	return lngURL, nil
 }
 
-func (uS *URLStorage) Ping() error {
+func (uS *URLStorage) Ping(ctx context.Context) error {
 	return nil
 }
 

@@ -36,7 +36,7 @@ func NewClientDBStruct(logger *zap.Logger, cf *config.Config) *ClientDBStruct {
 }
 
 func (cDBS *ClientDBStruct) Create(parentCtx context.Context) error {
-	cDBS.logger.Info("cDBS.dsn: " + cDBS.cf.DBdsn)
+	cDBS.logger.Debug("cDBS.dsn: " + cDBS.cf.DBdsn)
 	cf, err := pgxpool.ParseConfig(cDBS.cf.DBdsn)
 	cf.MaxConns = 10
 	cf.MaxConnIdleTime = 60 * time.Second
@@ -51,16 +51,16 @@ func (cDBS *ClientDBStruct) Create(parentCtx context.Context) error {
 		return err
 	}
 
-	ctx, cansel := context.WithTimeout(parentCtx, 100*time.Second)
-	defer cansel()
+	ctx, canselCtx := context.WithTimeout(parentCtx, 100*time.Second)
+	defer canselCtx()
 	res, err := cDBS.db.Exec(ctx, `CREATE TABLE IF NOT EXISTS urlstorage("id" INTEGER, "short_url" TEXT, "long_url" TEXT, UNIQUE(long_url))`)
 	if err != nil {
 		cDBS.logger.Error("creating db method, error while creating new table", zap.Error(err))
 		return err
 	}
-	cDBS.logger.Info("table is successfuly created")
+	cDBS.logger.Debug("table is successfuly created")
 	rows := res.RowsAffected()
-	cDBS.logger.Info("Rows affected when creating table: ", zap.Int64("raws num", rows))
+	cDBS.logger.Debug("Rows affected when creating table: ", zap.Int64("raws num", rows))
 	return nil
 }
 
@@ -68,21 +68,20 @@ func (cDBS *ClientDBStruct) Close() {
 	cDBS.db.Close()
 }
 
-func (cDBS *ClientDBStruct) Ping() error {
-	ctxPar := context.TODO()
-	ctx, canselFunc := context.WithTimeout(ctxPar, 30*time.Second)
-	defer canselFunc()
+func (cDBS *ClientDBStruct) Ping(ctxPar context.Context) error {
+	ctx, canselCtx := context.WithTimeout(ctxPar, 30*time.Second)
+	defer canselCtx()
 	err := cDBS.db.Ping(ctx)
 	if err != nil {
 		cDBS.logger.Error("db ping error")
 		return err
 	}
-	cDBS.logger.Info("db ping success")
+	cDBS.logger.Debug("db ping success")
 	return nil
 }
 
 func (cDBS *ClientDBStruct) PostShortURL(shortURL, longURL string, uuid int32) (string, error) {
-	cDBS.logger.Info("new shrtURL is: " + shortURL)
+	cDBS.logger.Debug("new shrtURL is: " + shortURL)
 	ctxPar := context.TODO()
 	ctx, canselCtx := context.WithTimeout(ctxPar, 1*time.Minute)
 	defer canselCtx()
