@@ -5,12 +5,11 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/config"
-	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgconn"
 	"go.uber.org/zap"
 )
 
@@ -80,15 +79,15 @@ func (cDBS *ClientDBStruct) PostShortURL(shortURL, longURL string, uuid int32) (
 	ctx, canselCtx := context.WithTimeout(ctxPar, 1*time.Minute)
 	defer canselCtx()
 	var shURL, lnURL string
-	var pgErr *pgconn.PgError
+	//var pgErr *pgconn.PgError
 	err := cDBS.db.QueryRow(ctx, `SELECT long_url FROM urlstorage WHERE short_url=$1`, shortURL).Scan(&lnURL)
 	if err != nil {
-		if !(errors.As(err, &pgErr) && pgErr.Code == pgerrcode.NoDataFound) {
+		//if !(errors.As(err, &pgErr) && pgErr.Code == pgerrcode.NoDataFound) {
+		//	return "", errors.New("postShortURL db method, err while selecting short url: " + err.Error())
+		//}
+		if !strings.Contains(err.Error(), "no rows in result set") {
 			return "", errors.New("postShortURL db method, err while selecting short url: " + err.Error())
 		}
-		//if !strings.Contains(err.Error(), "no rows in result set") {
-		//return "", errors.New("postShortURL db method, err while selecting short url: " + err.Error())
-		//}
 	}
 
 	if lnURL != "" {
