@@ -134,6 +134,7 @@ func (hn *Handlers) PostLongURL() http.HandlerFunc {
 func (hn *Handlers) GetLongURL(srtURL string) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		hn.logger.Info("start get request")
+		hn.US.PrintlAllDB()
 		hn.logger.Info("shortURL is:", zap.String("shortURL", srtURL))
 		lngURL, err := hn.US.GetLongURL(srtURL)
 		hn.logger. /*Debug*/ Info("longURL is:", zap.String("longURL", lngURL))
@@ -153,6 +154,7 @@ func (hn *Handlers) GetLongURL(srtURL string) http.HandlerFunc {
 func (hn *Handlers) PostURLApi() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		hn.logger.Info("start post url api request")
+		hn.US.PrintlAllDB()
 		var buf bytes.Buffer
 		_, err := buf.ReadFrom(r.Body)
 		if err != nil {
@@ -196,6 +198,7 @@ func (hn *Handlers) PostURLApi() http.HandlerFunc {
 			w.WriteHeader(http.StatusCreated)
 		}
 		w.Write(resp)
+		hn.US.PrintlAllDB()
 	})
 }
 
@@ -506,10 +509,10 @@ func (hn *Handlers) PostBatch() http.HandlerFunc {
 			hn.logger.Error("PostBatch handler, marshal func error", zap.Error(err))
 			return
 		}
-		hn.US.PrintlAllDB()
 		hn.logger.Info("response for postApi request", zap.String("response", string(resp)))
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
 		w.Write(resp)
+		hn.US.PrintlAllDB()
 	})
 }

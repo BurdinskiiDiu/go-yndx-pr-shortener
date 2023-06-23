@@ -52,7 +52,7 @@ func main() {
 			logger.Error(err.Error())
 		}
 	}
-
+	hn.US.PrintlAllDB()
 	rt := server.NewServer(hn, logger)
 	rt.Run()
 
