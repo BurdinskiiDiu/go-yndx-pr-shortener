@@ -406,6 +406,7 @@ func (hn *Handlers) PostBatch() http.HandlerFunc {
 			shortURL := shorting()
 			btchRow.ShortURL = shortURL
 			btchStr = append(btchStr, btchRow)
+			urlResparr = append(urlResparr, urlResp)
 		}
 		retShrtURL, err := hn.US.PostURLBatch(btchStr)
 		if err != nil {
