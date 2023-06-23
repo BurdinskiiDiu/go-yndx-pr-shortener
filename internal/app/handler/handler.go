@@ -146,6 +146,7 @@ func (hn *Handlers) GetLongURL(srtURL string) http.HandlerFunc {
 		w.WriteHeader(http.StatusTemporaryRedirect)
 		hn.logger.Debug("longURL is:", zap.String("longURL", lngURL))
 		w.Write([]byte(lngURL))
+		hn.US.PrintlAllDB()
 	})
 }
 
