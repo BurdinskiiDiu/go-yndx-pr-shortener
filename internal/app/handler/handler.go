@@ -450,7 +450,7 @@ func (hn *Handlers) PostBatch() http.HandlerFunc {
 		}
 		fmt.Println(urlReq)
 		btchStr := make([]postgresql.DBRowStrct, 0)
-		btchRow := new(postgresql.DBRowStrct)
+		var btchRow postgresql.DBRowStrct
 
 		urlResp := make([]batchRespStruct, cnt)
 		for i, v := range urlReq {
@@ -461,7 +461,7 @@ func (hn *Handlers) PostBatch() http.HandlerFunc {
 			shortURL := shorting()
 			btchRow.ShortURL = shortURL
 			//urlResp[i].ShortURL = shortURL
-			btchStr = append(btchStr, *btchRow)
+			btchStr = append(btchStr, btchRow)
 			//shortURL, err := hn.CreateShortURL(v.OrigURL)
 			//hn.logger.Info("shortURL is " + shortURL)
 			//if err != nil {
