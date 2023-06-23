@@ -9,7 +9,9 @@ import (
 	"time"
 
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/config"
+	//"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/zap"
 )
 
@@ -19,21 +21,57 @@ type ClientDB interface {
 	Close()
 }
 
+/*
+	type ClientDBStruct struct {
+		db     *pgx.Conn
+		logger *zap.Logger
+		cf     *config.Config
+	}
+*/
 type ClientDBStruct struct {
-	db     *pgx.Conn
+	db     *pgxpool.Pool
 	logger *zap.Logger
 	cf     *config.Config
 }
 
+/*
+	func NewClientDBStruct(logger *zap.Logger, cf *config.Config) *ClientDBStruct {
+		return &ClientDBStruct{
+			db:     new(pgx.Conn),
+			logger: logger,
+			cf:     cf,
+		}
+	}
+*/
 func NewClientDBStruct(logger *zap.Logger, cf *config.Config) *ClientDBStruct {
 	return &ClientDBStruct{
-		db:     new(pgx.Conn),
+		db:     new(pgxpool.Pool),
 		logger: logger,
 		cf:     cf,
 	}
 }
 
+// /////////////new impl
 func (cDBS *ClientDBStruct) Create(parentCtx context.Context) error {
+	cDBS.logger.Info("cDBS.dsn: " + cDBS.cf.DBdsn)
+	cf, err := pgxpool.ParseConfig(cDBS.cf.DBdsn)
+	cf.MaxConns = 10
+	cf.MaxConnIdleTime = 60 * time.Second
+	cf.MaxConnLifetime = 360 * time.Second
+	if err != nil {
+		cDBS.logger.Error("error while parsing db config", zap.Error(err))
+		return err
+	}
+	cDBS.db, err = pgxpool.NewWithConfig(parentCtx, cf)
+	if err != nil {
+		cDBS.logger.Error("error while creatin db connection pool", zap.Error(err))
+		return err
+	}
+	return nil
+}
+
+/////////////// old imp
+/*func (cDBS *ClientDBStruct) Create(parentCtx context.Context) error {
 	var err error
 	cDBS.logger.Info("cDBS.dsn: " + cDBS.cf.DBdsn)
 	cDBS.db, err = pgx.Connect(parentCtx, cDBS.cf.DBdsn)
@@ -55,10 +93,10 @@ func (cDBS *ClientDBStruct) Create(parentCtx context.Context) error {
 	cDBS.logger.Info("Rows affected when creating table: ", zap.Int64("raws num", rows))
 	return nil
 }
-
-func (cDBS *ClientDBStruct) Close(parentCtx context.Context) {
+*/
+/*func (cDBS *ClientDBStruct) Close(parentCtx context.Context) {
 	cDBS.db.Close(parentCtx)
-}
+}*/
 
 func (cDBS *ClientDBStruct) Ping() error {
 	ctxPar := context.TODO()

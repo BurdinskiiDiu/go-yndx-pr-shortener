@@ -25,7 +25,7 @@ func main() {
 	var str handler.URLStore
 	if conf.StoreType != 0 {
 		dbStore := postgresql.NewClientDBStruct( /*ctx,*/ logger, conf)
-		defer dbStore.Close(ctx)
+		//defer dbStore.Close(ctx)
 		err = dbStore.Create(ctx)
 
 		if err != nil {
