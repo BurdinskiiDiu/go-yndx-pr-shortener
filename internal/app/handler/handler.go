@@ -383,11 +383,6 @@ func (hn *Handlers) PostBatch() http.HandlerFunc {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-
-		//str := buf.String()
-		/*cnt := strings.Count(str, "correlation_id")
-		hn.logger.Info("cnt of json rows", zap.Int("cnt", cnt))*/
-
 		urlReq := make([]batchReqStruct, 0)
 		if err := json.Unmarshal(buf.Bytes(), &urlReq); err != nil {
 			hn.logger.Error("PostBatch handler, unmarshal func err", zap.Error(err))

@@ -16,6 +16,7 @@ type URLStorage struct {
 	logger     *zap.Logger
 }
 
+/*
 func NewURLStorageTest(us *map[string]string, logger *zap.Logger) *URLStorage {
 	return &URLStorage{
 		urlStr:     *us,
@@ -24,7 +25,7 @@ func NewURLStorageTest(us *map[string]string, logger *zap.Logger) *URLStorage {
 		dbFileName: "",
 		logger:     logger,
 	}
-}
+}*/
 
 func NewURLStorage(logger *zap.Logger) *URLStorage {
 	return &URLStorage{
