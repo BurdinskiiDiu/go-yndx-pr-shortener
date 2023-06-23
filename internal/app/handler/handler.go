@@ -379,7 +379,7 @@ type batchRespStruct struct {
 	ShortURL string `json:"short_url"`
 }
 
-func (hn *Handlers) PostBatch() http.HandlerFunc {
+func (hn *Handlers) PostBatch2() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		var buf bytes.Buffer
@@ -428,7 +428,7 @@ func (hn *Handlers) PostBatch() http.HandlerFunc {
 	})
 }
 
-func (hn *Handlers) PostBatch2() http.HandlerFunc {
+func (hn *Handlers) PostBatch() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		var buf bytes.Buffer
