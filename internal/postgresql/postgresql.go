@@ -42,21 +42,18 @@ func (cDBS *ClientDBStruct) Create(parentCtx context.Context) error {
 	cf.MaxConnIdleTime = 60 * time.Second
 	cf.MaxConnLifetime = 360 * time.Second
 	if err != nil {
-		cDBS.logger.Error("error while parsing db config", zap.Error(err))
-		return err
+		return errors.New("error while parsing db config, " + err.Error())
 	}
 	cDBS.db, err = pgxpool.NewWithConfig(parentCtx, cf)
 	if err != nil {
-		cDBS.logger.Error("error while creatin db connection pool", zap.Error(err))
-		return err
+		return errors.New("error while creatin db connection pool, " + err.Error())
 	}
 
 	ctx, canselCtx := context.WithTimeout(parentCtx, 100*time.Second)
 	defer canselCtx()
 	res, err := cDBS.db.Exec(ctx, `CREATE TABLE IF NOT EXISTS urlstorage("id" INTEGER, "short_url" TEXT, "long_url" TEXT, UNIQUE(long_url))`)
 	if err != nil {
-		cDBS.logger.Error("creating db method, error while creating new table", zap.Error(err))
-		return err
+		return errors.New("creating db method, error while creating new table, " + err.Error())
 	}
 	cDBS.logger.Debug("table is successfuly created")
 	rows := res.RowsAffected()
@@ -73,8 +70,7 @@ func (cDBS *ClientDBStruct) Ping(ctxPar context.Context) error {
 	defer canselCtx()
 	err := cDBS.db.Ping(ctx)
 	if err != nil {
-		cDBS.logger.Error("db ping error")
-		return err
+		return errors.New("db ping error" + err.Error())
 	}
 	cDBS.logger.Debug("db ping success")
 	return nil
@@ -127,9 +123,8 @@ func (cDBS *ClientDBStruct) PostShortURL(shortURL, longURL string, uuid int32) (
 	err = row.Scan(&shURL)
 	cDBS.logger.Debug("returned shrtURL is: " + shURL)
 	if err != nil {
-		cDBS.logger.Error("insert data error", zap.Error(err))
 		tx.Rollback(ctx)
-		return "", err
+		return "", errors.New("postShortURL db method, insert data error: " + err.Error())
 	}
 	if shURL != shortURL && shURL != "" {
 		err := errors.New("longURL is already exist")
@@ -149,7 +144,6 @@ func (cDBS *ClientDBStruct) GetLongURL(shortURL string) (string, error) {
 	var longURL string
 	err := row.Scan(&longURL)
 	if err != nil {
-		cDBS.logger.Info("getLongURL metod, getting longURL error" + longURL)
 		return "", errors.New("getLongURL metod, getting longURL error:" + err.Error())
 	}
 	return longURL, nil
@@ -190,24 +184,3 @@ func (cDBS *ClientDBStruct) PostURLBatch(URLarr []DBRowStrct) ([]string, error) 
 	}
 	return retShrtURL, nil
 }
-
-/*
-func (cDBS *ClientDBStruct) PrintlAllDB() {
-	ctxPar := context.TODO()
-	ctx, canselCtx := context.WithTimeout(ctxPar, 1*time.Minute)
-	defer canselCtx()
-	rows, err := cDBS.db.Query(ctx, `SELECT * FROM urlstorage`)
-	if err != nil {
-		cDBS.logger.Error("error while printing all db", zap.Error(err))
-	}
-	defer rows.Close()
-	var dataRow DBRowStrct
-	for rows.Next() {
-		err := rows.Scan(&dataRow.ID, &dataRow.ShortURL, &dataRow.LongURL)
-		if err != nil {
-			fmt.Println(err.Error())
-			continue
-		}
-		fmt.Println("Id: " + strconv.Itoa(dataRow.ID) + ", shkrtURL is: " + dataRow.ShortURL + " , longURL is: " + dataRow.LongURL)
-	}
-}*/
