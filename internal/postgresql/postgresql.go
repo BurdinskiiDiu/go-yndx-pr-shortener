@@ -95,6 +95,7 @@ func (cDBS *ClientDBStruct) PostShortURL(shortURL, longURL string, uuid int32) (
 
 	err = tx.QueryRow(ctx, `SELECT long_url FROM urlstorage WHERE short_url=$1`, shortURL).Scan(&lnURL)
 	if err != nil {
+		cDBS.logger.Info("our error " + err.Error())
 		if errors.As(err, &pgErr) {
 			if errors.Is(pgErr, sql.ErrNoRows) {
 				cDBS.logger.Info("shortURL is already exist")
