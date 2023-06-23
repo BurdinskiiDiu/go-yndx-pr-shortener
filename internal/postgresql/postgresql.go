@@ -93,10 +93,14 @@ func (cDBS *ClientDBStruct) Create(parentCtx context.Context) error {
 	cDBS.logger.Info("Rows affected when creating table: ", zap.Int64("raws num", rows))
 	return nil
 }
-*/
-/*func (cDBS *ClientDBStruct) Close(parentCtx context.Context) {
+*/ /*
+func (cDBS *ClientDBStruct) Close(parentCtx context.Context) {
 	cDBS.db.Close(parentCtx)
 }*/
+
+func (cDBS *ClientDBStruct) Close() {
+	cDBS.db.Close()
+}
 
 func (cDBS *ClientDBStruct) Ping() error {
 	ctxPar := context.TODO()

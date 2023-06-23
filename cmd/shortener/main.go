@@ -26,6 +26,7 @@ func main() {
 	if conf.StoreType != 0 {
 		dbStore := postgresql.NewClientDBStruct( /*ctx,*/ logger, conf)
 		//defer dbStore.Close(ctx)
+		defer dbStore.Close()
 		err = dbStore.Create(ctx)
 
 		if err != nil {
