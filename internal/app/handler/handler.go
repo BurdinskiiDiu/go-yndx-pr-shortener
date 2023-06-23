@@ -384,9 +384,9 @@ func (hn *Handlers) PostBatch() http.HandlerFunc {
 			return
 		}
 
-		str := buf.String()
-		cnt := strings.Count(str, "correlation_id")
-		hn.logger.Info("cnt of json rows", zap.Int("cnt", cnt))
+		//str := buf.String()
+		/*cnt := strings.Count(str, "correlation_id")
+		hn.logger.Info("cnt of json rows", zap.Int("cnt", cnt))*/
 
 		urlReq := make([]batchReqStruct, 0)
 		if err := json.Unmarshal(buf.Bytes(), &urlReq); err != nil {
@@ -396,10 +396,10 @@ func (hn *Handlers) PostBatch() http.HandlerFunc {
 		fmt.Println(urlReq)
 		btchStr := make([]postgresql.DBRowStrct, 0)
 		var btchRow postgresql.DBRowStrct
-
-		urlResp := make([]batchRespStruct, cnt)
-		for i, v := range urlReq {
-			urlResp[i].CorrID = v.CorrID
+		urlResparr := make([]batchRespStruct, 0)
+		var urlResp batchRespStruct
+		for _, v := range urlReq {
+			urlResp.CorrID = v.CorrID
 			hn.uuid++
 			btchRow.ID = int(hn.uuid)
 			btchRow.LongURL = v.OrigURL
@@ -414,10 +414,10 @@ func (hn *Handlers) PostBatch() http.HandlerFunc {
 		}
 
 		for i, v := range retShrtURL {
-			urlResp[i].ShortURL = hn.Cf.BaseAddr + "/" + v
+			urlResparr[i].ShortURL = hn.Cf.BaseAddr + "/" + v
 		}
 
-		resp, err := json.Marshal(urlResp)
+		resp, err := json.Marshal(urlResparr)
 		if err != nil {
 			hn.logger.Error("PostBatch handler, marshal func error", zap.Error(err))
 			return
