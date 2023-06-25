@@ -17,10 +17,10 @@ type Server struct {
 	cf *config.Config
 }
 
-func NewServer(wS *handler.WorkStruct, logger *zap.Logger) *Server {
+func NewServer(hn *handler.Handlers, logger *zap.Logger) *Server {
 	return &Server{
-		rt: NewRouter(wS, logger),
-		cf: wS.Cf,
+		rt: NewRouter(hn, logger),
+		cf: hn.Cf,
 	}
 }
 
@@ -56,20 +56,22 @@ type CompleRespWriter struct {
 	chiData *ChiData
 }
 
-func NewRouter(wS *handler.WorkStruct, logger *zap.Logger) chi.Router {
-	wS.Cf = ValidConfig(wS.Cf, logger)
-	logger.Info("server starting", zap.String("addr", wS.Cf.ServAddr))
+func NewRouter(hn *handler.Handlers, logger *zap.Logger) chi.Router {
+	hn.Cf = ValidConfig(hn.Cf, logger)
+	logger.Info("server starting", zap.String("addr", hn.Cf.ServAddr))
 	rt := chi.NewRouter()
-	rt.Use(middleware.Timeout(10 * time.Second))
-	rt.Use(wS.LoggingHandler)
-	rt.Use(wS.GZipMiddleware)
-	rt.Post("/", wS.PostLongURL())
+	rt.Use(middleware.Timeout(20 * time.Second))
+	rt.Use(hn.LoggingHandler)
+	rt.Use(hn.GZipMiddleware)
+	rt.Post("/", hn.PostLongURL())
 	rt.Get("/{id}", func(w http.ResponseWriter, r *http.Request) {
 		id := chi.URLParam(r, "id")
 		logger.Info("chi id is:", zap.String("id", id))
-		wS.GetLongURL(id).ServeHTTP(w, r)
+		hn.GetLongURL(id).ServeHTTP(w, r)
 	})
-	rt.Post("/api/shorten", wS.PostURLApi())
+	rt.Post("/api/shorten", hn.PostURLApi())
+	rt.Get("/ping", hn.GetDBPing())
+	rt.Post("/api/shorten/batch", hn.PostBatch())
 	return rt
 }
 

@@ -16,15 +16,19 @@ import (
 )
 
 func TestURLShortenerRequest(t *testing.T) {
-
+	conf := new(config.Config)
+	conf.DBdsn = ""
+	conf.FileStorePath = "/tmp/short-url-db.json"
+	logger, err := logg.InitLog(conf)
 	urlStr := make(map[string]string)
 	urlStr["abcdefj"] = "http://yandex.practicum.com"
-	uS := store.NewURLStorageTest(&urlStr)
-	conf := new(config.Config)
+	uS := store.NewURLStorageTest(&urlStr, logger)
+
 	conf.ServAddr = ":8080"
 	conf.BaseAddr = "http://localhost:8080/"
-	logger, err := logg.InitLog(conf)
-	wS := NewWorkStruct(uS, conf, logger)
+
+	//ctx := context.TODO()
+	hn := NewHandlers( /*ctx,*/ uS, conf, logger)
 
 	if err != nil {
 		log.Fatal(err)
@@ -53,7 +57,7 @@ func TestURLShortenerRequest(t *testing.T) {
 			log.Println("1st test start")
 			r := httptest.NewRequest(tc.method, tc.target, strings.NewReader(tc.testURL))
 			w := httptest.NewRecorder()
-			h := http.HandlerFunc(wS.PostLongURL())
+			h := http.HandlerFunc(hn.PostLongURL())
 			h(w, r)
 
 			result := w.Result()
@@ -72,14 +76,19 @@ func TestURLShortenerRequest(t *testing.T) {
 }
 
 func TestGetlongURLRequest(t *testing.T) {
+	conf := new(config.Config)
+	conf.DBdsn = ""
+	conf.FileStorePath = "/tmp/short-url-db.json"
+	logger, err := logg.InitLog(conf)
 	urlStr := make(map[string]string)
 	urlStr["abcdefj"] = "http://yandex.practicum.com"
-	uS := store.NewURLStorageTest(&urlStr)
-	conf := new(config.Config)
+	uS := store.NewURLStorageTest(&urlStr, logger)
+
 	conf.ServAddr = ":8080"
 	conf.BaseAddr = "http://localhost:8080/"
-	logger, err := logg.InitLog(conf)
-	wS := NewWorkStruct(uS, conf, logger)
+
+	//ctx := context.TODO()
+	hn := NewHandlers( /*ctx,*/ uS, conf, logger)
 
 	if err != nil {
 		log.Fatal(err)
@@ -111,7 +120,7 @@ func TestGetlongURLRequest(t *testing.T) {
 			log.Println("post req target is: " + tc.target)
 			r := httptest.NewRequest(tc.method, tc.target, nil)
 			w := httptest.NewRecorder()
-			h := http.HandlerFunc(wS.GetLongURL(tc.shortURL))
+			h := http.HandlerFunc(hn.GetLongURL(tc.shortURL))
 			h(w, r)
 
 			result := w.Result()
@@ -127,14 +136,19 @@ func TestGetlongURLRequest(t *testing.T) {
 }
 
 func TestPostlongURLRequestApi(t *testing.T) {
+	conf := new(config.Config)
+	conf.DBdsn = ""
+	conf.FileStorePath = "/tmp/short-url-db.json"
+	logger, err := logg.InitLog(conf)
 	urlStr := make(map[string]string)
 	urlStr["abcdefj"] = "http://yandex.practicum.com"
-	uS := store.NewURLStorageTest(&urlStr)
-	conf := new(config.Config)
+	uS := store.NewURLStorageTest(&urlStr, logger)
+
 	conf.ServAddr = ":8080"
 	conf.BaseAddr = "http://localhost:8080/"
-	logger, err := logg.InitLog(conf)
-	wS := NewWorkStruct(uS, conf, logger)
+
+	//ctx := context.TODO()
+	hn := NewHandlers( /*ctx,*/ uS, conf, logger)
 
 	if err != nil {
 		log.Fatal(err)
@@ -161,7 +175,7 @@ func TestPostlongURLRequestApi(t *testing.T) {
 			log.Println("3d test start")
 			r := httptest.NewRequest(tc.method, tc.target, strings.NewReader(tc.testURL))
 			w := httptest.NewRecorder()
-			h := http.HandlerFunc(wS.PostURLApi())
+			h := http.HandlerFunc(hn.PostURLApi())
 			h(w, r)
 
 			result := w.Result()
