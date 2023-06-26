@@ -30,7 +30,7 @@ func CreateUserID() (string, string, error) {
 		return "nil", "", err
 	}
 	h := hmac.New(sha256.New, key)
-	h.Write(id)
+	h.Write([]byte(idStr))
 	signature := h.Sum(nil)
 	signatureStr := hex.EncodeToString(signature)
 	fmt.Println("created signature is " + string(signature))
