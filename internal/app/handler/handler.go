@@ -529,6 +529,7 @@ func (hn *Handlers) GetUsersURLs() http.HandlerFunc {
 		ctx := context.TODO()
 		ans, err := hn.US.ReturnAllUserReq(ctx, hn.currentUser)
 		if err != nil {
+			hn.logger.Debug("GetUsersURLs err is " + err.Error())
 			hn.logger.Error("getUsersURLs error", zap.Error(err))
 			return
 		}
