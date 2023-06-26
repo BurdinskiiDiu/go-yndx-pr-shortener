@@ -51,7 +51,7 @@ func (cDBS *ClientDBStruct) Create(parentCtx context.Context) error {
 
 	ctx, canselCtx := context.WithTimeout(parentCtx, 100*time.Second)
 	defer canselCtx()
-	res, err := cDBS.db.Exec(ctx, `CREATE TABLE IF NOT EXISTS urlstorage("id" INTEGER, "user_id" TEXT, "short_url" TEXT, "long_url" TEXT, CONSTRAINT uniqkey PRIMARY KEY (user_id, long_url))` /*UNIQUE(user_id, long_url))*/)
+	res, err := cDBS.db.Exec(ctx, `CREATE TABLE IF NOT EXISTS urlstorage("id" INTEGER, "user_id" TEXT, "short_url" TEXT, "long_url" TEXT, CONSTRAINT uniq_key PRIMARY KEY(user_id, long_url))` /*UNIQUE(user_id, long_url))*/)
 	if err != nil {
 		return errors.New("creating db method, error while creating new table, " + err.Error())
 	}
@@ -117,7 +117,7 @@ func (cDBS *ClientDBStruct) PostShortURL(shortURL, longURL, userID string, uuid 
 		`INSERT INTO urlstorage(id, user_id, short_url, long_url)
 		 VALUES ($1, $2, $3, $4) 
 		 ON CONFLICT
-		 ON CONSTRAINT uniqkey
+		 ON CONSTRAINT uniq_key
 		 DO UPDATE SET 
 		 long_url=EXCLUDED.long_url
 		 RETURNING (short_url)`, uuid, userID, shortURL, longURL)
@@ -165,7 +165,7 @@ func (cDBS *ClientDBStruct) PostURLBatch(URLarr []DBRowStrct, userID string) ([]
 		btch.Queue(`INSERT INTO urlstorage(id, user_id, short_url, long_url)
 		 VALUES ($1, $2, $3, $4) 
 		 ON CONFLICT
-		 ON CONSTRAINT uniqkey
+		 ON CONSTRAINT uniq_key
 		 DO UPDATE SET 
 		 long_url=EXCLUDED.long_url
 		 RETURNING (short_url)`, v.ID, userID, v.ShortURL, v.LongURL)
