@@ -551,7 +551,8 @@ func (hn *Handlers) GetUsersURLs() http.HandlerFunc {
 			resp, err := json.Marshal(&usrURLsArr)
 			if err != nil {
 				hn.logger.Error("getUsersURLs, error while marshalling response data", zap.Error(err))
-				w.WriteHeader(http.StatusInternalServerError)
+				//w.WriteHeader(http.StatusInternalServerError)
+				w.WriteHeader(http.StatusNoContent)
 				return
 			}
 			fmt.Println("GetUsersURLs response is: " + string(resp))
