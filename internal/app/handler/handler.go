@@ -5,13 +5,13 @@ import (
 	"bytes"
 	"context"
 	"crypto/rand"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -453,14 +453,14 @@ func (hn *Handlers) AuthMiddleware(h http.Handler) http.Handler {
 		var emptyCookie, createCookie bool
 		var userID, signature string
 		if !noCookie {
-			cookieStrHex /*, err*/ := /*url.QueryUnescape()*/ cookie.Value
-			cookieStr := hex.EncodeToString([]byte(cookieStrHex))
+			cookieStrHex, err := url.QueryUnescape(cookie.Value)
+			//cookieStr := hex.EncodeToString([]byte(cookieStrHex))
 			if err != nil {
 				hn.logger.Error("decoding cookie string error", zap.Error(err))
 				return
 			}
 
-			userID, _, err = authentication.CheckCookie(cookieStr)
+			userID, _, err = authentication.CheckCookie(cookieStrHex)
 			if err != nil {
 				hn.logger.Error("cookie checking err", zap.Error(err))
 				if strings.Contains(err.Error(), "cookie is empty") {
