@@ -116,8 +116,7 @@ func (cDBS *ClientDBStruct) PostShortURL(shortURL, longURL, userID string, uuid 
 	row := tx.QueryRow(ctx,
 		`INSERT INTO urlstorage(id, user_id, short_url, long_url)
 		 VALUES ($1, $2, $3, $4) 
-		 ON CONFLICT
-		 ON CONSTRAINT uniq_key
+		 ON CONFLICT uniq_key
 		 DO UPDATE SET 
 		 long_url=EXCLUDED.long_url
 		 RETURNING (short_url)`, uuid, userID, shortURL, longURL)
@@ -164,8 +163,7 @@ func (cDBS *ClientDBStruct) PostURLBatch(URLarr []DBRowStrct, userID string) ([]
 	for _, v := range URLarr {
 		btch.Queue(`INSERT INTO urlstorage(id, user_id, short_url, long_url)
 		 VALUES ($1, $2, $3, $4) 
-		 ON CONFLICT
-		 ON CONSTRAINT uniq_key
+		 ON CONFLICT uniq_key
 		 DO UPDATE SET 
 		 long_url=EXCLUDED.long_url
 		 RETURNING (short_url)`, v.ID, userID, v.ShortURL, v.LongURL)

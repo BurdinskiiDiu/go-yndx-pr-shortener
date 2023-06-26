@@ -103,6 +103,7 @@ func (hn *Handlers) CreateShortURL(longURL, userID string) (shrtURL string, err 
 func (hn *Handlers) PostLongURL() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		//userID := w.Header().Get("UserID")
+		hn.logger.Debug("start PostLongURL")
 		content, err := io.ReadAll(r.Body)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -138,6 +139,7 @@ func (hn *Handlers) PostLongURL() http.HandlerFunc {
 
 func (hn *Handlers) GetLongURL(srtURL string) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		hn.logger.Debug("start GetLongURL")
 		hn.logger.Debug("shortURL is:", zap.String("shortURL", srtURL))
 		lngURL, err := hn.US.GetLongURL(srtURL)
 		hn.logger.Debug("longURL is:", zap.String("longURL", lngURL))
@@ -154,6 +156,7 @@ func (hn *Handlers) GetLongURL(srtURL string) http.HandlerFunc {
 func (hn *Handlers) PostURLApi() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		//userID := w.Header().Get("UserID")
+		hn.logger.Debug("start PostURLApi")
 		var buf bytes.Buffer
 		_, err := buf.ReadFrom(r.Body)
 		if err != nil {
@@ -229,7 +232,7 @@ func (lRW *LoggingRespWrt) WriteHeader(stCode int) {
 
 func (hn *Handlers) LoggingHandler(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
+		hn.logger.Debug("start LoggingHandler")
 		responseData := &responseData{
 			status: 0,
 			size:   0,
@@ -308,6 +311,7 @@ type URLDataStruct struct {
 }
 
 func (hn *Handlers) GetStoreBackup() error {
+	hn.logger.Debug("start GetStoreBackup")
 	hn.logger.Debug("storefile addr from createfile", zap.String("path", hn.Cf.FileStorePath))
 	file, err := os.OpenFile(hn.Cf.FileStorePath, os.O_RDONLY|os.O_CREATE, 0777)
 	if err != nil {
@@ -348,6 +352,7 @@ func (hn *Handlers) GetStoreBackup() error {
 }
 
 func (hn *Handlers) FileFilling(shrtURL, lngURL, userID string) error {
+	hn.logger.Debug("start FileFilling")
 	hn.logger.Debug("storefile addr from filling method", zap.String("path", hn.Cf.FileStorePath))
 	file, err := os.OpenFile(hn.Cf.FileStorePath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0777)
 	if err != nil {
@@ -388,7 +393,8 @@ type batchRespStruct struct {
 
 func (hn *Handlers) PostBatch() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		//userID := w.Header().Get("UserID")
+
+		hn.logger.Debug("start PostBatch") //userID := w.Header().Get("UserID")
 		var buf bytes.Buffer
 		_, err := buf.ReadFrom(r.Body)
 		if err != nil {
@@ -442,6 +448,7 @@ func (hn *Handlers) PostBatch() http.HandlerFunc {
 // authentication middleware
 func (hn *Handlers) AuthMiddleware(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		hn.logger.Debug("start AuthMiddleware")
 		cookie, err := r.Cookie("authentication")
 		var noCookie bool
 		if err != nil {
@@ -524,6 +531,7 @@ type UsersURLs struct {
 // GetUsersURLs handler
 func (hn *Handlers) GetUsersURLs() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		hn.logger.Debug("start GetUsersURLs")
 		//userID := w.Header().Get("UserID")
 		ctx := context.TODO()
 		ans, err := hn.US.ReturnAllUserReq(ctx, hn.currentUser)
