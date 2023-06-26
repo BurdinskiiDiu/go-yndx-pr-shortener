@@ -453,6 +453,7 @@ func (hn *Handlers) AuthMiddleware(h http.Handler) http.Handler {
 		var emptyCookie, createCookie bool
 		var userID, signature string
 		if !noCookie {
+			hn.logger.Info("gotted cookie string is", zap.String("hexcookie", cookie.Value))
 			cookieStrHex, err := url.QueryUnescape(cookie.Value)
 			//cookieStr := hex.EncodeToString([]byte(cookieStrHex))
 			if err != nil {
@@ -491,9 +492,12 @@ func (hn *Handlers) AuthMiddleware(h http.Handler) http.Handler {
 			hn.usersID[userID] = signature
 			respCookieVal := userID + signature
 			hn.logger.Info("cookie string is", zap.String("cookie", respCookieVal))
+
+			respCookieValHex := url.QueryEscape(respCookieVal)
+			hn.logger.Info("hex cookie string is", zap.String("hexcookie", respCookieValHex))
 			respCookie := http.Cookie{
 				Name:    "authentication",
-				Value:   url.QueryEscape(respCookieVal),
+				Value:   respCookieValHex,
 				Expires: time.Now().Add(1 * time.Hour),
 			}
 			http.SetCookie(w, &respCookie)
