@@ -459,8 +459,8 @@ func (hn *Handlers) AuthMiddleware(h http.Handler) http.Handler {
 			}
 			hn.logger.Info("request without necessary cookie")
 			noCookie = true
-		}
-		var emptyCookie, createCookie bool
+		} /*emptyCookie*/
+		var createCookie bool
 		var userID, signature string
 		if !noCookie {
 			hn.logger.Info("gotted cookie string is", zap.String("hexcookie", cookie.Value))
@@ -472,10 +472,10 @@ func (hn *Handlers) AuthMiddleware(h http.Handler) http.Handler {
 
 			userID, _, err = authentication.CheckCookie(cookieStrHex)
 			if err != nil {
-				hn.logger.Error("cookie checking err", zap.Error(err))
+				/*hn.logger.Error("cookie checking err", zap.Error(err))
 				if strings.Contains(err.Error(), "cookie is empty") {
 					emptyCookie = true
-				}
+				}*/
 				createCookie = true
 			}
 			_, ok := hn.usersID[userID]
@@ -509,7 +509,7 @@ func (hn *Handlers) AuthMiddleware(h http.Handler) http.Handler {
 		//w.Header().Set("UserID", userID)
 		hn.currentUser = userID
 		fmt.Println("current user is: " + hn.currentUser)
-		if (noCookie || emptyCookie) && r.Method == http.MethodGet && r.URL.Path == "/api/user/urls" {
+		if noCookie && r.Method == http.MethodGet && r.URL.Path == "/api/user/urls" {
 			w.WriteHeader(http.StatusUnauthorized)
 		}
 		h.ServeHTTP(w, r)
