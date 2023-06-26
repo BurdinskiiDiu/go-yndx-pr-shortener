@@ -12,7 +12,6 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -454,7 +453,7 @@ func (hn *Handlers) AuthMiddleware(h http.Handler) http.Handler {
 		var emptyCookie, createCookie bool
 		var userID, signature string
 		if !noCookie {
-			cookieStrHex, err := url.QueryUnescape(cookie.Value)
+			cookieStrHex /*, err*/ := /*url.QueryUnescape()*/ cookie.Value
 			cookieStr := hex.EncodeToString([]byte(cookieStrHex))
 			if err != nil {
 				hn.logger.Error("decoding cookie string error", zap.Error(err))
@@ -491,9 +490,10 @@ func (hn *Handlers) AuthMiddleware(h http.Handler) http.Handler {
 			}
 			hn.usersID[userID] = signature
 			respCookieVal := userID + signature
+			hn.logger.Info("cookie string is", zap.String("cookie", respCookieVal))
 			respCookie := http.Cookie{
-				Name:    "authentication",
-				Value:   url.QueryEscape(respCookieVal),
+				Name: "authentication",
+				Value:/*url.QueryEscape()*/ respCookieVal,
 				Expires: time.Now().Add(1 * time.Hour),
 			}
 			http.SetCookie(w, &respCookie)
