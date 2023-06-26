@@ -194,10 +194,11 @@ func (cDBS *ClientDBStruct) ReturnAllUserReq(ctxPar context.Context, userID stri
 	ans := make(map[string]string, 0)
 
 	rows, err := cDBS.db.Query(ctx, `SELECT short_url, long_url FROM urlstorage WHERE user_id = $1`, userID)
-	defer rows.Close()
+
 	if err != nil {
 		return nil, errors.New("getting all user requests error, " + err.Error())
 	}
+	defer rows.Close()
 	var shrtURL, lngURL string
 	for rows.Next() {
 		err := rows.Scan(&shrtURL, &lngURL)
