@@ -102,7 +102,7 @@ func (hn *Handlers) CreateShortURL(longURL, userID string) (shrtURL string, err 
 
 func (hn *Handlers) PostLongURL() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		userID := w.Header().Get("userID")
+		userID := w.Header().Get("UserID")
 		content, err := io.ReadAll(r.Body)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -153,7 +153,7 @@ func (hn *Handlers) GetLongURL(srtURL string) http.HandlerFunc {
 
 func (hn *Handlers) PostURLApi() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		userID := w.Header().Get("userID")
+		userID := w.Header().Get("UserID")
 		var buf bytes.Buffer
 		_, err := buf.ReadFrom(r.Body)
 		if err != nil {
@@ -388,7 +388,7 @@ type batchRespStruct struct {
 
 func (hn *Handlers) PostBatch() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		userID := w.Header().Get("userID")
+		userID := w.Header().Get("UserID")
 		var buf bytes.Buffer
 		_, err := buf.ReadFrom(r.Body)
 		if err != nil {
@@ -523,7 +523,7 @@ type UsersURLs struct {
 // GetUsersURLs handler
 func (hn *Handlers) GetUsersURLs() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		userID := w.Header().Get("userID")
+		userID := w.Header().Get("UserID")
 		ctx := context.TODO()
 		ans, err := hn.US.ReturnAllUserReq(ctx, userID)
 		if err != nil {
