@@ -46,9 +46,14 @@ func CheckCookie(cookieStr string) (string, string, error) {
 	if !(len([]byte(cookieStr)) > 8) {
 		return "", "", errors.New("wrong cookie len")
 	}
-	gottedUserID := []byte(cookieStr)[:8]
-	gottedSignature := []byte(cookieStr)[8:]
-
+	decgotStr, err := hex.DecodeString(cookieStr)
+	if err != nil {
+		return "", "", errors.New("decoding gotted cookie string err, " + err.Error())
+	}
+	//gottedUserID := []byte(cookieStr)[:8]
+	//gottedSignature := []byte(cookieStr)[8:]
+	gottedUserID := decgotStr[:8]
+	gottedSignature := decgotStr[8:]
 	h := hmac.New(sha256.New, key)
 	h.Write(gottedUserID)
 	signature := h.Sum(nil)
