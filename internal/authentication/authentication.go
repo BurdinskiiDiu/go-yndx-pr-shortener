@@ -55,8 +55,8 @@ func CheckCookie(cookieStr string) (string, string, error) {
 	decSign := hex.EncodeToString(signature)
 	fmt.Println("gotted sign is " + string(gottedSignature))
 	fmt.Println("checked sign is " + string(decSign))
-	if hmac.Equal(signature, gottedSignature) {
-		return string([]byte(decSign)), string(gottedSignature), nil
+	if hmac.Equal([]byte(decSign), gottedSignature) {
+		return string(gottedUserID), string(gottedSignature), nil
 	}
 	return "", "", errors.New("wrong signature")
 }
