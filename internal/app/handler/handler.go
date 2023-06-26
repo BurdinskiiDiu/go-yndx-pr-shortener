@@ -125,7 +125,7 @@ func (hn *Handlers) PostLongURL() http.HandlerFunc {
 		bodyResp := hn.Cf.BaseAddr + "/" + shrtURL
 		hn.logger.Debug("response body message", zap.String("body", bodyResp))
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-		w.Header().Del("userID")
+		w.Header()["UserID"] = nil
 		if chndStatus {
 			hn.logger.Info("chndStatus is true ")
 			w.WriteHeader(http.StatusConflict)
@@ -191,7 +191,7 @@ func (hn *Handlers) PostURLApi() http.HandlerFunc {
 
 		hn.logger.Debug("response for postApi request", zap.String("response", string(resp)))
 		w.Header().Set("Content-Type", "application/json")
-		w.Header().Del("userID")
+		w.Header()["UserID"] = nil
 		if chndStatus {
 			w.WriteHeader(http.StatusConflict)
 		} else {
@@ -433,7 +433,7 @@ func (hn *Handlers) PostBatch() http.HandlerFunc {
 		}
 		hn.logger.Debug("response for postApi request", zap.String("response", string(resp)))
 		w.Header().Set("Content-Type", "application/json")
-		w.Header().Del("userID")
+		w.Header()["UserID"] = nil
 		w.WriteHeader(http.StatusCreated)
 		w.Write(resp)
 	})
@@ -506,7 +506,7 @@ func (hn *Handlers) AuthMiddleware(h http.Handler) http.Handler {
 			}
 			http.SetCookie(w, &respCookie)
 		}
-		w.Header().Set("userID", userID)
+		w.Header().Set("UserID", userID)
 
 		if (noCookie || emptyCookie) && r.Method == http.MethodGet && r.URL.Path == "/api/user/urls" {
 			w.WriteHeader(http.StatusUnauthorized)
@@ -546,7 +546,7 @@ func (hn *Handlers) GetUsersURLs() http.HandlerFunc {
 			return
 		}
 		w.Header().Set("Content-Type", "application/json")
-		w.Header().Del("userID")
+		w.Header()["UserID"] = nil
 		w.Write([]byte(resp))
 	})
 }
