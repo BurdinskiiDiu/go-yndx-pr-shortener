@@ -27,7 +27,7 @@ func NewURLStorage(logger *zap.Logger) *URLStorage {
 	}
 }
 
-func (uS *URLStorage) PostShortURL(shortURL, longURL string, uuid int32) (string, error) {
+func (uS *URLStorage) PostShortURL(shortURL, longURL, userID string, uuid int32) (string, error) {
 	uS.mutex.Lock()
 	defer uS.mutex.Unlock()
 	_, ok := uS.urlStr[shortURL]
@@ -54,10 +54,15 @@ func (uS *URLStorage) Ping(ctx context.Context) error {
 	return nil
 }
 
-func (uS *URLStorage) PostURLBatch(btch []postgresql.DBRowStrct) ([]string, error) {
+func (uS *URLStorage) PostURLBatch(btch []postgresql.DBRowStrct, userID string) ([]string, error) {
 	return nil, nil
 }
 
-/*
-func (uS *URLStorage) PrintlAllDB() {
-}*/
+type usersURLs struct {
+	shortURL string
+	longURL  string
+}
+
+func (uS *URLStorage) ReturnAllUserReq(ctx context.Context, userID string) (map[string]string, error) {
+	return nil, nil
+}
