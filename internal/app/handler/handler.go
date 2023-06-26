@@ -512,7 +512,8 @@ func (hn *Handlers) AuthMiddleware(h http.Handler) http.Handler {
 		fmt.Println("method is: " + r.Method)
 		fmt.Println("path is: " + r.URL.Path)
 		if noCookie && r.Method == http.MethodGet && r.URL.Path == "/api/user/urls" {
-			w.WriteHeader(http.StatusUnauthorized)
+			//w.WriteHeader(http.StatusUnauthorized)
+			w.WriteHeader(http.StatusNoContent)
 			return
 		}
 		h.ServeHTTP(w, r)
@@ -551,8 +552,8 @@ func (hn *Handlers) GetUsersURLs() http.HandlerFunc {
 			resp, err := json.Marshal(&usrURLsArr)
 			if err != nil {
 				hn.logger.Error("getUsersURLs, error while marshalling response data", zap.Error(err))
-				//w.WriteHeader(http.StatusInternalServerError)
-				w.WriteHeader(http.StatusNoContent)
+				w.WriteHeader(http.StatusInternalServerError)
+				//w.WriteHeader(http.StatusNoContent)
 				return
 			}
 			fmt.Println("GetUsersURLs response is: " + string(resp))
