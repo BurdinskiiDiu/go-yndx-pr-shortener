@@ -533,6 +533,10 @@ func (hn *Handlers) GetUsersURLs() http.HandlerFunc {
 			hn.logger.Error("getUsersURLs error", zap.Error(err))
 			return
 		}
+		if ans == nil {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
 		var usersURLs UsersURLs
 		usrURLsArr := make([]UsersURLs, 0)
 		for i, v := range ans {
