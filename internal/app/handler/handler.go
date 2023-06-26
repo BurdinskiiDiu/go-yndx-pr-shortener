@@ -451,40 +451,54 @@ func (hn *Handlers) AuthMiddleware(h http.Handler) http.Handler {
 			hn.logger.Info("request without necessary cookie")
 			noCookie = true
 		}
-
-		cookieStrHex, err := url.QueryUnescape(cookie.Value)
-		cookieStr := hex.EncodeToString([]byte(cookieStrHex))
-		if err != nil {
-			hn.logger.Error("decoding cookie string error", zap.Error(err))
-			return
-		}
-		var emptyCookie bool
-		userID, signature, err := authentication.CheckCookie(cookieStr)
-		if err != nil {
-			hn.logger.Error("cookie checking err", zap.Error(err))
-			if strings.Contains(err.Error(), "cookie is empty") {
-				emptyCookie = true
+		var emptyCookie, createCookie bool
+		var userID, signature string
+		if !noCookie {
+			cookieStrHex, err := url.QueryUnescape(cookie.Value)
+			cookieStr := hex.EncodeToString([]byte(cookieStrHex))
+			if err != nil {
+				hn.logger.Error("decoding cookie string error", zap.Error(err))
+				return
 			}
+
+			userID, signature, err = authentication.CheckCookie(cookieStr)
+			if err != nil {
+				hn.logger.Error("cookie checking err", zap.Error(err))
+				if strings.Contains(err.Error(), "cookie is empty") {
+					emptyCookie = true
+				}
+				createCookie = true
+				/*userID, signature, err = authentication.CreateUserID()
+				if err != nil {
+					hn.logger.Error("creating user id error", zap.Error(err))
+					return
+				}*/
+			}
+			_, ok := hn.usersID[userID]
+			if !ok {
+				hn.logger.Error("wrong user ID")
+				createCookie = true
+			}
+		} else {
+			createCookie = true
 		}
 
-		_, ok := hn.usersID[userID]
-		if !ok {
-			hn.logger.Error("wrong user ID")
+		if createCookie {
 			userID, signature, err = authentication.CreateUserID()
 			if err != nil {
 				hn.logger.Error("creating user id error", zap.Error(err))
 				return
 			}
+			hn.usersID[userID] = signature
+			respCookieVal := userID + signature
+			respCookie := http.Cookie{
+				Name:  "authentication",
+				Value: url.QueryEscape(respCookieVal),
+			}
+			http.SetCookie(w, &respCookie)
 		}
-
-		hn.usersID[userID] = signature
-		respCookieVal := userID + signature
-		respCookie := http.Cookie{
-			Name:  "authentication",
-			Value: url.QueryEscape(respCookieVal),
-		}
-		http.SetCookie(w, &respCookie)
 		w.Header().Add("userID", userID)
+
 		if (noCookie || emptyCookie) && r.Method == http.MethodGet && r.URL.Path == "/api/user/urls" {
 			w.WriteHeader(http.StatusUnauthorized)
 		}
