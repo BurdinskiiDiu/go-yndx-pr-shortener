@@ -551,9 +551,10 @@ func (hn *Handlers) GetUsersURLs() http.HandlerFunc {
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
+			fmt.Println("GetUsersURLs response is: " + string(resp))
 			w.Header().Set("Content-Type", "application/json")
 			//w.Header()["UserID"] = nil
-			w.Write([]byte(resp))
+			w.Write(resp)
 		}
 	})
 }
