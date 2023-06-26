@@ -533,27 +533,27 @@ func (hn *Handlers) GetUsersURLs() http.HandlerFunc {
 			hn.logger.Error("getUsersURLs error", zap.Error(err))
 			return
 		}
-		if ans == nil {
+		if len(ans) == 0 {
 			w.WriteHeader(http.StatusNoContent)
-			return
-		}
-		var usersURLs UsersURLs
-		usrURLsArr := make([]UsersURLs, 0)
-		for i, v := range ans {
-			v = hn.Cf.BaseAddr + "/" + v
-			usersURLs.LongURL = i
-			usersURLs.ShortURL = v
-			usrURLsArr = append(usrURLsArr, usersURLs)
-		}
+		} else {
+			var usersURLs UsersURLs
+			usrURLsArr := make([]UsersURLs, 0)
+			for i, v := range ans {
+				v = hn.Cf.BaseAddr + "/" + v
+				usersURLs.LongURL = i
+				usersURLs.ShortURL = v
+				usrURLsArr = append(usrURLsArr, usersURLs)
+			}
 
-		resp, err := json.Marshal(&usrURLsArr)
-		if err != nil {
-			hn.logger.Error("getUsersURLs, error while marshalling response data", zap.Error(err))
-			w.WriteHeader(http.StatusInternalServerError)
-			return
+			resp, err := json.Marshal(&usrURLsArr)
+			if err != nil {
+				hn.logger.Error("getUsersURLs, error while marshalling response data", zap.Error(err))
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			w.Header().Set("Content-Type", "application/json")
+			//w.Header()["UserID"] = nil
+			w.Write([]byte(resp))
 		}
-		w.Header().Set("Content-Type", "application/json")
-		//w.Header()["UserID"] = nil
-		w.Write([]byte(resp))
 	})
 }
