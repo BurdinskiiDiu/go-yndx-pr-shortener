@@ -4,6 +4,7 @@ import (
 	"crypto/hmac"
 	"crypto/rand"
 	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
 )
@@ -22,15 +23,20 @@ func randID() ([]byte, error) {
 
 func CreateUserID() (string, string, error) {
 	id, err := randID()
+	idStr := hex.EncodeToString(id)
 	fmt.Println("created user is " + string(id))
+	fmt.Println("created userStr is " + string(idStr))
 	if err != nil {
 		return "nil", "", err
 	}
 	h := hmac.New(sha256.New, key)
 	h.Write(id)
 	signature := h.Sum(nil)
+	signatureStr := hex.EncodeToString(signature)
 	fmt.Println("created signature is " + string(signature))
-	return string(id), string(signature), nil
+	fmt.Println("created signatureStr is " + string(signatureStr))
+	//return string(id), string(signature), nil
+	return idStr, signatureStr, nil
 }
 
 func CheckCookie(cookieStr string) (string, string, error) {
