@@ -443,6 +443,7 @@ func (hn *Handlers) AuthMiddleware(h http.Handler) http.Handler {
 		cookie, err := r.Cookie("authentication")
 		var noCookie bool
 		if err != nil {
+			hn.logger.Info("cookie err, " + err.Error())
 			if !errors.Is(err, http.ErrNoCookie) {
 				hn.logger.Error("getting request cookie error", zap.Error(err))
 				return
