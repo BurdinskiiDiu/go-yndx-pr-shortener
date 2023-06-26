@@ -56,20 +56,22 @@ type URLResp struct {
 }
 
 type Handlers struct {
-	US      URLStore
-	Cf      *config.Config
-	logger  *zap.Logger
-	uuid    int32
-	usersID map[string]string
+	US          URLStore
+	Cf          *config.Config
+	logger      *zap.Logger
+	uuid        int32
+	currentUser string
+	usersID     map[string]string
 }
 
 func NewHandlers(uS URLStore, cf *config.Config, logger *zap.Logger) *Handlers {
 	return &Handlers{
-		US:      uS,
-		Cf:      cf,
-		logger:  logger,
-		uuid:    0,
-		usersID: make(map[string]string),
+		US:          uS,
+		Cf:          cf,
+		logger:      logger,
+		uuid:        0,
+		currentUser: "",
+		usersID:     make(map[string]string),
 	}
 }
 
@@ -504,7 +506,7 @@ func (hn *Handlers) AuthMiddleware(h http.Handler) http.Handler {
 			}
 			http.SetCookie(w, &respCookie)
 		}
-		w.Header().Add("userID", userID)
+		w.Header().Set("userID", userID)
 
 		if (noCookie || emptyCookie) && r.Method == http.MethodGet && r.URL.Path == "/api/user/urls" {
 			w.WriteHeader(http.StatusUnauthorized)
