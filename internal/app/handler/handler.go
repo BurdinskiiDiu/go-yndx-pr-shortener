@@ -102,7 +102,7 @@ func (hn *Handlers) CreateShortURL(longURL, userID string) (shrtURL string, err 
 
 func (hn *Handlers) PostLongURL() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		userID := w.Header().Get("UserID")
+		//userID := w.Header().Get("UserID")
 		content, err := io.ReadAll(r.Body)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -112,7 +112,7 @@ func (hn *Handlers) PostLongURL() http.HandlerFunc {
 		hn.logger.Debug("got post message" + longURL)
 		var shrtURL string
 		var chndStatus bool
-		shrtURL, err = hn.CreateShortURL(longURL, userID)
+		shrtURL, err = hn.CreateShortURL(longURL, hn.currentUser)
 		if err != nil {
 			if strings.Contains(err.Error(), "longURL is already exist") {
 				chndStatus = true
@@ -153,7 +153,7 @@ func (hn *Handlers) GetLongURL(srtURL string) http.HandlerFunc {
 
 func (hn *Handlers) PostURLApi() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		userID := w.Header().Get("UserID")
+		//userID := w.Header().Get("UserID")
 		var buf bytes.Buffer
 		_, err := buf.ReadFrom(r.Body)
 		if err != nil {
@@ -170,7 +170,7 @@ func (hn *Handlers) PostURLApi() http.HandlerFunc {
 		}
 		hn.logger.Debug("unmarshaled url from postApi message", zap.String("longURL", urlReq.URL))
 		var chndStatus bool
-		shrtURL, err := hn.CreateShortURL(urlReq.URL, userID)
+		shrtURL, err := hn.CreateShortURL(urlReq.URL, hn.currentUser)
 		if err != nil {
 			if strings.Contains(err.Error(), "longURL is already exist") {
 				chndStatus = true
@@ -388,7 +388,7 @@ type batchRespStruct struct {
 
 func (hn *Handlers) PostBatch() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		userID := w.Header().Get("UserID")
+		//userID := w.Header().Get("UserID")
 		var buf bytes.Buffer
 		_, err := buf.ReadFrom(r.Body)
 		if err != nil {
@@ -416,7 +416,7 @@ func (hn *Handlers) PostBatch() http.HandlerFunc {
 			btchStr = append(btchStr, btchRow)
 			urlResparr = append(urlResparr, urlResp)
 		}
-		retShrtURL, err := hn.US.PostURLBatch(btchStr, userID)
+		retShrtURL, err := hn.US.PostURLBatch(btchStr, hn.currentUser)
 		if err != nil {
 			hn.logger.Error("post batch error", zap.Error(err))
 			return
@@ -506,7 +506,8 @@ func (hn *Handlers) AuthMiddleware(h http.Handler) http.Handler {
 			}
 			http.SetCookie(w, &respCookie)
 		}
-		w.Header().Set("UserID", userID)
+		//w.Header().Set("UserID", userID)
+		hn.currentUser = userID
 
 		if (noCookie || emptyCookie) && r.Method == http.MethodGet && r.URL.Path == "/api/user/urls" {
 			w.WriteHeader(http.StatusUnauthorized)
@@ -523,9 +524,9 @@ type UsersURLs struct {
 // GetUsersURLs handler
 func (hn *Handlers) GetUsersURLs() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		userID := w.Header().Get("UserID")
+		//userID := w.Header().Get("UserID")
 		ctx := context.TODO()
-		ans, err := hn.US.ReturnAllUserReq(ctx, userID)
+		ans, err := hn.US.ReturnAllUserReq(ctx, hn.currentUser)
 		if err != nil {
 			hn.logger.Error("getUsersURLs error", zap.Error(err))
 			return
