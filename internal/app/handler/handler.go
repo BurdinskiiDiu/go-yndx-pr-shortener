@@ -492,8 +492,9 @@ func (hn *Handlers) AuthMiddleware(h http.Handler) http.Handler {
 			hn.usersID[userID] = signature
 			respCookieVal := userID + signature
 			respCookie := http.Cookie{
-				Name:  "authentication",
-				Value: url.QueryEscape(respCookieVal),
+				Name:    "authentication",
+				Value:   url.QueryEscape(respCookieVal),
+				Expires: time.Now().Add(1 * time.Hour),
 			}
 			http.SetCookie(w, &respCookie)
 		}
