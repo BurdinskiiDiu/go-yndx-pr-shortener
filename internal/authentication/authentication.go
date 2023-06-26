@@ -46,22 +46,28 @@ func CheckCookie(cookieStr string) (string, string, error) {
 	if !(len([]byte(cookieStr)) > 8) {
 		return "", "", errors.New("wrong cookie len")
 	}
-	decgotStr, err := hex.DecodeString(cookieStr)
+	decGotStr, err := hex.DecodeString(cookieStr)
 	if err != nil {
 		return "", "", errors.New("decoding gotted cookie string err, " + err.Error())
 	}
 	//gottedUserID := []byte(cookieStr)[:8]
 	//gottedSignature := []byte(cookieStr)[8:]
-	gottedUserID := decgotStr[:8]
-	gottedSignature := decgotStr[8:]
+	gottedUserID := decGotStr[:8]
+	fmt.Println("gotted userID is " + string(gottedUserID))
+	gottedUserIDStr := hex.EncodeToString(gottedUserID)
+	fmt.Println("gotted EncUserID is " + gottedUserIDStr)
+	gottedSign := decGotStr[8:]
+	fmt.Println("gotted sign is " + string(gottedSign))
+	gottedSignStr := hex.EncodeToString(gottedSign)
+	fmt.Println("gotted EncSign is " + string(gottedSignStr))
 	h := hmac.New(sha256.New, key)
-	h.Write(gottedUserID)
+	h.Write([]byte(gottedUserIDStr))
 	signature := h.Sum(nil)
 	decSign := hex.EncodeToString(signature)
-	fmt.Println("gotted sign is " + string(gottedSignature))
+
 	fmt.Println("checked sign is " + string(decSign))
-	if hmac.Equal([]byte(decSign), gottedSignature) {
-		return string(gottedUserID), string(gottedSignature), nil
+	if hmac.Equal([]byte(decSign), []byte(gottedSignStr)) {
+		return gottedUserIDStr, gottedSignStr, nil
 	}
 	return "", "", errors.New("wrong signature")
 }
