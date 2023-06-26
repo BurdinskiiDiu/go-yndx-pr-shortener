@@ -303,7 +303,7 @@ type URLDataStruct struct {
 	UUID    string `json:"uuid"`
 	ShrtURL string `json:"short_url"`
 	LngURL  string `json:"original_url"`
-	UsrID   string `json:"user_id`
+	UsrID   string `json:"user_id"`
 }
 
 func (hn *Handlers) GetStoreBackup() error {
