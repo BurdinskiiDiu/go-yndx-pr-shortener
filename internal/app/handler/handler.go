@@ -509,8 +509,11 @@ func (hn *Handlers) AuthMiddleware(h http.Handler) http.Handler {
 		//w.Header().Set("UserID", userID)
 		hn.currentUser = userID
 		fmt.Println("current user is: " + hn.currentUser)
+		fmt.Println("method is: " + r.Method)
+		fmt.Println("path is: " + r.URL.Path)
 		if noCookie && r.Method == http.MethodGet && r.URL.Path == "/api/user/urls" {
 			w.WriteHeader(http.StatusUnauthorized)
+			return
 		}
 		h.ServeHTTP(w, r)
 	})
