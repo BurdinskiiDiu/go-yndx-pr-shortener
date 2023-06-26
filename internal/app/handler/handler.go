@@ -442,14 +442,14 @@ func (hn *Handlers) PostBatch() http.HandlerFunc {
 func (hn *Handlers) AuthMiddleware(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		cookie, err := r.Cookie("authentication")
-		var noNecCookie bool
+		var noCookie bool
 		if err != nil {
 			if !errors.Is(err, http.ErrNoCookie) {
 				hn.logger.Error("getting request cookie error", zap.Error(err))
 				return
 			}
 			hn.logger.Info("request without necessary cookie")
-			noNecCookie = true
+			noCookie = true
 		}
 
 		cookieStrHex, err := url.QueryUnescape(cookie.Value)
@@ -458,12 +458,12 @@ func (hn *Handlers) AuthMiddleware(h http.Handler) http.Handler {
 			hn.logger.Error("decoding cookie string error", zap.Error(err))
 			return
 		}
-
+		var emptyCookie bool
 		userID, signature, err := authentication.CheckCookie(cookieStr)
 		if err != nil {
 			hn.logger.Error("cookie checking err", zap.Error(err))
 			if strings.Contains(err.Error(), "cookie is empty") {
-				noNecCookie = true
+				emptyCookie = true
 			}
 		}
 
@@ -485,7 +485,7 @@ func (hn *Handlers) AuthMiddleware(h http.Handler) http.Handler {
 		}
 		http.SetCookie(w, &respCookie)
 		w.Header().Add("userID", userID)
-		if !noNecCookie && r.Method == http.MethodGet && r.URL.Path == "/api/user/urls" {
+		if (noCookie || emptyCookie) && r.Method == http.MethodGet && r.URL.Path == "/api/user/urls" {
 			w.WriteHeader(http.StatusUnauthorized)
 		}
 		h.ServeHTTP(w, r)
