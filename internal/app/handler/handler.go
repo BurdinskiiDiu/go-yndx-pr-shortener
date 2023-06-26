@@ -463,6 +463,7 @@ func (hn *Handlers) AuthMiddleware(h http.Handler) http.Handler {
 			}
 
 			userID, _, err = authentication.CheckCookie(cookieStrHex)
+
 			if err != nil {
 				hn.logger.Error("cookie checking err", zap.Error(err))
 				if strings.Contains(err.Error(), "cookie is empty") {

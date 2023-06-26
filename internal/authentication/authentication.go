@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"errors"
+	"fmt"
 )
 
 var key = []byte("secretKey")
@@ -21,12 +22,14 @@ func randID() ([]byte, error) {
 
 func CreateUserID() (string, string, error) {
 	id, err := randID()
+	fmt.Println("created user is " + string(id))
 	if err != nil {
 		return "nil", "", err
 	}
 	h := hmac.New(sha256.New, key)
 	h.Write(id)
 	signature := h.Sum(nil)
+	fmt.Println("created signature is " + string(signature))
 	return string(id), string(signature), nil
 }
 
