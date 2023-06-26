@@ -11,22 +11,25 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/authentication"
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/config"
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/gzp"
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/postgresql"
+
 	"go.uber.org/zap"
 )
 
 type URLStore interface {
-	PostShortURL(shURL string, lnURL string, uuid int32) (string, error)
+	PostShortURL(shURL, lnURL, userID string, uuid int32) (string, error)
 	GetLongURL(shURL string) (string, error)
-	PostURLBatch([]postgresql.DBRowStrct) ([]string, error)
-	//PrintlAllDB()
+	PostURLBatch(tchStr []postgresql.DBRowStrct, userID string) ([]string, error)
+	ReturnAllUserReq(ctx context.Context, userID string) (map[string]string, error)
 	Ping(ctx context.Context) error
 }
 
@@ -53,30 +56,32 @@ type URLResp struct {
 }
 
 type Handlers struct {
-	US        URLStore
-	Cf        *config.Config
-	logger    *zap.Logger
-	uuid      int32
-	shortings map[string]int
+	US          URLStore
+	Cf          *config.Config
+	logger      *zap.Logger
+	uuid        int32
+	currentUser string
+	usersID     map[string]string
 }
 
 func NewHandlers(uS URLStore, cf *config.Config, logger *zap.Logger) *Handlers {
 	return &Handlers{
-		US:        uS,
-		Cf:        cf,
-		logger:    logger,
-		uuid:      0,
-		shortings: make(map[string]int),
+		US:          uS,
+		Cf:          cf,
+		logger:      logger,
+		uuid:        0,
+		currentUser: "",
+		usersID:     make(map[string]string),
 	}
 }
 
-func (hn *Handlers) CreateShortURL(longURL string) (shrtURL string, err error) {
+func (hn *Handlers) CreateShortURL(longURL, userID string) (shrtURL string, err error) {
 
 	cntr := 0
 	hn.uuid++
 	for cntr < 100 {
 		shrtURL = shorting()
-		if shrtURL, err = hn.US.PostShortURL(shrtURL, longURL, hn.uuid); err != nil {
+		if shrtURL, err = hn.US.PostShortURL(shrtURL, longURL, userID, hn.uuid); err != nil {
 			hn.logger.Info(err.Error())
 			if strings.Contains(err.Error(), "shortURL is already exist") {
 				cntr++
@@ -87,7 +92,7 @@ func (hn *Handlers) CreateShortURL(longURL string) (shrtURL string, err error) {
 				break
 			}
 		}
-		if errFF := hn.FileFilling(shrtURL, longURL); errFF != nil {
+		if errFF := hn.FileFilling(shrtURL, longURL, userID); errFF != nil {
 			hn.logger.Error("createShortURL method, err while filling file", zap.Error(errFF))
 		}
 		break
@@ -97,6 +102,8 @@ func (hn *Handlers) CreateShortURL(longURL string) (shrtURL string, err error) {
 
 func (hn *Handlers) PostLongURL() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		//userID := w.Header().Get("UserID")
+		hn.logger.Debug("start PostLongURL")
 		content, err := io.ReadAll(r.Body)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -106,7 +113,7 @@ func (hn *Handlers) PostLongURL() http.HandlerFunc {
 		hn.logger.Debug("got post message" + longURL)
 		var shrtURL string
 		var chndStatus bool
-		shrtURL, err = hn.CreateShortURL(longURL)
+		shrtURL, err = hn.CreateShortURL(longURL, hn.currentUser)
 		if err != nil {
 			if strings.Contains(err.Error(), "longURL is already exist") {
 				chndStatus = true
@@ -119,7 +126,7 @@ func (hn *Handlers) PostLongURL() http.HandlerFunc {
 		bodyResp := hn.Cf.BaseAddr + "/" + shrtURL
 		hn.logger.Debug("response body message", zap.String("body", bodyResp))
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-
+		//w.Header()["UserID"] = nil
 		if chndStatus {
 			hn.logger.Info("chndStatus is true ")
 			w.WriteHeader(http.StatusConflict)
@@ -132,6 +139,7 @@ func (hn *Handlers) PostLongURL() http.HandlerFunc {
 
 func (hn *Handlers) GetLongURL(srtURL string) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		hn.logger.Debug("start GetLongURL")
 		hn.logger.Debug("shortURL is:", zap.String("shortURL", srtURL))
 		lngURL, err := hn.US.GetLongURL(srtURL)
 		hn.logger.Debug("longURL is:", zap.String("longURL", lngURL))
@@ -147,6 +155,8 @@ func (hn *Handlers) GetLongURL(srtURL string) http.HandlerFunc {
 
 func (hn *Handlers) PostURLApi() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		//userID := w.Header().Get("UserID")
+		hn.logger.Debug("start PostURLApi")
 		var buf bytes.Buffer
 		_, err := buf.ReadFrom(r.Body)
 		if err != nil {
@@ -163,7 +173,7 @@ func (hn *Handlers) PostURLApi() http.HandlerFunc {
 		}
 		hn.logger.Debug("unmarshaled url from postApi message", zap.String("longURL", urlReq.URL))
 		var chndStatus bool
-		shrtURL, err := hn.CreateShortURL(urlReq.URL)
+		shrtURL, err := hn.CreateShortURL(urlReq.URL, hn.currentUser)
 		if err != nil {
 			if strings.Contains(err.Error(), "longURL is already exist") {
 				chndStatus = true
@@ -184,6 +194,7 @@ func (hn *Handlers) PostURLApi() http.HandlerFunc {
 
 		hn.logger.Debug("response for postApi request", zap.String("response", string(resp)))
 		w.Header().Set("Content-Type", "application/json")
+		//w.Header()["UserID"] = nil
 		if chndStatus {
 			w.WriteHeader(http.StatusConflict)
 		} else {
@@ -221,7 +232,7 @@ func (lRW *LoggingRespWrt) WriteHeader(stCode int) {
 
 func (hn *Handlers) LoggingHandler(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
+		hn.logger.Debug("start LoggingHandler")
 		responseData := &responseData{
 			status: 0,
 			size:   0,
@@ -296,9 +307,11 @@ type URLDataStruct struct {
 	UUID    string `json:"uuid"`
 	ShrtURL string `json:"short_url"`
 	LngURL  string `json:"original_url"`
+	UsrID   string `json:"user_id"`
 }
 
 func (hn *Handlers) GetStoreBackup() error {
+	hn.logger.Debug("start GetStoreBackup")
 	hn.logger.Debug("storefile addr from createfile", zap.String("path", hn.Cf.FileStorePath))
 	file, err := os.OpenFile(hn.Cf.FileStorePath, os.O_RDONLY|os.O_CREATE, 0777)
 	if err != nil {
@@ -321,7 +334,7 @@ func (hn *Handlers) GetStoreBackup() error {
 		if err != nil {
 			return errors.New("error while filling db from backup file, uuid conv to int err:" + err.Error())
 		}
-		_, err = hn.US.PostShortURL(urlDataStr.ShrtURL, urlDataStr.LngURL, int32(uuid))
+		_, err = hn.US.PostShortURL(urlDataStr.ShrtURL, urlDataStr.LngURL, urlDataStr.UsrID, int32(uuid))
 		if err != nil {
 			hn.logger.Error("getStoreBackup error, try to write itno db", zap.Error(err))
 		}
@@ -338,7 +351,8 @@ func (hn *Handlers) GetStoreBackup() error {
 	return nil
 }
 
-func (hn *Handlers) FileFilling(shrtURL, lngURL string) error {
+func (hn *Handlers) FileFilling(shrtURL, lngURL, userID string) error {
+	hn.logger.Debug("start FileFilling")
 	hn.logger.Debug("storefile addr from filling method", zap.String("path", hn.Cf.FileStorePath))
 	file, err := os.OpenFile(hn.Cf.FileStorePath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0777)
 	if err != nil {
@@ -352,6 +366,7 @@ func (hn *Handlers) FileFilling(shrtURL, lngURL string) error {
 	urlDataStr.UUID = strconv.Itoa(int(hn.uuid))
 	urlDataStr.ShrtURL = shrtURL
 	urlDataStr.LngURL = lngURL
+	urlDataStr.UsrID = userID
 	raw, err = json.Marshal(urlDataStr)
 	if err != nil {
 		return fmt.Errorf("marshalling data to db file error: %w", err)
@@ -378,6 +393,8 @@ type batchRespStruct struct {
 
 func (hn *Handlers) PostBatch() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		hn.logger.Debug("start PostBatch") //userID := w.Header().Get("UserID")
 		var buf bytes.Buffer
 		_, err := buf.ReadFrom(r.Body)
 		if err != nil {
@@ -405,7 +422,7 @@ func (hn *Handlers) PostBatch() http.HandlerFunc {
 			btchStr = append(btchStr, btchRow)
 			urlResparr = append(urlResparr, urlResp)
 		}
-		retShrtURL, err := hn.US.PostURLBatch(btchStr)
+		retShrtURL, err := hn.US.PostURLBatch(btchStr, hn.currentUser)
 		if err != nil {
 			hn.logger.Error("post batch error", zap.Error(err))
 			return
@@ -422,7 +439,127 @@ func (hn *Handlers) PostBatch() http.HandlerFunc {
 		}
 		hn.logger.Debug("response for postApi request", zap.String("response", string(resp)))
 		w.Header().Set("Content-Type", "application/json")
+		//w.Header()["UserID"] = nil
 		w.WriteHeader(http.StatusCreated)
 		w.Write(resp)
+	})
+}
+
+// authentication middleware
+func (hn *Handlers) AuthMiddleware(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		hn.logger.Debug("start AuthMiddleware")
+		cookie, err := r.Cookie("authentication")
+		var noCookie bool
+		if err != nil {
+			hn.logger.Info("cookie err, " + err.Error())
+			if !errors.Is(err, http.ErrNoCookie) {
+				hn.logger.Error("getting request cookie error", zap.Error(err))
+				return
+			}
+			hn.logger.Info("request without necessary cookie")
+			noCookie = true
+		} /*emptyCookie*/
+		var createCookie bool
+		var userID, signature string
+		if !noCookie {
+			hn.logger.Info("gotted cookie string is", zap.String("hexcookie", cookie.Value))
+			cookieStrHex, err := url.QueryUnescape(cookie.Value)
+			if err != nil {
+				hn.logger.Error("decoding cookie string error", zap.Error(err))
+				return
+			}
+
+			userID, _, err = authentication.CheckCookie(cookieStrHex)
+			if err != nil {
+				/*hn.logger.Error("cookie checking err", zap.Error(err))
+				if strings.Contains(err.Error(), "cookie is empty") {
+					emptyCookie = true
+				}*/
+				createCookie = true
+			}
+			_, ok := hn.usersID[userID]
+			if !ok {
+				hn.logger.Error("wrong user ID")
+				createCookie = true
+			}
+		} else {
+			createCookie = true
+		}
+
+		if createCookie {
+			userID, signature, err = authentication.CreateUserID()
+			if err != nil {
+				hn.logger.Error("creating user id error", zap.Error(err))
+				return
+			}
+			hn.usersID[userID] = signature
+			respCookieVal := userID + signature
+			hn.logger.Debug("cookie string is", zap.String("respCookieVal", respCookieVal))
+
+			respCookieValHex := url.QueryEscape(respCookieVal)
+			hn.logger.Debug("hex cookie string is", zap.String("hexcookie", respCookieValHex))
+			respCookie := http.Cookie{
+				Name:    "authentication",
+				Value:   respCookieVal,
+				Expires: time.Now().Add(1 * time.Hour),
+			}
+			http.SetCookie(w, &respCookie)
+		}
+		//w.Header().Set("UserID", userID)
+		hn.currentUser = userID
+		fmt.Println("current user is: " + hn.currentUser)
+		fmt.Println("method is: " + r.Method)
+		fmt.Println("path is: " + r.URL.Path)
+		if noCookie && r.Method == http.MethodGet && r.URL.Path == "/api/user/urls" {
+			//w.WriteHeader(http.StatusUnauthorized)
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+		h.ServeHTTP(w, r)
+	})
+}
+
+type UsersURLs struct {
+	ShortURL string `json:"short_url"`
+	LongURL  string `json:"original_url"`
+}
+
+// GetUsersURLs handler
+func (hn *Handlers) GetUsersURLs() http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		hn.logger.Debug("start GetUsersURLs")
+		//userID := w.Header().Get("UserID")
+		ctx := context.TODO()
+		ans, err := hn.US.ReturnAllUserReq(ctx, hn.currentUser)
+		if err != nil {
+			fmt.Println("GetUsersURLs err is " + err.Error())
+			hn.logger.Error("getUsersURLs error", zap.Error(err))
+			return
+		}
+		if len(ans) == 0 {
+			w.WriteHeader(http.StatusNoContent)
+		} else {
+			var usersURLs UsersURLs
+			usrURLsArr := make([]UsersURLs, 0)
+			for i, v := range ans {
+				v = hn.Cf.BaseAddr + "/" + v
+				usersURLs.LongURL = i
+				usersURLs.ShortURL = v
+				usrURLsArr = append(usrURLsArr, usersURLs)
+			}
+
+			resp, err := json.Marshal(&usrURLsArr)
+			if err != nil {
+				hn.logger.Error("getUsersURLs, error while marshalling response data", zap.Error(err))
+				w.WriteHeader(http.StatusInternalServerError)
+				//w.WriteHeader(http.StatusNoContent)
+				return
+			}
+			fmt.Println("GetUsersURLs response is: " + string(resp))
+			w.Header().Set("Content-Type", "application/json")
+			//w.Header()["UserID"] = nil
+			w.Write(resp)
+		}
 	})
 }

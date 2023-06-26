@@ -62,6 +62,7 @@ func NewRouter(hn *handler.Handlers, logger *zap.Logger) chi.Router {
 	rt := chi.NewRouter()
 	rt.Use(middleware.Timeout(20 * time.Second))
 	rt.Use(hn.LoggingHandler)
+	rt.Use(hn.AuthMiddleware)
 	rt.Use(hn.GZipMiddleware)
 	rt.Post("/", hn.PostLongURL())
 	rt.Get("/{id}", func(w http.ResponseWriter, r *http.Request) {
@@ -72,6 +73,7 @@ func NewRouter(hn *handler.Handlers, logger *zap.Logger) chi.Router {
 	rt.Post("/api/shorten", hn.PostURLApi())
 	rt.Get("/ping", hn.GetDBPing())
 	rt.Post("/api/shorten/batch", hn.PostBatch())
+	rt.Get("/api/user/urls", hn.GetUsersURLs())
 	return rt
 }
 

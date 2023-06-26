@@ -51,7 +51,7 @@ func (cDBS *ClientDBStruct) Create(parentCtx context.Context) error {
 
 	ctx, canselCtx := context.WithTimeout(parentCtx, 100*time.Second)
 	defer canselCtx()
-	res, err := cDBS.db.Exec(ctx, `CREATE TABLE IF NOT EXISTS urlstorage("id" INTEGER, "short_url" TEXT, "long_url" TEXT, UNIQUE(long_url))`)
+	res, err := cDBS.db.Exec(ctx, `CREATE TABLE IF NOT EXISTS urlstorage("id" INTEGER, "user_id" TEXT, "short_url" TEXT, "long_url" TEXT, CONSTRAINT uniq_key PRIMARY KEY("user_id", "long_url"))` /*UNIQUE(user_id, long_url))*/)
 	if err != nil {
 		return errors.New("creating db method, error while creating new table, " + err.Error())
 	}
@@ -76,7 +76,7 @@ func (cDBS *ClientDBStruct) Ping(ctxPar context.Context) error {
 	return nil
 }
 
-func (cDBS *ClientDBStruct) PostShortURL(shortURL, longURL string, uuid int32) (string, error) {
+func (cDBS *ClientDBStruct) PostShortURL(shortURL, longURL, userID string, uuid int32) (string, error) {
 	cDBS.logger.Debug("new shrtURL is: " + shortURL)
 	ctxPar := context.TODO()
 	ctx, canselCtx := context.WithTimeout(ctxPar, 1*time.Minute)
@@ -112,14 +112,15 @@ func (cDBS *ClientDBStruct) PostShortURL(shortURL, longURL string, uuid int32) (
 	if lnURL != "" {
 		return "", errors.New("shortURL is already exist")
 	}
-
+	cDBS.logger.Debug("what we insert: " + userID + " " + shortURL + " " + longURL)
 	row := tx.QueryRow(ctx,
-		`INSERT INTO urlstorage(id, short_url, long_url)
-		 VALUES ($1, $2, $3) 
-		 ON CONFLICT(long_url) 
+		`INSERT INTO urlstorage(id, user_id, short_url, long_url)
+		 VALUES ($1, $2, $3, $4) 
+		 ON CONFLICT 
+		 ON CONSTRAINT uniq_key
 		 DO UPDATE SET 
 		 long_url=EXCLUDED.long_url
-		 RETURNING (short_url)`, uuid, shortURL, longURL)
+		 RETURNING (short_url)`, uuid, userID, shortURL, longURL)
 	err = row.Scan(&shURL)
 	cDBS.logger.Debug("returned shrtURL is: " + shURL)
 	if err != nil {
@@ -139,7 +140,7 @@ func (cDBS *ClientDBStruct) GetLongURL(shortURL string) (string, error) {
 	ctxPar := context.TODO()
 	ctx, canselCtx := context.WithTimeout(ctxPar, 1*time.Minute)
 	defer canselCtx()
-
+	cDBS.logger.Debug("shortURL for getting", zap.String("shtURL", shortURL))
 	row := cDBS.db.QueryRow(ctx, `SELECT long_url FROM urlstorage WHERE short_url=$1`, shortURL)
 	var longURL string
 	err := row.Scan(&longURL)
@@ -155,18 +156,20 @@ type DBRowStrct struct {
 	LongURL  string
 }
 
-func (cDBS *ClientDBStruct) PostURLBatch(URLarr []DBRowStrct) ([]string, error) {
+func (cDBS *ClientDBStruct) PostURLBatch(URLarr []DBRowStrct, userID string) ([]string, error) {
 	ctxPar := context.TODO()
 	ctx, canselCtx := context.WithTimeout(ctxPar, 1*time.Minute)
 	defer canselCtx()
 	btch := new(pgx.Batch)
 	for _, v := range URLarr {
-		btch.Queue(`INSERT INTO urlstorage(id, short_url, long_url)
-		 VALUES ($1, $2, $3) 
-		 ON CONFLICT(long_url) 
+		cDBS.logger.Debug("what we insert: " + userID + " " + v.ShortURL + " " + v.LongURL)
+		btch.Queue(`INSERT INTO urlstorage(id, user_id, short_url, long_url)
+		 VALUES ($1, $2, $3, $4) 
+		 ON CONFLICT 
+		 ON CONSTRAINT uniq_key
 		 DO UPDATE SET 
 		 long_url=EXCLUDED.long_url
-		 RETURNING (short_url)`, v.ID, v.ShortURL, v.LongURL)
+		 RETURNING (short_url)`, v.ID, userID, v.ShortURL, v.LongURL)
 	}
 	retShrtURL := make([]string, 0)
 	br := cDBS.db.SendBatch(ctx, btch)
@@ -183,4 +186,26 @@ func (cDBS *ClientDBStruct) PostURLBatch(URLarr []DBRowStrct) ([]string, error) 
 		fmt.Println("returned short url: " + shortid)
 	}
 	return retShrtURL, nil
+}
+
+func (cDBS *ClientDBStruct) ReturnAllUserReq(ctxPar context.Context, userID string) (map[string]string, error) {
+	ctx, canselCtx := context.WithTimeout(ctxPar, 1*time.Minute)
+	defer canselCtx()
+	ans := make(map[string]string, 0)
+
+	rows, err := cDBS.db.Query(ctx, `SELECT short_url, long_url FROM urlstorage WHERE user_id = $1`, userID)
+
+	if err != nil {
+		return nil, errors.New("getting all user requests error, " + err.Error())
+	}
+	defer rows.Close()
+	var shrtURL, lngURL string
+	for rows.Next() {
+		err := rows.Scan(&shrtURL, &lngURL)
+		if err != nil {
+			cDBS.logger.Error("error while scaning user requests", zap.Error(err))
+		}
+		ans[lngURL] = shrtURL
+	}
+	return ans, nil
 }
