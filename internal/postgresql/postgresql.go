@@ -221,8 +221,10 @@ func (cDBS *ClientDBStruct) DeleteUserURLS(ctxPar context.Context, wg *sync.Wait
 	defer canselCtx()
 	fmt.Println("we are here deleting short urls")
 	btch := new(pgx.Batch)
+	fmt.Println("user ID is :" + userID)
 	for _, s := range str {
 		btch.Queue(`UPDATE urlstorage SET is_deleted = true WHERE user_id = $1 AND short_url = $2`, userID, s)
+		fmt.Println("short url is :" + s)
 	}
 	btchRes := cDBS.db.SendBatch(ctx, btch)
 	for i := range str {
