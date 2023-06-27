@@ -74,6 +74,7 @@ func NewRouter(hn *handler.Handlers, logger *zap.Logger) chi.Router {
 	rt.Get("/ping", hn.GetDBPing())
 	rt.Post("/api/shorten/batch", hn.PostBatch())
 	rt.Get("/api/user/urls", hn.GetUsersURLs())
+	rt.Delete("/api/user/urls", hn.DeleteUsersURLs())
 	return rt
 }
 

@@ -66,3 +66,7 @@ type usersURLs struct {
 func (uS *URLStorage) ReturnAllUserReq(ctx context.Context, userID string) (map[string]string, error) {
 	return nil, nil
 }
+
+func (uS *URLStorage) DeleteUserURLS(ctxPar context.Context, wg *sync.WaitGroup, userID string, str []string) {
+
+}

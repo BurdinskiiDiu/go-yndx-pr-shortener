@@ -15,6 +15,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/authentication"
@@ -30,6 +31,7 @@ type URLStore interface {
 	GetLongURL(shURL string) (string, error)
 	PostURLBatch(tchStr []postgresql.DBRowStrct, userID string) ([]string, error)
 	ReturnAllUserReq(ctx context.Context, userID string) (map[string]string, error)
+	DeleteUserURLS(ctx context.Context, wg *sync.WaitGroup, userID string, str []string)
 	Ping(ctx context.Context) error
 }
 
@@ -561,5 +563,34 @@ func (hn *Handlers) GetUsersURLs() http.HandlerFunc {
 			//w.Header()["UserID"] = nil
 			w.Write(resp)
 		}
+	})
+}
+
+func (hn *Handlers) DeleteUsersURLs() http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		hn.logger.Debug("start GetUsersURLs")
+		ctx := context.TODO()
+
+		var buf bytes.Buffer
+		_, err := buf.ReadFrom(r.Body)
+		urlsSlc := make([]string, 0)
+		if err != nil {
+			hn.logger.Error("DeleteUsersURLs handler, read from request body err", zap.Error(err))
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		urlsStr := buf.String()
+		hn.logger.Debug("gotted body DeleteUsersURLs: " + urlsStr)
+		urlsStr = urlsStr[2:]
+		urlsStr = urlsStr[:len(urlsStr)-3]
+		urlsSlc = strings.Split(urlsStr, "\", ")
+		hn.logger.Debug("conversed body to slice DeleteUsersURLs: ")
+		for _, v := range urlsSlc {
+			fmt.Println(v)
+		}
+		wg := new(sync.WaitGroup)
+		go hn.US.DeleteUserURLS(ctx, wg, hn.currentUser, urlsSlc)
+		w.WriteHeader(http.StatusAccepted)
+		wg.Wait()
 	})
 }

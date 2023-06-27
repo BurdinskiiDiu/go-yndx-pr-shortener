@@ -5,7 +5,9 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/config"
@@ -51,7 +53,7 @@ func (cDBS *ClientDBStruct) Create(parentCtx context.Context) error {
 
 	ctx, canselCtx := context.WithTimeout(parentCtx, 100*time.Second)
 	defer canselCtx()
-	res, err := cDBS.db.Exec(ctx, `CREATE TABLE IF NOT EXISTS urlstorage("id" INTEGER, "user_id" TEXT, "short_url" TEXT, "long_url" TEXT, CONSTRAINT uniq_key PRIMARY KEY("user_id", "long_url"))` /*UNIQUE(user_id, long_url))*/)
+	res, err := cDBS.db.Exec(ctx, `CREATE TABLE IF NOT EXISTS urlstorage("id" INTEGER, "user_id" TEXT, "short_url" TEXT, "long_url" TEXT, "is_deleted" BOOLEAN DEFAULT false,  CONSTRAINT uniq_key PRIMARY KEY("user_id", "long_url"))` /*UNIQUE(user_id, long_url))*/)
 	if err != nil {
 		return errors.New("creating db method, error while creating new table, " + err.Error())
 	}
@@ -156,6 +158,28 @@ type DBRowStrct struct {
 	LongURL  string
 }
 
+func (cDBS *ClientDBStruct) ReturnAllUserReq(ctxPar context.Context, userID string) (map[string]string, error) {
+	ctx, canselCtx := context.WithTimeout(ctxPar, 1*time.Minute)
+	defer canselCtx()
+	ans := make(map[string]string, 0)
+
+	rows, err := cDBS.db.Query(ctx, `SELECT short_url, long_url FROM urlstorage WHERE user_id = $1`, userID)
+
+	if err != nil {
+		return nil, errors.New("getting all user requests error, " + err.Error())
+	}
+	defer rows.Close()
+	var shrtURL, lngURL string
+	for rows.Next() {
+		err := rows.Scan(&shrtURL, &lngURL)
+		if err != nil {
+			cDBS.logger.Error("error while scaning user requests", zap.Error(err))
+		}
+		ans[lngURL] = shrtURL
+	}
+	return ans, nil
+}
+
 func (cDBS *ClientDBStruct) PostURLBatch(URLarr []DBRowStrct, userID string) ([]string, error) {
 	ctxPar := context.TODO()
 	ctx, canselCtx := context.WithTimeout(ctxPar, 1*time.Minute)
@@ -188,24 +212,20 @@ func (cDBS *ClientDBStruct) PostURLBatch(URLarr []DBRowStrct, userID string) ([]
 	return retShrtURL, nil
 }
 
-func (cDBS *ClientDBStruct) ReturnAllUserReq(ctxPar context.Context, userID string) (map[string]string, error) {
+func (cDBS *ClientDBStruct) DeleteUserURLS(ctxPar context.Context, wg *sync.WaitGroup, userID string, str []string) {
 	ctx, canselCtx := context.WithTimeout(ctxPar, 1*time.Minute)
 	defer canselCtx()
-	ans := make(map[string]string, 0)
 
-	rows, err := cDBS.db.Query(ctx, `SELECT short_url, long_url FROM urlstorage WHERE user_id = $1`, userID)
-
-	if err != nil {
-		return nil, errors.New("getting all user requests error, " + err.Error())
+	btch := new(pgx.Batch)
+	for _, s := range str {
+		btch.Queue(`UPDATE urlstorage SET is_deleted = true WHERE (user_id = $1, short_url = S2)`, userID, s)
 	}
-	defer rows.Close()
-	var shrtURL, lngURL string
-	for rows.Next() {
-		err := rows.Scan(&shrtURL, &lngURL)
+	btchRes := cDBS.db.SendBatch(ctx, btch)
+	for i := range str {
+		_, err := btchRes.Exec()
 		if err != nil {
-			cDBS.logger.Error("error while scaning user requests", zap.Error(err))
+			cDBS.logger.Error("batch row err, row N is "+strconv.Itoa(i)+" /", zap.Error(err))
 		}
-		ans[lngURL] = shrtURL
 	}
-	return ans, nil
+	wg.Done()
 }
