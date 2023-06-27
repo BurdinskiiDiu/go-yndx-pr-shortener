@@ -143,11 +143,15 @@ func (cDBS *ClientDBStruct) GetLongURL(shortURL string) (string, error) {
 	ctx, canselCtx := context.WithTimeout(ctxPar, 1*time.Minute)
 	defer canselCtx()
 	cDBS.logger.Debug("shortURL for getting", zap.String("shtURL", shortURL))
-	row := cDBS.db.QueryRow(ctx, `SELECT long_url FROM urlstorage WHERE (short_url=$1, is_deleted = false)`, shortURL)
+	row := cDBS.db.QueryRow(ctx, `SELECT long_url, is_deleted  FROM urlstorage WHERE short_url=$1`, shortURL)
 	var longURL string
-	err := row.Scan(&longURL)
+	var isDeleted bool
+	err := row.Scan(&longURL, &isDeleted)
 	if err != nil {
 		return "", errors.New("getLongURL metod, getting longURL error:" + err.Error())
+	}
+	if isDeleted {
+		return "", nil
 	}
 	return longURL, nil
 }
