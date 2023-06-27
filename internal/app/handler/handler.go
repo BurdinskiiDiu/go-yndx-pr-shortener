@@ -149,9 +149,14 @@ func (hn *Handlers) GetLongURL(srtURL string) http.HandlerFunc {
 			hn.logger.Error("getLongURL handler, error while getting long url from store", zap.Error(err))
 			return
 		}
-		w.Header().Set("Location", lngURL)
-		w.WriteHeader(http.StatusTemporaryRedirect)
-		w.Write([]byte(lngURL))
+		if lngURL == "" {
+			w.WriteHeader(http.StatusGone)
+		} else {
+			w.Header().Set("Location", lngURL)
+			w.WriteHeader(http.StatusTemporaryRedirect)
+			w.Write([]byte(lngURL))
+		}
+
 	})
 }
 
@@ -573,7 +578,7 @@ func (hn *Handlers) DeleteUsersURLs() http.HandlerFunc {
 
 		var buf bytes.Buffer
 		_, err := buf.ReadFrom(r.Body)
-		urlsSlc := make([]string, 0)
+		//urlsSlc := make([]string, 0)
 		if err != nil {
 			hn.logger.Error("DeleteUsersURLs handler, read from request body err", zap.Error(err))
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -583,7 +588,7 @@ func (hn *Handlers) DeleteUsersURLs() http.HandlerFunc {
 		hn.logger.Debug("gotted body DeleteUsersURLs: " + urlsStr)
 		urlsStr = urlsStr[2:]
 		urlsStr = urlsStr[:len(urlsStr)-3]
-		urlsSlc = strings.Split(urlsStr, "\", ")
+		urlsSlc := strings.Split(urlsStr, "\", ")
 		hn.logger.Debug("conversed body to slice DeleteUsersURLs: ")
 		for _, v := range urlsSlc {
 			fmt.Println(v)
