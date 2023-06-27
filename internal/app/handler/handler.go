@@ -573,7 +573,7 @@ func (hn *Handlers) GetUsersURLs() http.HandlerFunc {
 
 func (hn *Handlers) DeleteUsersURLs() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		hn.logger.Debug("start GetUsersURLs")
+		hn.logger.Debug("start DeleteUsersURLs")
 		ctx := context.TODO()
 
 		var buf bytes.Buffer
@@ -588,7 +588,7 @@ func (hn *Handlers) DeleteUsersURLs() http.HandlerFunc {
 		hn.logger.Debug("gotted body DeleteUsersURLs: " + urlsStr)
 		urlsStr = urlsStr[2:]
 		urlsStr = urlsStr[:len(urlsStr)-2]
-		urlsSlc := strings.Split(urlsStr, "\", \"")
+		urlsSlc := strings.Split(urlsStr, "\",\"")
 		hn.logger.Debug("conversed body to slice DeleteUsersURLs: ")
 		for _, v := range urlsSlc {
 			fmt.Println(v)
