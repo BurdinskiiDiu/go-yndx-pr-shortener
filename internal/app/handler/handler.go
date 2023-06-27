@@ -587,13 +587,14 @@ func (hn *Handlers) DeleteUsersURLs() http.HandlerFunc {
 		urlsStr := buf.String()
 		hn.logger.Debug("gotted body DeleteUsersURLs: " + urlsStr)
 		urlsStr = urlsStr[2:]
-		urlsStr = urlsStr[:len(urlsStr)-3]
-		urlsSlc := strings.Split(urlsStr, "\", ")
+		urlsStr = urlsStr[:len(urlsStr)-2]
+		urlsSlc := strings.Split(urlsStr, "\", \"")
 		hn.logger.Debug("conversed body to slice DeleteUsersURLs: ")
 		for _, v := range urlsSlc {
 			fmt.Println(v)
 		}
 		wg := new(sync.WaitGroup)
+		wg.Add(1)
 		go hn.US.DeleteUserURLS(ctx, wg, hn.currentUser, urlsSlc)
 		w.WriteHeader(http.StatusAccepted)
 		wg.Wait()
