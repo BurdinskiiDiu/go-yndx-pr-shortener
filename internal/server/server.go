@@ -5,8 +5,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/app/handler"
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/config"
+	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/handler"
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/chi/v5"
 	"go.uber.org/zap"

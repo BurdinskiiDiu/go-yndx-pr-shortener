@@ -10,6 +10,7 @@ import (
 
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/config"
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/logg"
+	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/postgresql"
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/store"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -26,9 +27,9 @@ func TestURLShortenerRequest(t *testing.T) {
 
 	conf.ServAddr = ":8080"
 	conf.BaseAddr = "http://localhost:8080/"
-
+	chnInp := make(chan postgresql.URLsForDel, 100)
 	//ctx := context.TODO()
-	hn := NewHandlers( /*ctx,*/ uS, conf, logger)
+	hn := NewHandlers( /*ctx,*/ uS, chnInp, conf, logger)
 
 	if err != nil {
 		log.Fatal(err)
@@ -88,7 +89,8 @@ func TestGetlongURLRequest(t *testing.T) {
 	conf.BaseAddr = "http://localhost:8080/"
 
 	//ctx := context.TODO()
-	hn := NewHandlers( /*ctx,*/ uS, conf, logger)
+	chnInp := make(chan postgresql.URLsForDel, 100)
+	hn := NewHandlers( /*ctx,*/ uS, chnInp, conf, logger)
 
 	if err != nil {
 		log.Fatal(err)
@@ -148,7 +150,8 @@ func TestPostlongURLRequestApi(t *testing.T) {
 	conf.BaseAddr = "http://localhost:8080/"
 
 	//ctx := context.TODO()
-	hn := NewHandlers( /*ctx,*/ uS, conf, logger)
+	chnInp := make(chan postgresql.URLsForDel, 100)
+	hn := NewHandlers( /*ctx,*/ uS, chnInp, conf, logger)
 
 	if err != nil {
 		log.Fatal(err)

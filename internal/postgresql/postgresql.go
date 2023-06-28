@@ -7,11 +7,9 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/config"
-
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/zap"
@@ -216,22 +214,42 @@ func (cDBS *ClientDBStruct) PostURLBatch(URLarr []DBRowStrct, userID string) ([]
 	return retShrtURL, nil
 }
 
-func (cDBS *ClientDBStruct) DeleteUserURLS(ctxPar context.Context, wg *sync.WaitGroup, userID string, str []string) {
+type URLsForDel struct {
+	UserID   string
+	ShortURL string
+}
+
+func (cDBS *ClientDBStruct) DeleteUserURLS(ctxPar context.Context, urlsArr []URLsForDel) (err error) {
 	ctx, canselCtx := context.WithTimeout(ctxPar, 10*time.Minute)
 	defer canselCtx()
 	fmt.Println("we are here deleting short urls")
+	//ticker := time.NewTicker(10 * time.Second)
+	//urlsArr := make([]handler.URLsForDel, 0)
+	/*for {
+		select {
+		case urlStr := <-inpChn:
+			urlsArr = append(urlsArr, urlStr)
+		case <-ticker.C:
+			if len(urlsArr) == 0 {
+				continue
+			}
+
+		}
+	}*/
 	btch := new(pgx.Batch)
-	fmt.Println("user ID is :" + userID)
-	for _, s := range str {
-		btch.Queue(`UPDATE urlstorage SET is_deleted = true WHERE user_id = $1 AND short_url = $2`, userID, s)
-		fmt.Println("short url is :" + s)
+	//fmt.Println("user ID is :" + userID)
+	for _, s := range urlsArr {
+		btch.Queue(`UPDATE urlstorage SET is_deleted = true WHERE user_id = $1 AND short_url = $2`, s.UserID, s.ShortURL)
+		fmt.Println("short url is :" + s.ShortURL)
+		fmt.Println("user ID is :" + s.UserID)
 	}
 	btchRes := cDBS.db.SendBatch(ctx, btch)
-	for i := range str {
-		_, err := btchRes.Exec()
+	for i := range urlsArr {
+		_, err = btchRes.Exec()
 		if err != nil {
 			cDBS.logger.Error("batch row err, row N is "+strconv.Itoa(i)+" /", zap.Error(err))
 		}
 	}
-	wg.Done()
+	return
+	//wg.Done()
 }

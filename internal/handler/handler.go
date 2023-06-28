@@ -15,7 +15,6 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/authentication"
@@ -31,7 +30,7 @@ type URLStore interface {
 	GetLongURL(shURL string) (string, error)
 	PostURLBatch(tchStr []postgresql.DBRowStrct, userID string) ([]string, error)
 	ReturnAllUserReq(ctx context.Context, userID string) (map[string]string, error)
-	DeleteUserURLS(ctx context.Context, wg *sync.WaitGroup, userID string, str []string)
+	DeleteUserURLS(ctx context.Context, str []postgresql.URLsForDel) error
 	Ping(ctx context.Context) error
 }
 
@@ -64,9 +63,10 @@ type Handlers struct {
 	uuid        int32
 	currentUser string
 	usersID     map[string]string
+	inpURLSChn  chan postgresql.URLsForDel
 }
 
-func NewHandlers(uS URLStore, cf *config.Config, logger *zap.Logger) *Handlers {
+func NewHandlers(uS URLStore, inpURLSChn chan postgresql.URLsForDel, cf *config.Config, logger *zap.Logger) *Handlers {
 	return &Handlers{
 		US:          uS,
 		Cf:          cf,
@@ -74,6 +74,7 @@ func NewHandlers(uS URLStore, cf *config.Config, logger *zap.Logger) *Handlers {
 		uuid:        0,
 		currentUser: "",
 		usersID:     make(map[string]string),
+		inpURLSChn:  inpURLSChn,
 	}
 }
 
@@ -574,11 +575,11 @@ func (hn *Handlers) GetUsersURLs() http.HandlerFunc {
 func (hn *Handlers) DeleteUsersURLs() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		hn.logger.Debug("start DeleteUsersURLs")
-		ctx := context.TODO()
+		//ctx := context.TODO()
 
 		var buf bytes.Buffer
 		_, err := buf.ReadFrom(r.Body)
-		//urlsSlc := make([]string, 0)
+		delSlc := make([]postgresql.URLsForDel, 0)
 		if err != nil {
 			hn.logger.Error("DeleteUsersURLs handler, read from request body err", zap.Error(err))
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -590,14 +591,38 @@ func (hn *Handlers) DeleteUsersURLs() http.HandlerFunc {
 		urlsStr = urlsStr[:len(urlsStr)-2]
 		urlsSlc := strings.Split(urlsStr, "\",\"")
 		hn.logger.Debug("conversed body to slice DeleteUsersURLs: ")
-		for _, v := range urlsSlc {
+		for i, v := range urlsSlc {
+			delSlc[i].UserID = hn.currentUser
+			delSlc[i].ShortURL = v
+			hn.inpURLSChn <- delSlc[i]
 			fmt.Println(v)
 		}
-		wg := new(sync.WaitGroup)
+		/*wg := new(sync.WaitGroup)
 		wg.Add(1)
 		hn.US.DeleteUserURLS(ctx, wg, hn.currentUser, urlsSlc)
-		wg.Wait()
+		wg.Wait()*/
 		w.WriteHeader(http.StatusAccepted)
-
 	})
+}
+
+func (hn *Handlers) DelURLSBatch() {
+	ctx := context.TODO()
+	ticker := time.NewTicker(10 * time.Second)
+	delURLsSlc := make([]postgresql.URLsForDel, 0)
+	for {
+		select {
+		case delURL := <-hn.inpURLSChn:
+			delURLsSlc = append(delURLsSlc, delURL)
+		case <-ticker.C:
+			if len(delURLsSlc) == 0 {
+				continue
+			}
+			err := hn.US.DeleteUserURLS(ctx, delURLsSlc)
+			if err != nil {
+				hn.logger.Debug("error while del urls:" + err.Error())
+				continue
+			}
+			delURLsSlc = nil
+		}
+	}
 }

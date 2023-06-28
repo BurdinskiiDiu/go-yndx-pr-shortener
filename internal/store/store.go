@@ -67,6 +67,6 @@ func (uS *URLStorage) ReturnAllUserReq(ctx context.Context, userID string) (map[
 	return nil, nil
 }
 
-func (uS *URLStorage) DeleteUserURLS(ctxPar context.Context, wg *sync.WaitGroup, userID string, str []string) {
-
+func (uS *URLStorage) DeleteUserURLS(ctxPar context.Context, str []postgresql.URLsForDel) error {
+	return nil
 }
