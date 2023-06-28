@@ -579,7 +579,7 @@ func (hn *Handlers) DeleteUsersURLs() http.HandlerFunc {
 
 		var buf bytes.Buffer
 		_, err := buf.ReadFrom(r.Body)
-		delSlc := make([]postgresql.URLsForDel, 0)
+		var delURLstr postgresql.URLsForDel
 		if err != nil {
 			hn.logger.Error("DeleteUsersURLs handler, read from request body err", zap.Error(err))
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -591,10 +591,10 @@ func (hn *Handlers) DeleteUsersURLs() http.HandlerFunc {
 		urlsStr = urlsStr[:len(urlsStr)-2]
 		urlsSlc := strings.Split(urlsStr, "\",\"")
 		hn.logger.Debug("conversed body to slice DeleteUsersURLs: ")
-		for i, v := range urlsSlc {
-			delSlc[i].UserID = hn.currentUser
-			delSlc[i].ShortURL = v
-			hn.inpURLSChn <- delSlc[i]
+		for _, v := range urlsSlc {
+			delURLstr.UserID = hn.currentUser
+			delURLstr.ShortURL = v
+			hn.inpURLSChn <- delURLstr
 			fmt.Println(v)
 		}
 		/*wg := new(sync.WaitGroup)
