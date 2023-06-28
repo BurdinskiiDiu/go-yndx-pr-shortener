@@ -595,8 +595,9 @@ func (hn *Handlers) DeleteUsersURLs() http.HandlerFunc {
 		}
 		wg := new(sync.WaitGroup)
 		wg.Add(1)
-		go hn.US.DeleteUserURLS(ctx, wg, hn.currentUser, urlsSlc)
-		w.WriteHeader(http.StatusAccepted)
+		hn.US.DeleteUserURLS(ctx, wg, hn.currentUser, urlsSlc)
 		wg.Wait()
+		w.WriteHeader(http.StatusAccepted)
+
 	})
 }
