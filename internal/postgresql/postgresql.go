@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -201,15 +200,13 @@ func (cDBS *ClientDBStruct) PostURLBatch(URLarr []DBRowStrct, userID string) ([]
 	br := cDBS.db.SendBatch(ctx, btch)
 	defer br.Close()
 	shortid := ""
-	for i, v := range URLarr {
+	for i := range URLarr {
 		br.QueryRow().Scan(&shortid)
 		if shortid != "" {
 			retShrtURL = append(retShrtURL, shortid)
 		} else {
 			retShrtURL = append(retShrtURL, URLarr[i].ShortURL)
 		}
-		fmt.Println("new short url: " + v.ShortURL)
-		fmt.Println("returned short url: " + shortid)
 	}
 	return retShrtURL, nil
 }
@@ -222,26 +219,9 @@ type URLsForDel struct {
 func (cDBS *ClientDBStruct) DeleteUserURLS(ctxPar context.Context, urlsArr []URLsForDel) (err error) {
 	ctx, canselCtx := context.WithTimeout(ctxPar, 10*time.Minute)
 	defer canselCtx()
-	fmt.Println("we are here deleting short urls")
-	//ticker := time.NewTicker(10 * time.Second)
-	//urlsArr := make([]handler.URLsForDel, 0)
-	/*for {
-		select {
-		case urlStr := <-inpChn:
-			urlsArr = append(urlsArr, urlStr)
-		case <-ticker.C:
-			if len(urlsArr) == 0 {
-				continue
-			}
-
-		}
-	}*/
 	btch := new(pgx.Batch)
-	//fmt.Println("user ID is :" + userID)
 	for _, s := range urlsArr {
 		btch.Queue(`UPDATE urlstorage SET is_deleted = true WHERE user_id = $1 AND short_url = $2`, s.UserID, s.ShortURL)
-		fmt.Println("short url is :" + s.ShortURL)
-		fmt.Println("user ID is :" + s.UserID)
 	}
 	btchRes := cDBS.db.SendBatch(ctx, btch)
 	for i := range urlsArr {
@@ -251,5 +231,4 @@ func (cDBS *ClientDBStruct) DeleteUserURLS(ctxPar context.Context, urlsArr []URL
 		}
 	}
 	return
-	//wg.Done()
 }
