@@ -41,7 +41,7 @@ func (cDBS *ClientDBStruct) Create(parentCtx context.Context) error {
 	cDBS.logger.Debug("cDBS.dsn: " + cDBS.cf.DBdsn)
 	cf, err := pgxpool.ParseConfig(cDBS.cf.DBdsn)
 	cf.MaxConns = 10
-	cf.MaxConnIdleTime = 60 * time.Second
+	cf.MaxConnIdleTime = 120 * time.Second
 	cf.MaxConnLifetime = 360 * time.Second
 	if err != nil {
 		return errors.New("error while parsing db config, " + err.Error())
@@ -81,7 +81,7 @@ func (cDBS *ClientDBStruct) Ping(ctxPar context.Context) error {
 func (cDBS *ClientDBStruct) PostShortURL(shortURL, longURL, userID string, uuid int32) (string, error) {
 	cDBS.logger.Debug("new shrtURL is: " + shortURL)
 	ctxPar := context.TODO()
-	ctx, canselCtx := context.WithTimeout(ctxPar, 1*time.Minute)
+	ctx, canselCtx := context.WithTimeout(ctxPar, 10*time.Minute)
 	defer canselCtx()
 	var shURL, lnURL string
 	//var pgErr *pgconn.PgError
@@ -140,7 +140,7 @@ func (cDBS *ClientDBStruct) PostShortURL(shortURL, longURL, userID string, uuid 
 
 func (cDBS *ClientDBStruct) GetLongURL(shortURL string) (string, error) {
 	ctxPar := context.TODO()
-	ctx, canselCtx := context.WithTimeout(ctxPar, 1*time.Minute)
+	ctx, canselCtx := context.WithTimeout(ctxPar, 10*time.Minute)
 	defer canselCtx()
 	cDBS.logger.Debug("shortURL for getting", zap.String("shtURL", shortURL))
 	row := cDBS.db.QueryRow(ctx, `SELECT long_url, is_deleted  FROM urlstorage WHERE short_url=$1`, shortURL)
@@ -163,7 +163,7 @@ type DBRowStrct struct {
 }
 
 func (cDBS *ClientDBStruct) ReturnAllUserReq(ctxPar context.Context, userID string) (map[string]string, error) {
-	ctx, canselCtx := context.WithTimeout(ctxPar, 1*time.Minute)
+	ctx, canselCtx := context.WithTimeout(ctxPar, 10*time.Minute)
 	defer canselCtx()
 	ans := make(map[string]string, 0)
 
@@ -186,7 +186,7 @@ func (cDBS *ClientDBStruct) ReturnAllUserReq(ctxPar context.Context, userID stri
 
 func (cDBS *ClientDBStruct) PostURLBatch(URLarr []DBRowStrct, userID string) ([]string, error) {
 	ctxPar := context.TODO()
-	ctx, canselCtx := context.WithTimeout(ctxPar, 1*time.Minute)
+	ctx, canselCtx := context.WithTimeout(ctxPar, 10*time.Minute)
 	defer canselCtx()
 	btch := new(pgx.Batch)
 	for _, v := range URLarr {
@@ -217,7 +217,7 @@ func (cDBS *ClientDBStruct) PostURLBatch(URLarr []DBRowStrct, userID string) ([]
 }
 
 func (cDBS *ClientDBStruct) DeleteUserURLS(ctxPar context.Context, wg *sync.WaitGroup, userID string, str []string) {
-	ctx, canselCtx := context.WithTimeout(ctxPar, 1*time.Minute)
+	ctx, canselCtx := context.WithTimeout(ctxPar, 10*time.Minute)
 	defer canselCtx()
 	fmt.Println("we are here deleting short urls")
 	btch := new(pgx.Batch)
