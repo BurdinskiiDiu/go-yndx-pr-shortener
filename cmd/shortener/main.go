@@ -46,8 +46,7 @@ func main() {
 		}
 	}
 	rt := server.NewServer(hn, logger)
-
-	rt.Run()
 	go hn.DelURLSBatch()
+	rt.Run()
 
 }

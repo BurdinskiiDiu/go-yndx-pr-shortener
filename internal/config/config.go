@@ -2,6 +2,7 @@ package config
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"os"
 )
@@ -29,10 +30,10 @@ func GetConfig() *Config {
 	flag.StringVar(&cf.LogLevel, "l", "Debug", "log level")
 	flag.StringVar(&cf.FileStorePath, "f", "/tmp/short-url-db.json", "full file name for storing url info")
 	///////query для локального тестирования базы
-	//query := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
-	//	`localhost`, `5432`, `postgres`, `A_41120113a_postsql`, `urlstore`)
+	query := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+		`localhost`, `5432`, `postgres`, `A_41120113a_postsql`, `urlstore`)
 
-	flag.StringVar(&cf.DBdsn, "d" /*query */, "", "dsn for db connection")
+	flag.StringVar(&cf.DBdsn, "d", query /*"",*/, "dsn for db connection")
 	flag.Parse()
 	log.Println("flag a: " + cf.ServAddr)
 	log.Println("flag b: " + cf.BaseAddr)
