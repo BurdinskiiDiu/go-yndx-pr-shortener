@@ -607,13 +607,14 @@ func (hn *Handlers) DeleteUsersURLs() http.HandlerFunc {
 
 func (hn *Handlers) DelURLSBatch() {
 	ctx := context.TODO()
-	ticker := time.NewTicker(10 * time.Second)
+	ticker := time.NewTicker(5 * time.Second)
 	delURLsSlc := make([]postgresql.URLsForDel, 0)
 	for {
 		select {
 		case delURL := <-hn.inpURLSChn:
 			delURLsSlc = append(delURLsSlc, delURL)
 		case <-ticker.C:
+			fmt.Println("now we try to remove urls")
 			if len(delURLsSlc) == 0 {
 				continue
 			}
