@@ -118,10 +118,12 @@ func (hn *Handlers) PostLongURL() http.HandlerFunc {
 		var shrtURL string
 		var chndStatus bool
 
-		ctx := r.Context()
-		userID := ctx.Value(currUser)
+		userID, ok := r.Context().Value(currUser).(string)
+		if !ok {
+			userID = ""
+		}
 
-		shrtURL, err = hn.CreateShortURL(longURL, userID.(string))
+		shrtURL, err = hn.CreateShortURL(longURL, userID)
 		if err != nil {
 			if strings.Contains(err.Error(), "longURL is already exist") {
 				chndStatus = true
@@ -184,9 +186,11 @@ func (hn *Handlers) PostURLApi() http.HandlerFunc {
 		hn.logger.Debug("unmarshaled url from postApi message", zap.String("longURL", urlReq.URL))
 		var chndStatus bool
 
-		ctx := r.Context()
-		userID := ctx.Value(currUser)
-		shrtURL, err := hn.CreateShortURL(urlReq.URL, userID.(string))
+		userID, ok := r.Context().Value(currUser).(string)
+		if !ok {
+			userID = ""
+		}
+		shrtURL, err := hn.CreateShortURL(urlReq.URL, userID)
 		if err != nil {
 			if strings.Contains(err.Error(), "longURL is already exist") {
 				chndStatus = true
@@ -432,9 +436,11 @@ func (hn *Handlers) PostBatch() http.HandlerFunc {
 			btchStr = append(btchStr, btchRow)
 			urlResparr = append(urlResparr, urlResp)
 		}
-		ctx := r.Context()
-		userID := ctx.Value(currUser)
-		retShrtURL, err := hn.US.PostURLBatch(btchStr, userID.(string))
+		userID, ok := r.Context().Value(currUser).(string)
+		if !ok {
+			userID = ""
+		}
+		retShrtURL, err := hn.US.PostURLBatch(btchStr, userID)
 		if err != nil {
 			hn.logger.Error("post batch error", zap.Error(err))
 			return
@@ -580,11 +586,14 @@ func (hn *Handlers) DeleteUsersURLs() http.HandlerFunc {
 		urlsStr = urlsStr[:len(urlsStr)-2]
 		urlsSlc := strings.Split(urlsStr, "\",\"")
 		hn.logger.Debug("conversed body to slice DeleteUsersURLs: ")
-		ctx := r.Context()
 
-		userID := ctx.Value(currUser)
+		userID, ok := r.Context().Value(currUser).(string)
+		if !ok {
+			userID = ""
+		}
+
 		for _, v := range urlsSlc {
-			delURLstr.UserID = userID.(string) //hn.currentUser
+			delURLstr.UserID = userID
 			delURLstr.ShortURL = v
 			hn.inpURLSChn <- delURLstr
 		}
