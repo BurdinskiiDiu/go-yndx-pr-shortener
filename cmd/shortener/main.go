@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"time"
 
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/config"
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/handler"
@@ -22,7 +23,8 @@ func main() {
 	ctx := context.Background()
 	var str handler.URLStore
 	if conf.StoreType != 0 {
-		dbStore := postgresql.NewClientDBStruct(logger, conf)
+		tm := 1 * time.Minute
+		dbStore := postgresql.NewClientDBStruct(logger, conf, tm)
 		defer dbStore.Close()
 		err = dbStore.Create(ctx)
 
