@@ -25,6 +25,10 @@ import (
 	"go.uber.org/zap"
 )
 
+type ctxUserKey string
+
+var currUser ctxUserKey = "userID"
+
 type URLStore interface {
 	PostShortURL(shURL, lnURL, userID string, uuid int32) (string, error)
 	GetLongURL(shURL string) (string, error)
@@ -57,24 +61,22 @@ type URLResp struct {
 }
 
 type Handlers struct {
-	US          URLStore
-	Cf          *config.Config
-	logger      *zap.Logger
-	uuid        int32
-	currentUser string
-	usersID     map[string]string
-	inpURLSChn  chan postgresql.URLsForDel
+	US         URLStore
+	Cf         *config.Config
+	logger     *zap.Logger
+	uuid       int32
+	usersID    map[string]string
+	inpURLSChn chan postgresql.URLsForDel
 }
 
 func NewHandlers(uS URLStore, inpURLSChn chan postgresql.URLsForDel, cf *config.Config, logger *zap.Logger) *Handlers {
 	return &Handlers{
-		US:          uS,
-		Cf:          cf,
-		logger:      logger,
-		uuid:        0,
-		currentUser: "userID",
-		usersID:     make(map[string]string),
-		inpURLSChn:  inpURLSChn,
+		US:         uS,
+		Cf:         cf,
+		logger:     logger,
+		uuid:       0,
+		usersID:    make(map[string]string),
+		inpURLSChn: inpURLSChn,
 	}
 }
 
@@ -117,9 +119,9 @@ func (hn *Handlers) PostLongURL() http.HandlerFunc {
 		var chndStatus bool
 
 		ctx := r.Context()
-		userID := ctx.Value(hn.currentUser)
+		userID := ctx.Value(currUser)
 
-		shrtURL, err = hn.CreateShortURL(longURL /*hn.currentUser*/, userID.(string))
+		shrtURL, err = hn.CreateShortURL(longURL, userID.(string))
 		if err != nil {
 			if strings.Contains(err.Error(), "longURL is already exist") {
 				chndStatus = true
@@ -183,8 +185,8 @@ func (hn *Handlers) PostURLApi() http.HandlerFunc {
 		var chndStatus bool
 
 		ctx := r.Context()
-		userID := ctx.Value(hn.currentUser)
-		shrtURL, err := hn.CreateShortURL(urlReq.URL /*hn.currentUser*/, userID.(string))
+		userID := ctx.Value(currUser)
+		shrtURL, err := hn.CreateShortURL(urlReq.URL, userID.(string))
 		if err != nil {
 			if strings.Contains(err.Error(), "longURL is already exist") {
 				chndStatus = true
@@ -431,8 +433,8 @@ func (hn *Handlers) PostBatch() http.HandlerFunc {
 			urlResparr = append(urlResparr, urlResp)
 		}
 		ctx := r.Context()
-		userID := ctx.Value(hn.currentUser)
-		retShrtURL, err := hn.US.PostURLBatch(btchStr /*hn.currentUser*/, userID.(string))
+		userID := ctx.Value(currUser)
+		retShrtURL, err := hn.US.PostURLBatch(btchStr, userID.(string))
 		if err != nil {
 			hn.logger.Error("post batch error", zap.Error(err))
 			return
@@ -510,9 +512,8 @@ func (hn *Handlers) AuthMiddleware(h http.Handler) http.Handler {
 			}
 			http.SetCookie(w, &respCookie)
 		}
-		ctx := context.WithValue(r.Context(), hn.currentUser, userID)
+		ctx := context.WithValue(r.Context(), currUser, userID)
 
-		//hn.currentUser = userID
 		if noCookie && r.Method == http.MethodGet && r.URL.Path == "/api/user/urls" {
 			w.WriteHeader(http.StatusNoContent)
 			return
@@ -532,8 +533,8 @@ func (hn *Handlers) GetUsersURLs() http.HandlerFunc {
 		hn.logger.Debug("start GetUsersURLs")
 		//ctx := context.TODO()
 		ctx := r.Context()
-		userID := ctx.Value(hn.currentUser)
-		ans, err := hn.US.ReturnAllUserReq(ctx /*hn.currentUser*/, userID.(string))
+		userID := ctx.Value(currUser)
+		ans, err := hn.US.ReturnAllUserReq(ctx, userID.(string))
 		if err != nil {
 			hn.logger.Error("getUsersURLs error", zap.Error(err))
 			return
@@ -580,7 +581,8 @@ func (hn *Handlers) DeleteUsersURLs() http.HandlerFunc {
 		urlsSlc := strings.Split(urlsStr, "\",\"")
 		hn.logger.Debug("conversed body to slice DeleteUsersURLs: ")
 		ctx := r.Context()
-		userID := ctx.Value(hn.currentUser)
+
+		userID := ctx.Value(currUser)
 		for _, v := range urlsSlc {
 			delURLstr.UserID = userID.(string) //hn.currentUser
 			delURLstr.ShortURL = v
