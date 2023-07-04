@@ -13,6 +13,7 @@ type Config struct {
 	FileStorePath string
 	DBdsn         string
 	StoreType     storeType
+	AuthentKey    string
 }
 
 type storeType int
@@ -28,6 +29,7 @@ func GetConfig() *Config {
 	flag.StringVar(&cf.BaseAddr, "b", "http://localhost:8080", "base host addr for short URL response")
 	flag.StringVar(&cf.LogLevel, "l", "Debug", "log level")
 	flag.StringVar(&cf.FileStorePath, "f", "/tmp/short-url-db.json", "full file name for storing url info")
+	flag.StringVar(&cf.AuthentKey, "k", "secretKey", "authentification key")
 	///////query для локального тестирования базы
 	//query := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
 	//	`localhost`, `5432`, `postgres`, `A_41120113a_postsql`, `urlstore`)
@@ -58,6 +60,10 @@ func GetConfig() *Config {
 
 	if EnvDBdsn := os.Getenv("DATABASE_DSN"); EnvDBdsn != "" {
 		cf.DBdsn = EnvDBdsn
+	}
+
+	if EnvAuthentKey := os.Getenv("AUTHENT_KEY"); EnvAuthentKey != "" {
+		cf.AuthentKey = EnvAuthentKey
 	}
 
 	if cf.DBdsn != "" {

@@ -486,7 +486,7 @@ func (hn *Handlers) AuthMiddleware(h http.Handler) http.Handler {
 				hn.logger.Error("decoding cookie string error", zap.Error(err))
 				return
 			}
-			userID, _, err = authentication.CheckCookie(cookieStrHex)
+			userID, _, err = authentication.CheckCookie(cookieStrHex, *hn.Cf)
 			if err != nil {
 				createCookie = true
 			}
@@ -500,7 +500,7 @@ func (hn *Handlers) AuthMiddleware(h http.Handler) http.Handler {
 		}
 
 		if createCookie {
-			userID, signature, err = authentication.CreateUserID()
+			userID, signature, err = authentication.CreateUserID(*hn.Cf)
 			if err != nil {
 				hn.logger.Error("creating user id error", zap.Error(err))
 				return
