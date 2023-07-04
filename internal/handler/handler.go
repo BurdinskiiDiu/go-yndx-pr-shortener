@@ -580,12 +580,20 @@ func (hn *Handlers) DeleteUsersURLs() http.HandlerFunc {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		urlsStr := buf.String()
-		hn.logger.Debug("gotted body DeleteUsersURLs: " + urlsStr)
-		urlsStr = urlsStr[2:]
-		urlsStr = urlsStr[:len(urlsStr)-2]
-		urlsSlc := strings.Split(urlsStr, "\",\"")
-		hn.logger.Debug("conversed body to slice DeleteUsersURLs: ")
+
+		urlsSlc := make([]string, 0)
+		if err := json.Unmarshal(buf.Bytes(), &urlsSlc); err != nil {
+			hn.logger.Error("DeleteUsersURLs handler, unmarshal func err", zap.Error(err))
+			return
+		}
+
+		/*
+			urlsStr := buf.String()
+			hn.logger.Debug("gotted body DeleteUsersURLs: " + urlsStr)
+			urlsStr = urlsStr[2:]
+			urlsStr = urlsStr[:len(urlsStr)-2]
+			urlsSlc := strings.Split(urlsStr, "\",\"")
+			hn.logger.Debug("conversed body to slice DeleteUsersURLs: ")*/
 
 		userID, ok := r.Context().Value(currUser).(string)
 		if !ok {
