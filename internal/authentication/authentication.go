@@ -40,12 +40,12 @@ func CreateUserID(cf config.Config) (string, string, error) {
 	return /*idStr*/ id, signatureStr /*string(signature)*/, nil
 }
 
-func CheckCookie(cookieStr string, cf config.Config) /*string,*/ error {
+func CheckCookie(cookieStr string, cf config.Config) (string, error) {
 	if cookieStr == "" {
-		return /*"",*/ errors.New("cookie is empty")
+		return "", errors.New("cookie is empty")
 	}
 	if !(len([]byte(cookieStr)) > 8) {
-		return /*"",*/ errors.New("wrong cookie len")
+		return "", errors.New("wrong cookie len")
 	}
 	//decGotStr, err := hex.DecodeString(cookieStr)
 	//if err != nil {
@@ -63,7 +63,7 @@ func CheckCookie(cookieStr string, cf config.Config) /*string,*/ error {
 	decSign := hex.EncodeToString(signature)
 
 	if hmac.Equal([]byte(decSign), []byte( /*gottedSignStr*/ gottedSign)) {
-		return /*gottedUserIDStr*/ /*gottedUserID*/ /*gottedSignStr,*/ nil
+		return /*gottedUserIDStr*/ gottedUserID /*gottedSignStr,*/, nil
 	}
-	return /*"",*/ errors.New("wrong signature")
+	return "", errors.New("wrong signature")
 }

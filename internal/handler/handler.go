@@ -487,7 +487,7 @@ func (hn *Handlers) AuthMiddleware(h http.Handler) http.Handler {
 			//	return
 			//}
 			/*userID,*/
-			err := authentication.CheckCookie( /*cookieStrHex*/ cookie.Value, *hn.Cf)
+			userID, err = authentication.CheckCookie( /*cookieStrHex*/ cookie.Value, *hn.Cf)
 			if err != nil {
 				createCookie = true
 			}
