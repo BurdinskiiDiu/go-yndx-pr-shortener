@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
+	"fmt"
 
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/config"
 	"github.com/google/uuid"
@@ -33,6 +34,8 @@ func CreateUserID(cf config.Config) (string, string, error) {
 	h.Write([]byte( /*idStr*/ id))
 	signature := h.Sum(nil)
 	signatureStr := hex.EncodeToString(signature)
+	fmt.Println("created id is " + id)
+	fmt.Println("created signatureStr is " + signatureStr)
 	return /*idStr*/ id, signatureStr /*string(signature)*/, nil
 }
 
@@ -47,9 +50,11 @@ func CheckCookie(cookieStr string, cf config.Config) (string, error) {
 	//if err != nil {
 	//	return "", errors.New("decoding gotted cookie string err, " + err.Error())
 	//}
-	gottedUserID := /*decGotStr*/ cookieStr[32:]
+	gottedUserID := /*decGotStr*/ string([]byte(cookieStr)[32:])
+	fmt.Println("gottedUserID is " + gottedUserID)
 	//gottedUserIDStr := hex.EncodeToString(gottedUserID)
-	gottedSign := /*decGotStr*/ cookieStr[:32]
+	gottedSign := /*decGotStr*/ string([]byte(cookieStr)[:32])
+	fmt.Println("gottedSign is " + gottedSign)
 	//gottedSignStr := hex.EncodeToString(gottedSign)
 	h := hmac.New(sha256.New, []byte(cf.AuthentKey) /* key*/)
 	h.Write([]byte( /*gottedUserIDStr*/ gottedUserID))
