@@ -46,9 +46,9 @@ func CheckCookie(cookieStr string, cf config.Config) (string, string, error) {
 	if err != nil {
 		return "", "", errors.New("decoding gotted cookie string err, " + err.Error())
 	}
-	gottedUserID := decGotStr[:8]
+	gottedUserID := decGotStr[32:]
 	gottedUserIDStr := hex.EncodeToString(gottedUserID)
-	gottedSign := decGotStr[8:]
+	gottedSign := decGotStr[:32]
 	gottedSignStr := hex.EncodeToString(gottedSign)
 	h := hmac.New(sha256.New, []byte(cf.AuthentKey) /* key*/)
 	h.Write([]byte(gottedUserIDStr))

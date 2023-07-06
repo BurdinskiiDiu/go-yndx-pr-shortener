@@ -506,7 +506,7 @@ func (hn *Handlers) AuthMiddleware(h http.Handler) http.Handler {
 				return
 			}
 			hn.usersID[userID] = signature
-			respCookieVal := userID + signature
+			respCookieVal := signature + userID
 			hn.logger.Debug("cookie string is", zap.String("respCookieVal", respCookieVal))
 
 			respCookieValHex := url.QueryEscape(respCookieVal)
