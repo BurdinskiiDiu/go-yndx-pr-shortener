@@ -51,10 +51,10 @@ func CheckCookie(cookieStr string, cf config.Config) (string, error) {
 	//if err != nil {
 	//	return "", errors.New("decoding gotted cookie string err, " + err.Error())
 	//}
-	gottedUserID := /*decGotStr*/ string([]byte(cookieStr)[32:])
+	gottedUserID := /*decGotStr*/ string([]byte(cookieStr)[64:])
 	fmt.Println("gottedUserID is " + gottedUserID)
 	//gottedUserIDStr := hex.EncodeToString(gottedUserID)
-	gottedSign := /*decGotStr*/ string([]byte(cookieStr)[:32])
+	gottedSign := /*decGotStr*/ string([]byte(cookieStr)[:64])
 	fmt.Println("gottedSign is " + gottedSign)
 	//gottedSignStr := hex.EncodeToString(gottedSign)
 	h := hmac.New(sha256.New, []byte(cf.AuthentKey) /* key*/)
