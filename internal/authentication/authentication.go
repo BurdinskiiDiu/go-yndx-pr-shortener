@@ -36,6 +36,7 @@ func CreateUserID(cf config.Config) (string, string, error) {
 	signatureStr := hex.EncodeToString(signature)
 	fmt.Println("created id is " + id)
 	fmt.Println("created signatureStr is " + signatureStr)
+	fmt.Println(len([]byte(signatureStr)))
 	return /*idStr*/ id, signatureStr /*string(signature)*/, nil
 }
 
