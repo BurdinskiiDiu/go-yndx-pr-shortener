@@ -32,8 +32,8 @@ func CreateUserID(cf config.Config) (string, string, error) {
 	h := hmac.New(sha256.New, []byte(cf.AuthentKey) /*key*/)
 	h.Write([]byte( /*idStr*/ id))
 	signature := h.Sum(nil)
-	signatureStr := hex.EncodeToString(signature)
-	return /*idStr*/ id, signatureStr, nil
+	//signatureStr := hex.EncodeToString(signature)
+	return /*idStr*/ id /*signatureStr*/, string(signature), nil
 }
 
 func CheckCookie(cookieStr string, cf config.Config) (string, error) {

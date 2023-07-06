@@ -11,7 +11,6 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -481,12 +480,12 @@ func (hn *Handlers) AuthMiddleware(h http.Handler) http.Handler {
 		var userID, signature string
 		if !noCookie {
 			hn.logger.Debug("gotted cookie string is", zap.String("hexcookie", cookie.Value))
-			cookieStrHex, err := url.QueryUnescape(cookie.Value)
-			if err != nil {
-				hn.logger.Error("decoding cookie string error", zap.Error(err))
-				return
-			}
-			userID, err = authentication.CheckCookie(cookieStrHex, *hn.Cf)
+			//cookieStrHex, err := url.QueryUnescape(cookie.Value)
+			//if err != nil {
+			//	hn.logger.Error("decoding cookie string error", zap.Error(err))
+			//	return
+			//}
+			userID, err = authentication.CheckCookie( /*cookieStrHex*/ cookie.Value, *hn.Cf)
 			if err != nil {
 				createCookie = true
 			}
@@ -509,8 +508,8 @@ func (hn *Handlers) AuthMiddleware(h http.Handler) http.Handler {
 			respCookieVal := signature + userID
 			hn.logger.Debug("cookie string is", zap.String("respCookieVal", respCookieVal))
 
-			respCookieValHex := url.QueryEscape(respCookieVal)
-			hn.logger.Debug("hex cookie string is", zap.String("hexcookie", respCookieValHex))
+			//respCookieValHex := url.QueryEscape(respCookieVal)
+			//hn.logger.Debug("hex cookie string is", zap.String("hexcookie", respCookieValHex))
 			respCookie := http.Cookie{
 				Name:    "authentication",
 				Value:   respCookieVal,
