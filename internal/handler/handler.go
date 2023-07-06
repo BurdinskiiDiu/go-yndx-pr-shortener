@@ -60,21 +60,21 @@ type URLResp struct {
 }
 
 type Handlers struct {
-	US         URLStore
-	Cf         *config.Config
-	logger     *zap.Logger
-	uuid       int32
-	usersID    map[string]string
+	US     URLStore
+	Cf     *config.Config
+	logger *zap.Logger
+	uuid   int32
+	//usersID    map[string]string
 	inpURLSChn chan postgresql.URLsForDel
 }
 
 func NewHandlers(uS URLStore, inpURLSChn chan postgresql.URLsForDel, cf *config.Config, logger *zap.Logger) *Handlers {
 	return &Handlers{
-		US:         uS,
-		Cf:         cf,
-		logger:     logger,
-		uuid:       0,
-		usersID:    make(map[string]string),
+		US:     uS,
+		Cf:     cf,
+		logger: logger,
+		uuid:   0,
+		//usersID:    make(map[string]string),
 		inpURLSChn: inpURLSChn,
 	}
 }
@@ -465,8 +465,9 @@ func (hn *Handlers) PostBatch() http.HandlerFunc {
 func (hn *Handlers) AuthMiddleware(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		hn.logger.Debug("start AuthMiddleware")
-		cookie, err := r.Cookie("authentication")
 		var noCookie bool
+		cookie, err := r.Cookie("authentication")
+
 		if err != nil {
 			hn.logger.Info("cookie err, " + err.Error())
 			if !errors.Is(err, http.ErrNoCookie) {
@@ -485,15 +486,16 @@ func (hn *Handlers) AuthMiddleware(h http.Handler) http.Handler {
 			//	hn.logger.Error("decoding cookie string error", zap.Error(err))
 			//	return
 			//}
-			userID, err = authentication.CheckCookie( /*cookieStrHex*/ cookie.Value, *hn.Cf)
+			/*userID,*/
+			err := authentication.CheckCookie( /*cookieStrHex*/ cookie.Value, *hn.Cf)
 			if err != nil {
 				createCookie = true
 			}
-			_, ok := hn.usersID[userID]
+			/*_, ok := hn.usersID[userID]
 			if !ok {
 				hn.logger.Error("wrong user ID")
 				createCookie = true
-			}
+			}*/
 		} else {
 			createCookie = true
 		}
@@ -503,8 +505,8 @@ func (hn *Handlers) AuthMiddleware(h http.Handler) http.Handler {
 			if err != nil {
 				hn.logger.Error("creating user id error", zap.Error(err))
 				return
-			}
-			hn.usersID[userID] = signature
+			} /*
+				hn.usersID[userID] = signature*/
 			respCookieVal := signature + userID
 			hn.logger.Debug("cookie string is", zap.String("respCookieVal", respCookieVal))
 
