@@ -37,7 +37,7 @@ func CreateUserID(cf config.Config) (string, string, error) {
 	var cookieSls []byte
 	cookieSls = signature
 	for _, v := range []byte(id) {
-		cookieSls = append(signature, v)
+		cookieSls = append(cookieSls, v)
 	}
 	encoder := new(base64.Encoding)
 	cookieStr := encoder.EncodeToString(cookieSls)
