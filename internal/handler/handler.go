@@ -589,11 +589,11 @@ func (hn *Handlers) DeleteUsersURLs() http.HandlerFunc {
 		if !ok {
 			userID = ""
 		}
-		delURLsSlc := make([]postgresql.URLsForDel, 0)
+		//delURLsSlc := make([]postgresql.URLsForDel, 0)
 		for _, v := range urlsSlc {
 			delURLstr.UserID = userID
 			delURLstr.ShortURL = v
-			delURLsSlc = append(delURLsSlc, delURLstr)
+			//delURLsSlc = append(delURLsSlc, delURLstr)
 			hn.inpURLSChn <- delURLstr
 		}
 
