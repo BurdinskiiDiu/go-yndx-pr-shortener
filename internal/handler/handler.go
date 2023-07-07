@@ -592,17 +592,40 @@ func (hn *Handlers) DeleteUsersURLs() http.HandlerFunc {
 			delURLstr.ShortURL = v
 			delURLsSlc = append(delURLsSlc, delURLstr)
 		}
+		hn.inpURLSChn <- delURLsSlc
 		fmt.Println(delURLsSlc)
-
+		go hn.DelURLSBatch(hn.inpURLSChn)
 		w.WriteHeader(http.StatusAccepted)
-
-		ctx := context.TODO()
-		go func() {
-			hn.US.DeleteUserURLS(ctx, delURLsSlc)
-			if err != nil {
-				hn.logger.Error("async deleting userURLS err", zap.Error(err))
-			}
-		}()
-
+		/*
+			ctx := context.TODO()
+			go func() {
+				hn.US.DeleteUserURLS(ctx, delURLsSlc)
+				if err != nil {
+					hn.logger.Error("async deleting userURLS err", zap.Error(err))
+				}
+			}()
+		*/
 	})
+}
+
+func (hn *Handlers) DelURLSBatch(inpChnl chan []postgresql.URLsForDel) {
+	ctx := context.TODO()
+	ticker := time.NewTicker(5 * time.Second)
+	delURL := make([]postgresql.URLsForDel, 0)
+
+	for {
+		select {
+		case delURL = <-inpChnl:
+			err := hn.US.DeleteUserURLS(ctx, delURL)
+			if err != nil {
+				hn.logger.Debug("error while del urls:" + err.Error())
+				continue
+			}
+		case <-ticker.C:
+			if len(delURL) == 0 {
+				continue
+			}
+			delURL = nil
+		}
+	}
 }
