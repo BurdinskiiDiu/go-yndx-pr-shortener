@@ -15,6 +15,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/authentication"
@@ -61,22 +62,24 @@ type URLResp struct {
 }
 
 type Handlers struct {
-	US     URLStore
-	Cf     *config.Config
-	logger *zap.Logger
-	uuid   int32
-	//usersID    map[string]string
+	US         URLStore
+	Cf         *config.Config
+	logger     *zap.Logger
+	uuid       int32
+	forDel     [][]postgresql.URLsForDel
 	inpURLSChn chan []postgresql.URLsForDel
+	delMtx     *sync.Mutex
 }
 
-func NewHandlers(uS URLStore, inpURLSChn chan []postgresql.URLsForDel, cf *config.Config, logger *zap.Logger) *Handlers {
+func NewHandlers(uS URLStore, inpURLSChn chan []postgresql.URLsForDel, cf *config.Config, logger *zap.Logger, delMtx *sync.Mutex) *Handlers {
 	return &Handlers{
-		US:     uS,
-		Cf:     cf,
-		logger: logger,
-		uuid:   0,
-		//usersID:    make(map[string]string),
+		US:         uS,
+		Cf:         cf,
+		logger:     logger,
+		uuid:       0,
+		forDel:     make([][]postgresql.URLsForDel, 0),
 		inpURLSChn: inpURLSChn,
+		delMtx:     delMtx,
 	}
 }
 
@@ -592,8 +595,9 @@ func (hn *Handlers) DeleteUsersURLs() http.HandlerFunc {
 			delURLstr.ShortURL = v
 			delURLsSlc = append(delURLsSlc, delURLstr)
 		}
-		hn.inpURLSChn <- delURLsSlc
-		fmt.Println(delURLsSlc)
+		//hn.inpURLSChn <- delURLsSlc
+
+		hn.forDel = append(hn.forDel, delURLsSlc)
 		w.WriteHeader(http.StatusAccepted)
 		/*
 			ctx := context.TODO()
@@ -621,10 +625,24 @@ func (hn *Handlers) DelURLSBatch() {
 				continue
 			}
 		case <-ticker.C:
-			if len(delURL) == 0 {
+			hn.delMtx.Lock()
+			if len(hn.forDel) == 0 {
+				hn.delMtx.Unlock()
 				continue
 			}
-			delURL = nil
+			if len(hn.forDel) <= hn.Cf.DelChnlLen {
+				for _, v := range hn.forDel {
+					hn.inpURLSChn <- v
+				}
+				hn.forDel = nil
+				hn.delMtx.Unlock()
+				continue
+			}
+			for i := 0; i < hn.Cf.DelChnlLen; i++ {
+				hn.inpURLSChn <- hn.forDel[i]
+			}
+			hn.forDel = hn.forDel[hn.Cf.DelChnlLen-1:]
+			hn.delMtx.Unlock()
 		}
 	}
 }

@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/config"
@@ -29,7 +30,8 @@ func TestURLShortenerRequest(t *testing.T) {
 	conf.ServAddr = ":8080"
 	conf.BaseAddr = "http://localhost:8080/"
 	chnInp := make(chan []postgresql.URLsForDel, 100)
-	hn := NewHandlers(uS, chnInp, conf, logger)
+	delMtx := new(sync.Mutex)
+	hn := NewHandlers(uS, chnInp, conf, logger, delMtx)
 
 	if err != nil {
 		log.Fatal(err)
@@ -88,9 +90,9 @@ func TestGetlongURLRequest(t *testing.T) {
 
 	conf.ServAddr = ":8080"
 	conf.BaseAddr = "http://localhost:8080/"
-
+	delMtx := new(sync.Mutex)
 	chnInp := make(chan []postgresql.URLsForDel, 100)
-	hn := NewHandlers(uS, chnInp, conf, logger)
+	hn := NewHandlers(uS, chnInp, conf, logger, delMtx)
 
 	if err != nil {
 		log.Fatal(err)
@@ -151,7 +153,8 @@ func TestPostlongURLRequestApi(t *testing.T) {
 	conf.BaseAddr = "http://localhost:8080/"
 
 	chnInp := make(chan []postgresql.URLsForDel, 100)
-	hn := NewHandlers(uS, chnInp, conf, logger)
+	delMtx := new(sync.Mutex)
+	hn := NewHandlers(uS, chnInp, conf, logger, delMtx)
 
 	if err != nil {
 		log.Fatal(err)

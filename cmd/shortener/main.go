@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"sync"
 	"time"
 
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/config"
@@ -37,9 +38,10 @@ func main() {
 		mapStore := store.NewURLStorage(logger)
 		str = mapStore
 	}
-	delURLSChan := make(chan []postgresql.URLsForDel, 1000)
+	delURLSChan := make(chan []postgresql.URLsForDel, conf.DelChnlLen)
 	defer close(delURLSChan)
-	hn := handler.NewHandlers(str, delURLSChan, conf, logger)
+	delMtx := new(sync.Mutex)
+	hn := handler.NewHandlers(str, delURLSChan, conf, logger, delMtx)
 	if conf.StoreType == 0 {
 		err = hn.GetStoreBackup()
 		if err != nil {

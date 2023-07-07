@@ -13,6 +13,7 @@ type Config struct {
 	DBdsn         string
 	StoreType     storeType
 	AuthentKey    string
+	DelChnlLen    int
 }
 
 type storeType int
@@ -62,6 +63,8 @@ func GetConfig() *Config {
 	} else {
 		cf.StoreType = file
 	}
+
+	cf.DelChnlLen = 1000
 
 	return cf
 }
