@@ -2,7 +2,6 @@ package config
 
 import (
 	"flag"
-	"log"
 	"os"
 )
 
@@ -33,12 +32,7 @@ func GetConfig() *Config {
 
 	flag.StringVar(&cf.DBdsn, "d", "", "dsn for db connection")
 	flag.Parse()
-	log.Println("flag a: " + cf.ServAddr)
-	log.Println("flag b: " + cf.BaseAddr)
 
-	log.Println("flag l: " + cf.LogLevel)
-	log.Println("flag f: " + cf.FileStorePath)
-	log.Println("flag d: " + cf.DBdsn)
 	if EnvServAddr := os.Getenv("SERVER_ADDRESS"); EnvServAddr != "" {
 		cf.ServAddr = EnvServAddr
 	}

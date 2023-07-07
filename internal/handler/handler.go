@@ -479,7 +479,7 @@ func (hn *Handlers) AuthMiddleware(h http.Handler) http.Handler {
 			noCookie = true
 		}
 		var createCookie bool
-		var userID, cookieStr /*signature*/ string
+		var userID, cookieStr string
 		if !noCookie {
 			hn.logger.Debug("gotted cookie string is", zap.String("hexcookie", cookie.Value))
 			gCookieStr, err := url.QueryUnescape(cookie.Value)
@@ -487,36 +487,28 @@ func (hn *Handlers) AuthMiddleware(h http.Handler) http.Handler {
 				hn.logger.Error("decoding cookie string error", zap.Error(err))
 				return
 			}
-			/*userID,*/
-			userID, err = authentication.CheckCookie( /*cookieStrHex*/ gCookieStr /*cookie.Value*/, *hn.Cf)
+
+			userID, err = authentication.CheckCookie(gCookieStr, *hn.Cf)
 			if err != nil {
 				createCookie = true
 			}
-			/*_, ok := hn.usersID[userID]
-			if !ok {
-				hn.logger.Error("wrong user ID")
-				createCookie = true
-			}*/
+
 		} else {
 			createCookie = true
 		}
 
 		if createCookie {
-			//userID, signature, err = authentication.CreateUserID(*hn.Cf)
+
 			userID, cookieStr, err = authentication.CreateUserID(*hn.Cf)
 			if err != nil {
 				hn.logger.Error("creating user id error", zap.Error(err))
 				return
-			} /*
-				hn.usersID[userID] = signature*/
-			//respCookieVal := signature + userID
-			//hn.logger.Debug("cookie string is", zap.String("respCookieVal", respCookieVal))
+			}
 
 			respCookieStr := url.QueryEscape(cookieStr)
-			//hn.logger.Debug("hex cookie string is", zap.String("hexcookie", respCookieValHex))
 			respCookie := http.Cookie{
-				Name: "authentication",
-				Value:/*respCookieVal*/ respCookieStr,
+				Name:    "authentication",
+				Value:   respCookieStr,
 				Expires: time.Now().Add(1 * time.Hour),
 			}
 			http.SetCookie(w, &respCookie)
@@ -540,7 +532,7 @@ type UsersURLs struct {
 func (hn *Handlers) GetUsersURLs() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		hn.logger.Debug("start GetUsersURLs")
-		//ctx := context.TODO()
+
 		ctx := r.Context()
 		userID := ctx.Value(currUser)
 		ans, err := hn.US.ReturnAllUserReq(ctx, userID.(string))
@@ -599,57 +591,18 @@ func (hn *Handlers) DeleteUsersURLs() http.HandlerFunc {
 			delURLstr.UserID = userID
 			delURLstr.ShortURL = v
 			delURLsSlc = append(delURLsSlc, delURLstr)
-			//hn.inpURLSChn <- delURLstr
 		}
+		fmt.Println(delURLsSlc)
 
-		//inpChnl := make(chan []postgresql.URLsForDel, len(delURLsSlc))
-		//inpChnl <- delURLsSlc
-		//defer close(inpChnl)
 		w.WriteHeader(http.StatusAccepted)
-		go hn.DelURLSBatch(delURLsSlc)
-		/*ctx := context.TODO()
+
+		ctx := context.TODO()
 		go func() {
-			hn.US.DeleteUserURLS(ctx, <-inpChnl)
+			hn.US.DeleteUserURLS(ctx, delURLsSlc)
 			if err != nil {
 				hn.logger.Error("async deleting userURLS err", zap.Error(err))
 			}
-		}()*/
+		}()
 
 	})
 }
-
-func (hn *Handlers) DelURLSBatch(inpChnl []postgresql.URLsForDel) {
-	ctx := context.TODO()
-	err := hn.US.DeleteUserURLS(ctx, inpChnl)
-	if err != nil {
-		hn.logger.Debug("error while del urls:" + err.Error())
-	}
-	//ticker := time.NewTicker(5 * time.Second)
-	//delURLsSlc := make([]postgresql.URLsForDel, 0)
-	/*for {
-	select {
-	case delURL := <-inpChnl:
-		err := hn.US.DeleteUserURLS(ctx, delURL)
-		if err != nil {
-			hn.logger.Debug("error while del urls:" + err.Error())
-		}
-	default:
-		continue
-	}*/
-	/*select {
-	case delURL := <-inpChnl:
-		delURLsSlc = append(delURLsSlc, delURL)
-	case <-ticker.C:
-		if len(delURLsSlc) == 0 {
-			continue
-		}
-		err := hn.US.DeleteUserURLS(ctx, delURLsSlc)
-		if err != nil {
-			hn.logger.Debug("error while del urls:" + err.Error())
-			continue
-		}
-		delURLsSlc = nil
-	}*/
-}
-
-//}
