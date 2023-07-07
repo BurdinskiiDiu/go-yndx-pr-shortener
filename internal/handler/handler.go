@@ -67,11 +67,11 @@ type Handlers struct {
 	logger     *zap.Logger
 	uuid       int32
 	forDel     [][]postgresql.URLsForDel
-	inpURLSChn chan []postgresql.URLsForDel
+	inpURLSChn chan postgresql.URLsForDel
 	delMtx     *sync.Mutex
 }
 
-func NewHandlers(uS URLStore, inpURLSChn chan []postgresql.URLsForDel, cf *config.Config, logger *zap.Logger, delMtx *sync.Mutex) *Handlers {
+func NewHandlers(uS URLStore, inpURLSChn chan postgresql.URLsForDel, cf *config.Config, logger *zap.Logger, delMtx *sync.Mutex) *Handlers {
 	return &Handlers{
 		US:         uS,
 		Cf:         cf,
@@ -594,12 +594,13 @@ func (hn *Handlers) DeleteUsersURLs() http.HandlerFunc {
 			delURLstr.UserID = userID
 			delURLstr.ShortURL = v
 			delURLsSlc = append(delURLsSlc, delURLstr)
+			hn.inpURLSChn <- delURLstr
 		}
-		//hn.inpURLSChn <- delURLsSlc
-		hn.delMtx.Lock()
-		hn.forDel = append(hn.forDel, delURLsSlc)
-		hn.delMtx.Unlock()
-		w.WriteHeader(http.StatusAccepted)
+
+		//hn.delMtx.Lock()
+		//hn.forDel = append(hn.forDel, delURLsSlc)
+		//hn.delMtx.Unlock()
+		//w.WriteHeader(http.StatusAccepted)
 		/*
 			ctx := context.TODO()
 			go func() {
@@ -607,64 +608,65 @@ func (hn *Handlers) DeleteUsersURLs() http.HandlerFunc {
 				if err != nil {
 					hn.logger.Error("async deleting userURLS err", zap.Error(err))
 				}
-			}()
-		*/
+			}()*/
+
 	})
 }
 
+/*
+func (hn *Handlers) DeleteUsersURLs() http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		hn.logger.Debug("start DeleteUsersURLs")
+		//ctx := context.TODO()
+
+		var buf bytes.Buffer
+		_, err := buf.ReadFrom(r.Body)
+		var delURLstr postgresql.URLsForDel
+		if err != nil {
+			hn.logger.Error("DeleteUsersURLs handler, read from request body err", zap.Error(err))
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		urlsStr := buf.String()
+		hn.logger.Debug("gotted body DeleteUsersURLs: " + urlsStr)
+		urlsStr = urlsStr[2:]
+		urlsStr = urlsStr[:len(urlsStr)-2]
+		urlsSlc := strings.Split(urlsStr, "\",\"")
+		hn.logger.Debug("conversed body to slice DeleteUsersURLs: ")
+		for _, v := range urlsSlc {
+			delURLstr.UserID = hn.currentUser
+			delURLstr.ShortURL = v
+			hn.inpURLSChn <- delURLstr
+			fmt.Println(v)
+		}
+		/*wg := new(sync.WaitGroup)
+		wg.Add(1)
+		hn.US.DeleteUserURLS(ctx, wg, hn.currentUser, urlsSlc)
+		wg.Wait()*/
+//w.WriteHeader(http.StatusAccepted)
+//})
+//}
+
 func (hn *Handlers) DelURLSBatch() {
 	ctx := context.TODO()
-	//ticker := time.NewTicker(5 * time.Second)
-	//delURL := make([]postgresql.URLsForDel, 0)
+	ticker := time.NewTicker(5 * time.Second)
+	delURLsSlc := make([]postgresql.URLsForDel, 0)
 	for {
-		if len(hn.forDel) > 0 {
-			hn.delMtx.Lock()
-			fmt.Println("befor deleting:")
-			fmt.Println("hn.forDel")
-			servSlc := hn.forDel
-			hn.forDel = nil
-			fmt.Println("gotted deleting:")
-			fmt.Println("hn.forDel")
-			hn.delMtx.Unlock()
-			for _, v := range servSlc {
-				err := hn.US.DeleteUserURLS(ctx, v)
-				if err != nil {
-					hn.logger.Debug("error while del urls:" + err.Error())
-				}
-			}
-			fmt.Println("deleting finished")
-		}
-		continue
-	}
-	/*
+		select {
+		case delURL := <-hn.inpURLSChn:
+			delURLsSlc = append(delURLsSlc, delURL)
 
-		for {
-			select {
-			case delURL := <-hn.inpURLSChn:
-				err := hn.US.DeleteUserURLS(ctx, delURL)
-				if err != nil {
-					hn.logger.Debug("error while del urls:" + err.Error())
-					continue
-				}
-			case <-ticker.C:
-				hn.delMtx.Lock()
-				if len(hn.forDel) == 0 {
-					hn.delMtx.Unlock()
-					continue
-				}
-				if len(hn.forDel) <= hn.Cf.DelChnlLen {
-					for _, v := range hn.forDel {
-						hn.inpURLSChn <- v
-					}
-					hn.forDel = nil
-					hn.delMtx.Unlock()
-					continue
-				}
-				for i := 0; i < hn.Cf.DelChnlLen; i++ {
-					hn.inpURLSChn <- hn.forDel[i]
-				}
-				hn.forDel = hn.forDel[hn.Cf.DelChnlLen-1:]
-				hn.delMtx.Unlock()
+		case <-ticker.C:
+			fmt.Println("now we try to remove urls")
+			if len(delURLsSlc) == 0 {
+				continue
 			}
-		}*/
+			err := hn.US.DeleteUserURLS(ctx, delURLsSlc)
+			if err != nil {
+				hn.logger.Debug("error while del urls:" + err.Error())
+				continue
+			}
+			delURLsSlc = nil
+		}
+	}
 }

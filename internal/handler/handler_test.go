@@ -29,7 +29,7 @@ func TestURLShortenerRequest(t *testing.T) {
 
 	conf.ServAddr = ":8080"
 	conf.BaseAddr = "http://localhost:8080/"
-	chnInp := make(chan []postgresql.URLsForDel, 100)
+	chnInp := make(chan postgresql.URLsForDel, 100)
 	delMtx := new(sync.Mutex)
 	hn := NewHandlers(uS, chnInp, conf, logger, delMtx)
 
@@ -91,7 +91,7 @@ func TestGetlongURLRequest(t *testing.T) {
 	conf.ServAddr = ":8080"
 	conf.BaseAddr = "http://localhost:8080/"
 	delMtx := new(sync.Mutex)
-	chnInp := make(chan []postgresql.URLsForDel, 100)
+	chnInp := make(chan postgresql.URLsForDel, 100)
 	hn := NewHandlers(uS, chnInp, conf, logger, delMtx)
 
 	if err != nil {
@@ -152,7 +152,7 @@ func TestPostlongURLRequestApi(t *testing.T) {
 	conf.ServAddr = ":8080"
 	conf.BaseAddr = "http://localhost:8080/"
 
-	chnInp := make(chan []postgresql.URLsForDel, 100)
+	chnInp := make(chan postgresql.URLsForDel, 100)
 	delMtx := new(sync.Mutex)
 	hn := NewHandlers(uS, chnInp, conf, logger, delMtx)
 
