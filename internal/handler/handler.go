@@ -602,10 +602,13 @@ func (hn *Handlers) DeleteUsersURLs() http.HandlerFunc {
 			//hn.inpURLSChn <- delURLstr
 		}
 
+		inpChnl := make(chan []postgresql.URLsForDel)
+		inpChnl <- delURLsSlc
+		defer close(inpChnl)
 		w.WriteHeader(http.StatusAccepted)
 		ctx := context.TODO()
 		go func() {
-			hn.US.DeleteUserURLS(ctx, delURLsSlc)
+			hn.US.DeleteUserURLS(ctx, <-inpChnl)
 			if err != nil {
 				hn.logger.Error("async deleting userURLS err", zap.Error(err))
 			}
