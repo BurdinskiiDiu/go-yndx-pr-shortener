@@ -478,7 +478,7 @@ func (hn *Handlers) AuthMiddleware(h http.Handler) http.Handler {
 			noCookie = true
 		}
 		var createCookie bool
-		var userID, signature string
+		var userID, cookieStr /*signature*/ string
 		if !noCookie {
 			hn.logger.Debug("gotted cookie string is", zap.String("hexcookie", cookie.Value))
 			//cookieStrHex, err := url.QueryUnescape(cookie.Value)
@@ -501,20 +501,21 @@ func (hn *Handlers) AuthMiddleware(h http.Handler) http.Handler {
 		}
 
 		if createCookie {
-			userID, signature, err = authentication.CreateUserID(*hn.Cf)
+			//userID, signature, err = authentication.CreateUserID(*hn.Cf)
+			userID, cookieStr, err = authentication.CreateUserID(*hn.Cf)
 			if err != nil {
 				hn.logger.Error("creating user id error", zap.Error(err))
 				return
 			} /*
 				hn.usersID[userID] = signature*/
-			respCookieVal := signature + userID
-			hn.logger.Debug("cookie string is", zap.String("respCookieVal", respCookieVal))
+			//respCookieVal := signature + userID
+			//hn.logger.Debug("cookie string is", zap.String("respCookieVal", respCookieVal))
 
 			//respCookieValHex := url.QueryEscape(respCookieVal)
 			//hn.logger.Debug("hex cookie string is", zap.String("hexcookie", respCookieValHex))
 			respCookie := http.Cookie{
-				Name:    "authentication",
-				Value:   respCookieVal,
+				Name: "authentication",
+				Value:/*respCookieVal*/ cookieStr,
 				Expires: time.Now().Add(1 * time.Hour),
 			}
 			http.SetCookie(w, &respCookie)
