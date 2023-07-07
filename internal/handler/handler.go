@@ -66,7 +66,6 @@ type Handlers struct {
 	Cf         *config.Config
 	logger     *zap.Logger
 	uuid       int32
-	forDel     [][]postgresql.URLsForDel
 	inpURLSChn chan postgresql.URLsForDel
 	delMtx     *sync.Mutex
 }
@@ -77,7 +76,6 @@ func NewHandlers(uS URLStore, inpURLSChn chan postgresql.URLsForDel, cf *config.
 		Cf:         cf,
 		logger:     logger,
 		uuid:       0,
-		forDel:     make([][]postgresql.URLsForDel, 0),
 		inpURLSChn: inpURLSChn,
 		delMtx:     delMtx,
 	}
@@ -589,17 +587,12 @@ func (hn *Handlers) DeleteUsersURLs() http.HandlerFunc {
 		if !ok {
 			userID = ""
 		}
-		//delURLsSlc := make([]postgresql.URLsForDel, 0)
 		for _, v := range urlsSlc {
 			delURLstr.UserID = userID
 			delURLstr.ShortURL = v
-			//delURLsSlc = append(delURLsSlc, delURLstr)
 			hn.inpURLSChn <- delURLstr
 		}
 
-		//hn.delMtx.Lock()
-		//hn.forDel = append(hn.forDel, delURLsSlc)
-		//hn.delMtx.Unlock()
 		w.WriteHeader(http.StatusAccepted)
 		/*
 			ctx := context.TODO()
@@ -612,40 +605,6 @@ func (hn *Handlers) DeleteUsersURLs() http.HandlerFunc {
 
 	})
 }
-
-/*
-func (hn *Handlers) DeleteUsersURLs() http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		hn.logger.Debug("start DeleteUsersURLs")
-		//ctx := context.TODO()
-
-		var buf bytes.Buffer
-		_, err := buf.ReadFrom(r.Body)
-		var delURLstr postgresql.URLsForDel
-		if err != nil {
-			hn.logger.Error("DeleteUsersURLs handler, read from request body err", zap.Error(err))
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		urlsStr := buf.String()
-		hn.logger.Debug("gotted body DeleteUsersURLs: " + urlsStr)
-		urlsStr = urlsStr[2:]
-		urlsStr = urlsStr[:len(urlsStr)-2]
-		urlsSlc := strings.Split(urlsStr, "\",\"")
-		hn.logger.Debug("conversed body to slice DeleteUsersURLs: ")
-		for _, v := range urlsSlc {
-			delURLstr.UserID = hn.currentUser
-			delURLstr.ShortURL = v
-			hn.inpURLSChn <- delURLstr
-			fmt.Println(v)
-		}
-		/*wg := new(sync.WaitGroup)
-		wg.Add(1)
-		hn.US.DeleteUserURLS(ctx, wg, hn.currentUser, urlsSlc)
-		wg.Wait()*/
-//w.WriteHeader(http.StatusAccepted)
-//})
-//}
 
 func (hn *Handlers) DelURLSBatch() {
 	ctx := context.TODO()
