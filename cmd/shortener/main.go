@@ -37,7 +37,7 @@ func main() {
 		mapStore := store.NewURLStorage(logger)
 		str = mapStore
 	}
-	delURLSChan := make(chan postgresql.URLsForDel, 100)
+	delURLSChan := make(chan []postgresql.URLsForDel, 100)
 	defer close(delURLSChan)
 	hn := handler.NewHandlers(str, delURLSChan, conf, logger)
 	if conf.StoreType == 0 {

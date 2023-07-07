@@ -66,10 +66,10 @@ type Handlers struct {
 	logger *zap.Logger
 	uuid   int32
 	//usersID    map[string]string
-	inpURLSChn chan postgresql.URLsForDel
+	inpURLSChn chan []postgresql.URLsForDel
 }
 
-func NewHandlers(uS URLStore, inpURLSChn chan postgresql.URLsForDel, cf *config.Config, logger *zap.Logger) *Handlers {
+func NewHandlers(uS URLStore, inpURLSChn chan []postgresql.URLsForDel, cf *config.Config, logger *zap.Logger) *Handlers {
 	return &Handlers{
 		US:     uS,
 		Cf:     cf,
@@ -602,29 +602,39 @@ func (hn *Handlers) DeleteUsersURLs() http.HandlerFunc {
 			//hn.inpURLSChn <- delURLstr
 		}
 
-		inpChnl := make(chan []postgresql.URLsForDel)
+		inpChnl := make(chan []postgresql.URLsForDel, len(delURLsSlc))
 		inpChnl <- delURLsSlc
 		defer close(inpChnl)
 		w.WriteHeader(http.StatusAccepted)
-		ctx := context.TODO()
+		go hn.DelURLSBatch(inpChnl)
+		/*ctx := context.TODO()
 		go func() {
 			hn.US.DeleteUserURLS(ctx, <-inpChnl)
 			if err != nil {
 				hn.logger.Error("async deleting userURLS err", zap.Error(err))
 			}
-		}()
+		}()*/
 
 	})
 }
 
-/*
-func (hn *Handlers) DelURLSBatch() {
+func (hn *Handlers) DelURLSBatch(inpChnl chan []postgresql.URLsForDel) {
 	ctx := context.TODO()
-	ticker := time.NewTicker(5 * time.Second)
-	delURLsSlc := make([]postgresql.URLsForDel, 0)
+	//ticker := time.NewTicker(5 * time.Second)
+	//delURLsSlc := make([]postgresql.URLsForDel, 0)
 	for {
 		select {
-		case delURL := <-hn.inpURLSChn:
+		case delURL := <-inpChnl:
+			err := hn.US.DeleteUserURLS(ctx, delURL)
+			if err != nil {
+				hn.logger.Debug("error while del urls:" + err.Error())
+				break
+			}
+		default:
+			continue
+		}
+		/*select {
+		case delURL := <-inpChnl:
 			delURLsSlc = append(delURLsSlc, delURL)
 		case <-ticker.C:
 			if len(delURLsSlc) == 0 {
@@ -636,7 +646,6 @@ func (hn *Handlers) DelURLSBatch() {
 				continue
 			}
 			delURLsSlc = nil
-		}
+		}*/
 	}
 }
-*/
