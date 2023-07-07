@@ -602,16 +602,24 @@ func (hn *Handlers) DeleteUsersURLs() http.HandlerFunc {
 		if !ok {
 			userID = ""
 		}
-
+		delURLsSlc := make([]postgresql.URLsForDel, 0)
 		for _, v := range urlsSlc {
 			delURLstr.UserID = userID
 			delURLstr.ShortURL = v
-			hn.inpURLSChn <- delURLstr
+			delURLsSlc = append(delURLsSlc, delURLstr)
+			//hn.inpURLSChn <- delURLstr
 		}
+		go func() {
+			err := hn.US.DeleteUserURLS(r.Context(), delURLsSlc)
+			if err != nil {
+				hn.logger.Error("async deleting userURLS err", zap.Error(err))
+			}
+		}()
 		w.WriteHeader(http.StatusAccepted)
 	})
 }
 
+/*
 func (hn *Handlers) DelURLSBatch() {
 	ctx := context.TODO()
 	ticker := time.NewTicker(5 * time.Second)
@@ -633,3 +641,4 @@ func (hn *Handlers) DelURLSBatch() {
 		}
 	}
 }
+*/
