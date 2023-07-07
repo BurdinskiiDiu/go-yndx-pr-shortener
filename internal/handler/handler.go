@@ -614,36 +614,52 @@ func (hn *Handlers) DeleteUsersURLs() http.HandlerFunc {
 
 func (hn *Handlers) DelURLSBatch() {
 	ctx := context.TODO()
-	ticker := time.NewTicker(5 * time.Second)
+	//ticker := time.NewTicker(5 * time.Second)
 	//delURL := make([]postgresql.URLsForDel, 0)
-
 	for {
-		select {
-		case delURL := <-hn.inpURLSChn:
-			err := hn.US.DeleteUserURLS(ctx, delURL)
-			if err != nil {
-				hn.logger.Debug("error while del urls:" + err.Error())
-				continue
-			}
-		case <-ticker.C:
+		if len(hn.forDel) > 0 {
 			hn.delMtx.Lock()
-			if len(hn.forDel) == 0 {
-				hn.delMtx.Unlock()
-				continue
-			}
-			if len(hn.forDel) <= hn.Cf.DelChnlLen {
-				for _, v := range hn.forDel {
-					hn.inpURLSChn <- v
-				}
-				hn.forDel = nil
-				hn.delMtx.Unlock()
-				continue
-			}
-			for i := 0; i < hn.Cf.DelChnlLen; i++ {
-				hn.inpURLSChn <- hn.forDel[i]
-			}
-			hn.forDel = hn.forDel[hn.Cf.DelChnlLen-1:]
+			servSlc := hn.forDel
+			hn.forDel = nil
 			hn.delMtx.Unlock()
+			for _, v := range servSlc {
+				err := hn.US.DeleteUserURLS(ctx, v)
+				if err != nil {
+					hn.logger.Debug("error while del urls:" + err.Error())
+				}
+			}
 		}
+		continue
 	}
+	/*
+
+		for {
+			select {
+			case delURL := <-hn.inpURLSChn:
+				err := hn.US.DeleteUserURLS(ctx, delURL)
+				if err != nil {
+					hn.logger.Debug("error while del urls:" + err.Error())
+					continue
+				}
+			case <-ticker.C:
+				hn.delMtx.Lock()
+				if len(hn.forDel) == 0 {
+					hn.delMtx.Unlock()
+					continue
+				}
+				if len(hn.forDel) <= hn.Cf.DelChnlLen {
+					for _, v := range hn.forDel {
+						hn.inpURLSChn <- v
+					}
+					hn.forDel = nil
+					hn.delMtx.Unlock()
+					continue
+				}
+				for i := 0; i < hn.Cf.DelChnlLen; i++ {
+					hn.inpURLSChn <- hn.forDel[i]
+				}
+				hn.forDel = hn.forDel[hn.Cf.DelChnlLen-1:]
+				hn.delMtx.Unlock()
+			}
+		}*/
 }
