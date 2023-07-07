@@ -602,11 +602,11 @@ func (hn *Handlers) DeleteUsersURLs() http.HandlerFunc {
 			//hn.inpURLSChn <- delURLstr
 		}
 
-		inpChnl := make(chan []postgresql.URLsForDel, len(delURLsSlc))
-		inpChnl <- delURLsSlc
-		defer close(inpChnl)
+		//inpChnl := make(chan []postgresql.URLsForDel, len(delURLsSlc))
+		//inpChnl <- delURLsSlc
+		//defer close(inpChnl)
 		w.WriteHeader(http.StatusAccepted)
-		go hn.DelURLSBatch(inpChnl)
+		go hn.DelURLSBatch(delURLsSlc)
 		/*ctx := context.TODO()
 		go func() {
 			hn.US.DeleteUserURLS(ctx, <-inpChnl)
@@ -618,33 +618,38 @@ func (hn *Handlers) DeleteUsersURLs() http.HandlerFunc {
 	})
 }
 
-func (hn *Handlers) DelURLSBatch(inpChnl chan []postgresql.URLsForDel) {
+func (hn *Handlers) DelURLSBatch(inpChnl []postgresql.URLsForDel) {
 	ctx := context.TODO()
+	err := hn.US.DeleteUserURLS(ctx, inpChnl)
+	if err != nil {
+		hn.logger.Debug("error while del urls:" + err.Error())
+	}
 	//ticker := time.NewTicker(5 * time.Second)
 	//delURLsSlc := make([]postgresql.URLsForDel, 0)
-	for {
-		select {
-		case delURL := <-inpChnl:
-			err := hn.US.DeleteUserURLS(ctx, delURL)
-			if err != nil {
-				hn.logger.Debug("error while del urls:" + err.Error())
-			}
-		default:
+	/*for {
+	select {
+	case delURL := <-inpChnl:
+		err := hn.US.DeleteUserURLS(ctx, delURL)
+		if err != nil {
+			hn.logger.Debug("error while del urls:" + err.Error())
+		}
+	default:
+		continue
+	}*/
+	/*select {
+	case delURL := <-inpChnl:
+		delURLsSlc = append(delURLsSlc, delURL)
+	case <-ticker.C:
+		if len(delURLsSlc) == 0 {
 			continue
 		}
-		/*select {
-		case delURL := <-inpChnl:
-			delURLsSlc = append(delURLsSlc, delURL)
-		case <-ticker.C:
-			if len(delURLsSlc) == 0 {
-				continue
-			}
-			err := hn.US.DeleteUserURLS(ctx, delURLsSlc)
-			if err != nil {
-				hn.logger.Debug("error while del urls:" + err.Error())
-				continue
-			}
-			delURLsSlc = nil
-		}*/
-	}
+		err := hn.US.DeleteUserURLS(ctx, delURLsSlc)
+		if err != nil {
+			hn.logger.Debug("error while del urls:" + err.Error())
+			continue
+		}
+		delURLsSlc = nil
+	}*/
 }
+
+//}
