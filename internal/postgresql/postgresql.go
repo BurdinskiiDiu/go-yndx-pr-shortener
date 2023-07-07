@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -219,6 +220,7 @@ type URLsForDel struct {
 }
 
 func (cDBS *ClientDBStruct) DeleteUserURLS(ctxPar context.Context, urlsArr []URLsForDel) (err error) {
+	fmt.Println("start deleting")
 	ctx, canselCtx := context.WithTimeout(ctxPar, cDBS.tm)
 	defer canselCtx()
 	btch := new(pgx.Batch)
@@ -232,5 +234,6 @@ func (cDBS *ClientDBStruct) DeleteUserURLS(ctxPar context.Context, urlsArr []URL
 			cDBS.logger.Error("batch row err, row N is "+strconv.Itoa(i)+" /", zap.Error(err))
 		}
 	}
+	fmt.Println("finish deleting")
 	return
 }

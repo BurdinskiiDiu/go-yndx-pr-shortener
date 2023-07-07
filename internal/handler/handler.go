@@ -619,8 +619,12 @@ func (hn *Handlers) DelURLSBatch() {
 	for {
 		if len(hn.forDel) > 0 {
 			hn.delMtx.Lock()
+			fmt.Println("befor deleting:")
+			fmt.Println("hn.forDel")
 			servSlc := hn.forDel
 			hn.forDel = nil
+			fmt.Println("gotted deleting:")
+			fmt.Println("hn.forDel")
 			hn.delMtx.Unlock()
 			for _, v := range servSlc {
 				err := hn.US.DeleteUserURLS(ctx, v)
@@ -628,6 +632,7 @@ func (hn *Handlers) DelURLSBatch() {
 					hn.logger.Debug("error while del urls:" + err.Error())
 				}
 			}
+			fmt.Println("deleting finished")
 		}
 		continue
 	}
