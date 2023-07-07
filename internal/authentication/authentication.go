@@ -3,7 +3,7 @@ package authentication
 import (
 	"crypto/hmac"
 	"crypto/sha256"
-	"encoding/base64"
+	"encoding/hex"
 	"errors"
 	"fmt"
 
@@ -38,9 +38,10 @@ func CreateUserID(cf config.Config) (string, string, error) {
 	cookieSls = signature
 	//for _, v := range []byte(id) {
 	cookieSls = append(cookieSls, []byte(id)...)
+	cookieStr := hex.EncodeToString(cookieSls)
 	//}
-	encoder := new(base64.Encoding)
-	cookieStr := encoder.EncodeToString(cookieSls)
+	//encoder := new(base64.Encoding)
+	//cookieStr := encoder.EncodeToString(cookieSls)
 	fmt.Println("created id is " + id)
 	fmt.Println(len([]byte(id)))
 	fmt.Println("created signature is " + string(signature))
@@ -59,8 +60,8 @@ func CheckCookie(cookieStr string, cf config.Config) (string, error) {
 	if !(len([]byte(cookieStr)) > 8) {
 		return "", errors.New("wrong cookie len")
 	}
-	encoder := new(base64.Encoding)
-	gCookieSlc, err := encoder.DecodeString(cookieStr)
+	//encoder := new(base64.Encoding)
+	gCookieSlc, err := hex.DecodeString(cookieStr)
 
 	if err != nil {
 		return "", fmt.Errorf("decoding gotted cookies error: %w", err)
