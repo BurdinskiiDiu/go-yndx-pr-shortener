@@ -594,7 +594,6 @@ func (hn *Handlers) DeleteUsersURLs() http.HandlerFunc {
 		}
 		hn.inpURLSChn <- delURLsSlc
 		fmt.Println(delURLsSlc)
-		go hn.DelURLSBatch()
 		w.WriteHeader(http.StatusAccepted)
 		/*
 			ctx := context.TODO()
