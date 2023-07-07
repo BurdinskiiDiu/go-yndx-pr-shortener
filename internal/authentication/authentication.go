@@ -42,6 +42,7 @@ func CreateUserID(cf config.Config) (string, string, error) {
 	encoder := new(base64.Encoding)
 	cookieStr := encoder.EncodeToString(cookieSls)
 	fmt.Println("created id is " + id)
+	fmt.Println(len([]byte(id)))
 	fmt.Println("created signature is " + string(signature))
 	fmt.Println(len(signature))
 	fmt.Println("created sookieSls is " + string(cookieSls))
