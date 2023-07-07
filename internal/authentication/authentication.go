@@ -18,18 +18,8 @@ func CreateUserID(cf config.Config) (string, string, error) {
 	signature := h.Sum(nil)
 	var cookieSls []byte
 	cookieSls = signature
-
 	cookieSls = append(cookieSls, []byte(id)...)
 	cookieStr := hex.EncodeToString(cookieSls)
-
-	fmt.Println("created id is " + id)
-	fmt.Println(len([]byte(id)))
-	fmt.Println("created signature is " + string(signature))
-	fmt.Println(len(signature))
-	fmt.Println("created sookieSls is " + string(cookieSls))
-	fmt.Println(len([]byte(cookieSls)))
-	fmt.Println("created cookieStr is " + cookieStr)
-	fmt.Println(len([]byte(cookieStr)))
 	return id, cookieStr, nil
 }
 
