@@ -11,7 +11,7 @@ import (
 )
 
 type UlStr struct {
-	Id      int32
+	ID      int32
 	UserID  string
 	LongURL string
 }
@@ -40,7 +40,7 @@ func (uS *URLStorage) PostShortURL(shortURL, longURL, userID string, uuid int32)
 	var ulStr UlStr
 	ulStr.UserID = userID
 	ulStr.LongURL = longURL
-	ulStr.Id = uuid
+	ulStr.ID = uuid
 	_, ok := uS.urlStr[shortURL]
 	if ok {
 		uS.logger.Info("shortURL: " + shortURL + " and longURL: " + uS.urlStr[shortURL].LongURL)

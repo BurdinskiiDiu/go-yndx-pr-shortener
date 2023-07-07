@@ -18,7 +18,7 @@ func NewURLStorageTest(us *map[string]UlStr, logger *zap.Logger) *URLStorage {
 
 func NewUlStr() *UlStr {
 	return &UlStr{
-		Id:      0,
+		ID:      0,
 		UserID:  "",
 		LongURL: "http://yandex.practicum.com",
 	}
