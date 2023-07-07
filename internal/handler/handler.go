@@ -614,11 +614,11 @@ func (hn *Handlers) DeleteUsersURLs() http.HandlerFunc {
 func (hn *Handlers) DelURLSBatch() {
 	ctx := context.TODO()
 	ticker := time.NewTicker(5 * time.Second)
-	delURL := make([]postgresql.URLsForDel, 0)
+	//delURL := make([]postgresql.URLsForDel, 0)
 
 	for {
 		select {
-		case delURL = <-hn.inpURLSChn:
+		case delURL := <-hn.inpURLSChn:
 			err := hn.US.DeleteUserURLS(ctx, delURL)
 			if err != nil {
 				hn.logger.Debug("error while del urls:" + err.Error())
