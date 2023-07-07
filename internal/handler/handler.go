@@ -596,8 +596,9 @@ func (hn *Handlers) DeleteUsersURLs() http.HandlerFunc {
 			delURLsSlc = append(delURLsSlc, delURLstr)
 		}
 		//hn.inpURLSChn <- delURLsSlc
-
+		hn.delMtx.Lock()
 		hn.forDel = append(hn.forDel, delURLsSlc)
+		hn.delMtx.Unlock()
 		w.WriteHeader(http.StatusAccepted)
 		/*
 			ctx := context.TODO()
