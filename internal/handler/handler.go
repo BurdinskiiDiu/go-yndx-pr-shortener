@@ -15,7 +15,6 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/authentication"
@@ -591,14 +590,6 @@ func (hn *Handlers) DeleteUsersURLs() http.HandlerFunc {
 			return
 		}
 
-		/*
-			urlsStr := buf.String()
-			hn.logger.Debug("gotted body DeleteUsersURLs: " + urlsStr)
-			urlsStr = urlsStr[2:]
-			urlsStr = urlsStr[:len(urlsStr)-2]
-			urlsSlc := strings.Split(urlsStr, "\",\"")
-			hn.logger.Debug("conversed body to slice DeleteUsersURLs: ")*/
-
 		userID, ok := r.Context().Value(currUser).(string)
 		if !ok {
 			userID = ""
@@ -610,18 +601,16 @@ func (hn *Handlers) DeleteUsersURLs() http.HandlerFunc {
 			delURLsSlc = append(delURLsSlc, delURLstr)
 			//hn.inpURLSChn <- delURLstr
 		}
-		wg := new(sync.WaitGroup)
-		wg.Add(1)
-		go func(wg *sync.WaitGroup) {
-			ctx := context.TODO()
-			err := hn.US.DeleteUserURLS(ctx, delURLsSlc)
+
+		w.WriteHeader(http.StatusAccepted)
+		ctx := context.TODO()
+		go func() {
+			hn.US.DeleteUserURLS(ctx, delURLsSlc)
 			if err != nil {
 				hn.logger.Error("async deleting userURLS err", zap.Error(err))
 			}
-			wg.Done()
-		}(wg)
-		w.WriteHeader(http.StatusAccepted)
-		wg.Wait()
+		}()
+
 	})
 }
 
