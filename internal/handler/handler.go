@@ -600,7 +600,7 @@ func (hn *Handlers) DeleteUsersURLs() http.HandlerFunc {
 		//hn.delMtx.Lock()
 		//hn.forDel = append(hn.forDel, delURLsSlc)
 		//hn.delMtx.Unlock()
-		//w.WriteHeader(http.StatusAccepted)
+		w.WriteHeader(http.StatusAccepted)
 		/*
 			ctx := context.TODO()
 			go func() {
