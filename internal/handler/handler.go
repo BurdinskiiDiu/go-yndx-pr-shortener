@@ -610,7 +610,8 @@ func (hn *Handlers) DeleteUsersURLs() http.HandlerFunc {
 			//hn.inpURLSChn <- delURLstr
 		}
 		go func() {
-			err := hn.US.DeleteUserURLS(r.Context(), delURLsSlc)
+			ctx := context.TODO()
+			err := hn.US.DeleteUserURLS(ctx, delURLsSlc)
 			if err != nil {
 				hn.logger.Error("async deleting userURLS err", zap.Error(err))
 			}
