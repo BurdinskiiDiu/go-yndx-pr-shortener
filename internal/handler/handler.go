@@ -594,7 +594,7 @@ func (hn *Handlers) DeleteUsersURLs() http.HandlerFunc {
 		}
 		hn.inpURLSChn <- delURLsSlc
 		fmt.Println(delURLsSlc)
-		go hn.DelURLSBatch(hn.inpURLSChn)
+		go hn.DelURLSBatch()
 		w.WriteHeader(http.StatusAccepted)
 		/*
 			ctx := context.TODO()
@@ -608,14 +608,14 @@ func (hn *Handlers) DeleteUsersURLs() http.HandlerFunc {
 	})
 }
 
-func (hn *Handlers) DelURLSBatch(inpChnl chan []postgresql.URLsForDel) {
+func (hn *Handlers) DelURLSBatch() {
 	ctx := context.TODO()
 	ticker := time.NewTicker(5 * time.Second)
 	delURL := make([]postgresql.URLsForDel, 0)
 
 	for {
 		select {
-		case delURL = <-inpChnl:
+		case delURL = <-hn.inpURLSChn:
 			err := hn.US.DeleteUserURLS(ctx, delURL)
 			if err != nil {
 				hn.logger.Debug("error while del urls:" + err.Error())
