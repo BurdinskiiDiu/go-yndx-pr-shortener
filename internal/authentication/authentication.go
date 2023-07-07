@@ -35,6 +35,7 @@ func CreateUserID(cf config.Config) (string, string, error) {
 	signature := h.Sum(nil)
 	//signatureStr := hex.EncodeToString(signature)
 	var cookieSls []byte
+	cookieSls = signature
 	for _, v := range []byte(id) {
 		cookieSls = append(signature, v)
 	}
