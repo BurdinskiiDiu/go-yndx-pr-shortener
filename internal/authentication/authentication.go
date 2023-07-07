@@ -61,20 +61,21 @@ func CheckCookie(cookieStr string, cf config.Config) (string, error) {
 	}
 	encoder := new(base64.Encoding)
 	gCookieSlc, err := encoder.DecodeString(cookieStr)
+
 	if err != nil {
 		return "", fmt.Errorf("decoding gotted cookies error: %w", err)
 	}
-
+	fmt.Println("gotted decoded gCookieSlc is " + string(gCookieSlc))
 	//decGotStr, err := hex.DecodeString(cookieStr)
 	//if err != nil {
 	//	return "", errors.New("decoding gotted cookie string err, " + err.Error())
 	//}
 	//gottedUserID := /*decGotStr*/ string([]byte(cookieStr)[64:])
-	gottedUserID := /*decGotStr*/ string(gCookieSlc[64:])
+	gottedUserID := /*decGotStr*/ string(gCookieSlc[32:])
 	fmt.Println("gottedUserID is " + gottedUserID)
 	//gottedUserIDStr := hex.EncodeToString(gottedUserID)
 	//gottedSign := /*decGotStr*/ string([]byte(cookieStr)[:64])
-	gottedSign := /*decGotStr*/ gCookieSlc[:64]
+	gottedSign := /*decGotStr*/ gCookieSlc[:32]
 	fmt.Println("gottedSign is " + string(gottedSign))
 	//gottedSignStr := hex.EncodeToString(gottedSign)
 	h := hmac.New(sha256.New, []byte(cf.AuthentKey) /* key*/)
