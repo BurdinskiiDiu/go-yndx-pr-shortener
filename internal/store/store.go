@@ -12,7 +12,7 @@ import (
 
 type UlStr struct {
 	Id      int32
-	User_id string
+	UserID  string
 	LongURL string
 }
 
@@ -38,7 +38,7 @@ func (uS *URLStorage) PostShortURL(shortURL, longURL, userID string, uuid int32)
 	uS.mutex.Lock()
 	defer uS.mutex.Unlock()
 	var ulStr UlStr
-	ulStr.User_id = userID
+	ulStr.UserID = userID
 	ulStr.LongURL = longURL
 	ulStr.Id = uuid
 	_, ok := uS.urlStr[shortURL]
@@ -86,7 +86,7 @@ func (uS *URLStorage) ReturnAllUserReq(ctx context.Context, userID string) (map[
 	ans := make(map[string]string, 0)
 
 	for i, v := range uS.urlStr {
-		if v.User_id == userID {
+		if v.UserID == userID {
 			ans[v.LongURL] = i
 		}
 	}
