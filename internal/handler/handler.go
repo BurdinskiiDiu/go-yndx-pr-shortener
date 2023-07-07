@@ -628,7 +628,6 @@ func (hn *Handlers) DelURLSBatch(inpChnl chan []postgresql.URLsForDel) {
 			err := hn.US.DeleteUserURLS(ctx, delURL)
 			if err != nil {
 				hn.logger.Debug("error while del urls:" + err.Error())
-				break
 			}
 		default:
 			continue
