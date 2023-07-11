@@ -5,8 +5,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/app/handler"
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/config"
+	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/handler"
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/chi/v5"
 	"go.uber.org/zap"
@@ -62,6 +62,7 @@ func NewRouter(hn *handler.Handlers, logger *zap.Logger) chi.Router {
 	rt := chi.NewRouter()
 	rt.Use(middleware.Timeout(20 * time.Second))
 	rt.Use(hn.LoggingHandler)
+	rt.Use(hn.AuthMiddleware)
 	rt.Use(hn.GZipMiddleware)
 	rt.Post("/", hn.PostLongURL())
 	rt.Get("/{id}", func(w http.ResponseWriter, r *http.Request) {
@@ -72,6 +73,8 @@ func NewRouter(hn *handler.Handlers, logger *zap.Logger) chi.Router {
 	rt.Post("/api/shorten", hn.PostURLApi())
 	rt.Get("/ping", hn.GetDBPing())
 	rt.Post("/api/shorten/batch", hn.PostBatch())
+	rt.Get("/api/user/urls", hn.GetUsersURLs())
+	rt.Delete("/api/user/urls", hn.DeleteUsersURLs())
 	return rt
 }
 

@@ -2,7 +2,6 @@ package config
 
 import (
 	"flag"
-	"log"
 	"os"
 )
 
@@ -13,6 +12,8 @@ type Config struct {
 	FileStorePath string
 	DBdsn         string
 	StoreType     storeType
+	AuthentKey    string
+	DelChnlLen    int
 }
 
 type storeType int
@@ -28,18 +29,11 @@ func GetConfig() *Config {
 	flag.StringVar(&cf.BaseAddr, "b", "http://localhost:8080", "base host addr for short URL response")
 	flag.StringVar(&cf.LogLevel, "l", "Info", "log level")
 	flag.StringVar(&cf.FileStorePath, "f", "/tmp/short-url-db.json", "full file name for storing url info")
-	///////query для локального тестирования базы
-	//query := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
-	//`localhost`, `5432`, `postgres`, `A_41120113a_postsql`, `urlstore`)
+	flag.StringVar(&cf.AuthentKey, "k", "secretKey", "authentification key")
 
-	flag.StringVar(&cf.DBdsn, "d" /*query*/, "", "dsn for db connection")
+	flag.StringVar(&cf.DBdsn, "d", "", "dsn for db connection")
 	flag.Parse()
-	log.Println("flag a: " + cf.ServAddr)
-	log.Println("flag b: " + cf.BaseAddr)
 
-	log.Println("flag l: " + cf.LogLevel)
-	log.Println("flag f: " + cf.FileStorePath)
-	log.Println("flag d: " + cf.DBdsn)
 	if EnvServAddr := os.Getenv("SERVER_ADDRESS"); EnvServAddr != "" {
 		cf.ServAddr = EnvServAddr
 	}
@@ -60,11 +54,17 @@ func GetConfig() *Config {
 		cf.DBdsn = EnvDBdsn
 	}
 
+	if EnvAuthentKey := os.Getenv("AUTHENT_KEY"); EnvAuthentKey != "" {
+		cf.AuthentKey = EnvAuthentKey
+	}
+
 	if cf.DBdsn != "" {
 		cf.StoreType = db
 	} else {
 		cf.StoreType = file
 	}
+
+	cf.DelChnlLen = 1000
 
 	return cf
 }

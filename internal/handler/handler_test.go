@@ -6,10 +6,12 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/config"
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/logg"
+	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/postgresql"
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/store"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -20,15 +22,16 @@ func TestURLShortenerRequest(t *testing.T) {
 	conf.DBdsn = ""
 	conf.FileStorePath = "/tmp/short-url-db.json"
 	logger, err := logg.InitLog(conf)
-	urlStr := make(map[string]string)
-	urlStr["abcdefj"] = "http://yandex.practicum.com"
+	urlStr := make(map[string]store.UlStr)
+	urlStrElm := store.NewUlStr()
+	urlStr["abcdefj"] = *urlStrElm
 	uS := store.NewURLStorageTest(&urlStr, logger)
 
 	conf.ServAddr = ":8080"
 	conf.BaseAddr = "http://localhost:8080/"
-
-	//ctx := context.TODO()
-	hn := NewHandlers( /*ctx,*/ uS, conf, logger)
+	chnInp := make(chan postgresql.URLsForDel, 100)
+	delMtx := new(sync.Mutex)
+	hn := NewHandlers(uS, chnInp, conf, logger, delMtx)
 
 	if err != nil {
 		log.Fatal(err)
@@ -50,7 +53,7 @@ func TestURLShortenerRequest(t *testing.T) {
 		tc := tc
 		for k, v := range urlStr {
 			tc.shortURL = k
-			tc.testURL = v
+			tc.testURL = v.LongURL
 		}
 		log.Println("post req shortURL is: " + tc.shortURL)
 		t.Run(tc.method, func(t *testing.T) {
@@ -80,15 +83,16 @@ func TestGetlongURLRequest(t *testing.T) {
 	conf.DBdsn = ""
 	conf.FileStorePath = "/tmp/short-url-db.json"
 	logger, err := logg.InitLog(conf)
-	urlStr := make(map[string]string)
-	urlStr["abcdefj"] = "http://yandex.practicum.com"
+	urlStr := make(map[string]store.UlStr)
+	urlStrElm := store.NewUlStr()
+	urlStr["abcdefj"] = *urlStrElm
 	uS := store.NewURLStorageTest(&urlStr, logger)
 
 	conf.ServAddr = ":8080"
 	conf.BaseAddr = "http://localhost:8080/"
-
-	//ctx := context.TODO()
-	hn := NewHandlers( /*ctx,*/ uS, conf, logger)
+	delMtx := new(sync.Mutex)
+	chnInp := make(chan postgresql.URLsForDel, 100)
+	hn := NewHandlers(uS, chnInp, conf, logger, delMtx)
 
 	if err != nil {
 		log.Fatal(err)
@@ -110,7 +114,7 @@ func TestGetlongURLRequest(t *testing.T) {
 		tc := tc
 		for k, v := range urlStr {
 			tc.shortURL = k
-			tc.testURL = v
+			tc.testURL = v.LongURL
 		}
 		log.Println("testURL is: " + tc.testURL)
 		t.Run(tc.method, func(t *testing.T) {
@@ -140,15 +144,17 @@ func TestPostlongURLRequestApi(t *testing.T) {
 	conf.DBdsn = ""
 	conf.FileStorePath = "/tmp/short-url-db.json"
 	logger, err := logg.InitLog(conf)
-	urlStr := make(map[string]string)
-	urlStr["abcdefj"] = "http://yandex.practicum.com"
+	urlStr := make(map[string]store.UlStr)
+	urlStrElm := store.NewUlStr()
+	urlStr["abcdefj"] = *urlStrElm
 	uS := store.NewURLStorageTest(&urlStr, logger)
 
 	conf.ServAddr = ":8080"
 	conf.BaseAddr = "http://localhost:8080/"
 
-	//ctx := context.TODO()
-	hn := NewHandlers( /*ctx,*/ uS, conf, logger)
+	chnInp := make(chan postgresql.URLsForDel, 100)
+	delMtx := new(sync.Mutex)
+	hn := NewHandlers(uS, chnInp, conf, logger, delMtx)
 
 	if err != nil {
 		log.Fatal(err)

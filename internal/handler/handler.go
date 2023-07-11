@@ -11,22 +11,31 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
+	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/authentication"
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/config"
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/gzp"
 	"github.com/BurdinskiiDiu/go-yndx-pr-shortener.git/internal/postgresql"
+
 	"go.uber.org/zap"
 )
 
+type ctxUserKey string
+
+var currUser ctxUserKey = "userID"
+
 type URLStore interface {
-	PostShortURL(shURL string, lnURL string, uuid int32) (string, error)
+	PostShortURL(shURL, lnURL, userID string, uuid int32) (string, error)
 	GetLongURL(shURL string) (string, error)
-	PostURLBatch([]postgresql.DBRowStrct) ([]string, error)
-	//PrintlAllDB()
+	PostURLBatch(tchStr []postgresql.DBRowStrct, userID string) ([]string, error)
+	ReturnAllUserReq(ctx context.Context, userID string) (map[string]string, error)
+	DeleteUserURLS(ctx context.Context, str []postgresql.URLsForDel) error
 	Ping(ctx context.Context) error
 }
 
@@ -53,30 +62,32 @@ type URLResp struct {
 }
 
 type Handlers struct {
-	US        URLStore
-	Cf        *config.Config
-	logger    *zap.Logger
-	uuid      int32
-	shortings map[string]int
+	US         URLStore
+	Cf         *config.Config
+	logger     *zap.Logger
+	uuid       int32
+	inpURLSChn chan postgresql.URLsForDel
+	delMtx     *sync.Mutex
 }
 
-func NewHandlers(uS URLStore, cf *config.Config, logger *zap.Logger) *Handlers {
+func NewHandlers(uS URLStore, inpURLSChn chan postgresql.URLsForDel, cf *config.Config, logger *zap.Logger, delMtx *sync.Mutex) *Handlers {
 	return &Handlers{
-		US:        uS,
-		Cf:        cf,
-		logger:    logger,
-		uuid:      0,
-		shortings: make(map[string]int),
+		US:         uS,
+		Cf:         cf,
+		logger:     logger,
+		uuid:       0,
+		inpURLSChn: inpURLSChn,
+		delMtx:     delMtx,
 	}
 }
 
-func (hn *Handlers) CreateShortURL(longURL string) (shrtURL string, err error) {
+func (hn *Handlers) CreateShortURL(longURL, userID string) (shrtURL string, err error) {
 
 	cntr := 0
 	hn.uuid++
 	for cntr < 100 {
 		shrtURL = shorting()
-		if shrtURL, err = hn.US.PostShortURL(shrtURL, longURL, hn.uuid); err != nil {
+		if shrtURL, err = hn.US.PostShortURL(shrtURL, longURL, userID, hn.uuid); err != nil {
 			hn.logger.Info(err.Error())
 			if strings.Contains(err.Error(), "shortURL is already exist") {
 				cntr++
@@ -87,7 +98,7 @@ func (hn *Handlers) CreateShortURL(longURL string) (shrtURL string, err error) {
 				break
 			}
 		}
-		if errFF := hn.FileFilling(shrtURL, longURL); errFF != nil {
+		if errFF := hn.FileFilling(shrtURL, longURL, userID); errFF != nil {
 			hn.logger.Error("createShortURL method, err while filling file", zap.Error(errFF))
 		}
 		break
@@ -97,6 +108,7 @@ func (hn *Handlers) CreateShortURL(longURL string) (shrtURL string, err error) {
 
 func (hn *Handlers) PostLongURL() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		hn.logger.Debug("start PostLongURL")
 		content, err := io.ReadAll(r.Body)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -106,7 +118,13 @@ func (hn *Handlers) PostLongURL() http.HandlerFunc {
 		hn.logger.Debug("got post message" + longURL)
 		var shrtURL string
 		var chndStatus bool
-		shrtURL, err = hn.CreateShortURL(longURL)
+
+		userID, ok := r.Context().Value(currUser).(string)
+		if !ok {
+			userID = ""
+		}
+
+		shrtURL, err = hn.CreateShortURL(longURL, userID)
 		if err != nil {
 			if strings.Contains(err.Error(), "longURL is already exist") {
 				chndStatus = true
@@ -119,7 +137,6 @@ func (hn *Handlers) PostLongURL() http.HandlerFunc {
 		bodyResp := hn.Cf.BaseAddr + "/" + shrtURL
 		hn.logger.Debug("response body message", zap.String("body", bodyResp))
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-
 		if chndStatus {
 			hn.logger.Info("chndStatus is true ")
 			w.WriteHeader(http.StatusConflict)
@@ -132,6 +149,7 @@ func (hn *Handlers) PostLongURL() http.HandlerFunc {
 
 func (hn *Handlers) GetLongURL(srtURL string) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		hn.logger.Debug("start GetLongURL")
 		hn.logger.Debug("shortURL is:", zap.String("shortURL", srtURL))
 		lngURL, err := hn.US.GetLongURL(srtURL)
 		hn.logger.Debug("longURL is:", zap.String("longURL", lngURL))
@@ -139,14 +157,19 @@ func (hn *Handlers) GetLongURL(srtURL string) http.HandlerFunc {
 			hn.logger.Error("getLongURL handler, error while getting long url from store", zap.Error(err))
 			return
 		}
-		w.Header().Set("Location", lngURL)
-		w.WriteHeader(http.StatusTemporaryRedirect)
-		w.Write([]byte(lngURL))
+		if lngURL == "" {
+			w.WriteHeader(http.StatusGone)
+		} else {
+			w.Header().Set("Location", lngURL)
+			w.WriteHeader(http.StatusTemporaryRedirect)
+			w.Write([]byte(lngURL))
+		}
 	})
 }
 
 func (hn *Handlers) PostURLApi() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		hn.logger.Debug("start PostURLApi")
 		var buf bytes.Buffer
 		_, err := buf.ReadFrom(r.Body)
 		if err != nil {
@@ -163,7 +186,12 @@ func (hn *Handlers) PostURLApi() http.HandlerFunc {
 		}
 		hn.logger.Debug("unmarshaled url from postApi message", zap.String("longURL", urlReq.URL))
 		var chndStatus bool
-		shrtURL, err := hn.CreateShortURL(urlReq.URL)
+
+		userID, ok := r.Context().Value(currUser).(string)
+		if !ok {
+			userID = ""
+		}
+		shrtURL, err := hn.CreateShortURL(urlReq.URL, userID)
 		if err != nil {
 			if strings.Contains(err.Error(), "longURL is already exist") {
 				chndStatus = true
@@ -221,7 +249,7 @@ func (lRW *LoggingRespWrt) WriteHeader(stCode int) {
 
 func (hn *Handlers) LoggingHandler(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
+		hn.logger.Debug("start LoggingHandler")
 		responseData := &responseData{
 			status: 0,
 			size:   0,
@@ -296,9 +324,11 @@ type URLDataStruct struct {
 	UUID    string `json:"uuid"`
 	ShrtURL string `json:"short_url"`
 	LngURL  string `json:"original_url"`
+	UsrID   string `json:"user_id"`
 }
 
 func (hn *Handlers) GetStoreBackup() error {
+	hn.logger.Debug("start GetStoreBackup")
 	hn.logger.Debug("storefile addr from createfile", zap.String("path", hn.Cf.FileStorePath))
 	file, err := os.OpenFile(hn.Cf.FileStorePath, os.O_RDONLY|os.O_CREATE, 0777)
 	if err != nil {
@@ -321,7 +351,7 @@ func (hn *Handlers) GetStoreBackup() error {
 		if err != nil {
 			return errors.New("error while filling db from backup file, uuid conv to int err:" + err.Error())
 		}
-		_, err = hn.US.PostShortURL(urlDataStr.ShrtURL, urlDataStr.LngURL, int32(uuid))
+		_, err = hn.US.PostShortURL(urlDataStr.ShrtURL, urlDataStr.LngURL, urlDataStr.UsrID, int32(uuid))
 		if err != nil {
 			hn.logger.Error("getStoreBackup error, try to write itno db", zap.Error(err))
 		}
@@ -338,7 +368,8 @@ func (hn *Handlers) GetStoreBackup() error {
 	return nil
 }
 
-func (hn *Handlers) FileFilling(shrtURL, lngURL string) error {
+func (hn *Handlers) FileFilling(shrtURL, lngURL, userID string) error {
+	hn.logger.Debug("start FileFilling")
 	hn.logger.Debug("storefile addr from filling method", zap.String("path", hn.Cf.FileStorePath))
 	file, err := os.OpenFile(hn.Cf.FileStorePath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0777)
 	if err != nil {
@@ -352,6 +383,7 @@ func (hn *Handlers) FileFilling(shrtURL, lngURL string) error {
 	urlDataStr.UUID = strconv.Itoa(int(hn.uuid))
 	urlDataStr.ShrtURL = shrtURL
 	urlDataStr.LngURL = lngURL
+	urlDataStr.UsrID = userID
 	raw, err = json.Marshal(urlDataStr)
 	if err != nil {
 		return fmt.Errorf("marshalling data to db file error: %w", err)
@@ -378,6 +410,7 @@ type batchRespStruct struct {
 
 func (hn *Handlers) PostBatch() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		hn.logger.Debug("start PostBatch")
 		var buf bytes.Buffer
 		_, err := buf.ReadFrom(r.Body)
 		if err != nil {
@@ -390,7 +423,6 @@ func (hn *Handlers) PostBatch() http.HandlerFunc {
 			hn.logger.Error("PostBatch handler, unmarshal func err", zap.Error(err))
 			return
 		}
-		fmt.Println(urlReq)
 		btchStr := make([]postgresql.DBRowStrct, 0)
 		var btchRow postgresql.DBRowStrct
 		urlResparr := make([]batchRespStruct, 0)
@@ -405,7 +437,11 @@ func (hn *Handlers) PostBatch() http.HandlerFunc {
 			btchStr = append(btchStr, btchRow)
 			urlResparr = append(urlResparr, urlResp)
 		}
-		retShrtURL, err := hn.US.PostURLBatch(btchStr)
+		userID, ok := r.Context().Value(currUser).(string)
+		if !ok {
+			userID = ""
+		}
+		retShrtURL, err := hn.US.PostURLBatch(btchStr, userID)
 		if err != nil {
 			hn.logger.Error("post batch error", zap.Error(err))
 			return
@@ -425,4 +461,171 @@ func (hn *Handlers) PostBatch() http.HandlerFunc {
 		w.WriteHeader(http.StatusCreated)
 		w.Write(resp)
 	})
+}
+
+// authentication middleware
+func (hn *Handlers) AuthMiddleware(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		hn.logger.Debug("start AuthMiddleware")
+		var noCookie bool
+		cookie, err := r.Cookie("authentication")
+
+		if err != nil {
+			hn.logger.Info("cookie err, " + err.Error())
+			if !errors.Is(err, http.ErrNoCookie) {
+				hn.logger.Error("getting request cookie error", zap.Error(err))
+				return
+			}
+			hn.logger.Info("request without necessary cookie")
+			noCookie = true
+		}
+		var createCookie bool
+		var userID, cookieStr string
+		if !noCookie {
+			hn.logger.Debug("gotted cookie string is", zap.String("hexcookie", cookie.Value))
+			gCookieStr, err := url.QueryUnescape(cookie.Value)
+			if err != nil {
+				hn.logger.Error("decoding cookie string error", zap.Error(err))
+				return
+			}
+
+			userID, err = authentication.CheckCookie(gCookieStr, *hn.Cf)
+			if err != nil {
+				createCookie = true
+			}
+
+		} else {
+			createCookie = true
+		}
+
+		if createCookie {
+
+			userID, cookieStr, err = authentication.CreateUserID(*hn.Cf)
+			if err != nil {
+				hn.logger.Error("creating user id error", zap.Error(err))
+				return
+			}
+
+			respCookieStr := url.QueryEscape(cookieStr)
+			respCookie := http.Cookie{
+				Name:    "authentication",
+				Value:   respCookieStr,
+				Expires: time.Now().Add(1 * time.Hour),
+			}
+			http.SetCookie(w, &respCookie)
+		}
+		ctx := context.WithValue(r.Context(), currUser, userID)
+
+		if noCookie && r.Method == http.MethodGet && r.URL.Path == "/api/user/urls" {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+		h.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+type UsersURLs struct {
+	ShortURL string `json:"short_url"`
+	LongURL  string `json:"original_url"`
+}
+
+// GetUsersURLs handler
+func (hn *Handlers) GetUsersURLs() http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		hn.logger.Debug("start GetUsersURLs")
+
+		ctx := r.Context()
+		userID := ctx.Value(currUser)
+		ans, err := hn.US.ReturnAllUserReq(ctx, userID.(string))
+		if err != nil {
+			hn.logger.Error("getUsersURLs error", zap.Error(err))
+			return
+		}
+		if len(ans) == 0 {
+			w.WriteHeader(http.StatusNoContent)
+		} else {
+			var usersURLs UsersURLs
+			usrURLsArr := make([]UsersURLs, 0)
+			for i, v := range ans {
+				v = hn.Cf.BaseAddr + "/" + v
+				usersURLs.LongURL = i
+				usersURLs.ShortURL = v
+				usrURLsArr = append(usrURLsArr, usersURLs)
+			}
+
+			resp, err := json.Marshal(&usrURLsArr)
+			if err != nil {
+				hn.logger.Error("getUsersURLs, error while marshalling response data", zap.Error(err))
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			w.Header().Set("Content-Type", "application/json")
+			w.Write(resp)
+		}
+	})
+}
+
+func (hn *Handlers) DeleteUsersURLs() http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		hn.logger.Debug("start DeleteUsersURLs")
+		var buf bytes.Buffer
+		_, err := buf.ReadFrom(r.Body)
+		var delURLstr postgresql.URLsForDel
+		if err != nil {
+			hn.logger.Error("DeleteUsersURLs handler, read from request body err", zap.Error(err))
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		urlsSlc := make([]string, 0)
+		if err := json.Unmarshal(buf.Bytes(), &urlsSlc); err != nil {
+			hn.logger.Error("DeleteUsersURLs handler, unmarshal func err", zap.Error(err))
+			return
+		}
+
+		userID, ok := r.Context().Value(currUser).(string)
+		if !ok {
+			userID = ""
+		}
+		for _, v := range urlsSlc {
+			delURLstr.UserID = userID
+			delURLstr.ShortURL = v
+			hn.inpURLSChn <- delURLstr
+		}
+
+		w.WriteHeader(http.StatusAccepted)
+		/*
+			ctx := context.TODO()
+			go func() {
+				hn.US.DeleteUserURLS(ctx, delURLsSlc)
+				if err != nil {
+					hn.logger.Error("async deleting userURLS err", zap.Error(err))
+				}
+			}()*/
+
+	})
+}
+
+func (hn *Handlers) DelURLSBatch() {
+	ctx := context.TODO()
+	ticker := time.NewTicker(5 * time.Second)
+	delURLsSlc := make([]postgresql.URLsForDel, 0)
+	for {
+		select {
+		case delURL := <-hn.inpURLSChn:
+			delURLsSlc = append(delURLsSlc, delURL)
+
+		case <-ticker.C:
+			fmt.Println("now we try to remove urls")
+			if len(delURLsSlc) == 0 {
+				continue
+			}
+			err := hn.US.DeleteUserURLS(ctx, delURLsSlc)
+			if err != nil {
+				hn.logger.Debug("error while del urls:" + err.Error())
+				continue
+			}
+			delURLsSlc = nil
+		}
+	}
 }
